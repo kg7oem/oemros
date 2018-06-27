@@ -33,7 +33,7 @@ ASSIGNMENT ^{KEY_PATH}{WHITESPACE}*={WHITESPACE}*({SCALAR}|{TABLE}|{LIST})
 
 {WHITESPACE} /* skipped */
 {NEWLINE} cout << "got a new line\n";
-{QUOTED_STRING} cout << "got a quoted string: " << YYText() << "\n";
+{QUOTED_STRING} cout << "got a quoted string\n";
 
 '.' /* ignore */
 
