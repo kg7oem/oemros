@@ -1,4 +1,5 @@
 oemros
 *.o
+*.d
 turboini.flex.cpp
 turboini.flex.h
