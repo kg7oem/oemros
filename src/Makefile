@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS+=-Wall -Werror -MMD -ggdb
+CXXFLAGS+=-std=c++11 -Wall -Werror -MMD -ggdb
 FLEXPP=flex++
 
 COMMON_DEPS=Makefile
