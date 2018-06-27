@@ -20,7 +20,7 @@ $(OEMROS_BIN): $(OBJS) $(COMMON_DEPS)
 %.o: %.cpp %.h $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(CFLAGS)
 
-turboini.flex.o : CXXFLAGS+=-Wno-sign-compare
+turboini.flex.o: CXXFLAGS+=-Wno-sign-compare
 
 turboini.flex.cpp: turboini.flexpp $(COMMON_DEPS)
 	$(FLEXPP) -o $@ $<
