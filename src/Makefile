@@ -15,10 +15,12 @@ clean:
 	rm -f $(OEMROS_BIN) turboini.flex.cpp *.o *.d
 
 $(OEMROS_BIN): main.o turboini.flex.o $(COMMON_DEPS)
-	$(CXX) -o $@ *.o
+	$(CXX) $(CXXFLAGS) -o $@ *.o
 
 %.o: %.cpp %.h $(COMMON_DEPS)
-	$(CXX) -c -o $@ $< $(CFLAGS)
+	$(CXX) $(CXXFLAGS) -c -o $@ $< $(CFLAGS)
+
+turboini.flex.o : CXXFLAGS+=-Wno-sign-compare
 
 turboini.flex.cpp: turboini.flexpp $(COMMON_DEPS)
 	$(FLEXPP) -o $@ $<
