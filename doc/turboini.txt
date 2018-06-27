@@ -1,0 +1,85 @@
+
+
+
+
+Types
+  * scalar
+  * table (key/value pairs)
+  * list
+
+Scalar formats
+  * string
+  * boolean (true, false)
+  * integer (1, 2, 3, -1)
+  * real (1, 2, -1.1, inf, -inf, nan)
+  * imaginary (1i, 2i, -1i, 1.1i)
+  * complex (1+1i, 2-i)
+
+
+
+Behavior
+  * Multiple sections with the same name is fine (maybe configurable)
+  * values can exist outside of any section
+
+
+
+Example
+
+
+
+foo = bar
+
+[lame]
+baz = fiddle
+
+[bizzy]
+flame.lots = aptly
+ignore.people = [ frank, lizzy, james ]
+ignore.map = { sam: true, lucas: false }
+something.escaped = "welp\n"
+something.looks.like.table = "{ foo bar }"
+this.is.a.string = \{ sam: foo, blah: uiip }
+
+[whoa]
+"blah foo".fiddle = true
+complicated = {
+    but.this.helps.make: 1,
+    but.this.helps.better: 2,
+    but.this.helps.maybe?: dunno,
+}
+
+
+
+
+[transceiver]
+name = IC-7100
+hamlib.rigid = 370
+hamlib.serial.port = /dev/ttyUSB0
+hamlib.serial.speed = 19200
+audio.engine = alsa
+audio.device = hw:CARD=CODEC,DEV=0
+audio.input.gain = 0db
+audio.output.gain = -30db
+
+[transceiver]
+name = IC-7610
+hamlib.rigid = 378
+hamlib.serial.port = /dev/ttyUSB2
+hamlib.serial.speed = 57600
+audio.engine = alsa
+audio.device = hw:CARD=LIESSS,DEV=0
+audio.input.gain = 0db
+audio.output.gain = -30db
+
+
+[repeater]
+name = Justa Test
+receiver.name = IC-7610
+receiver.freq = 53.545
+receiver.mode = FM
+transmitter.name = IC-7100
+transmitter.freq = 146.560
+transmitter.mode = FM
+
+
+
