@@ -19,6 +19,7 @@
  *
  */
 
+#include <cassert>
 #include <iostream>
 
 #include "logging.h"
@@ -43,6 +44,14 @@ logging * logging_engine(void) {
     }
 
     return log_singleton;
+}
+
+loglevel logging_get_level(void) {
+    return logging_engine()->current_level();
+}
+
+loglevel logging_set_level(loglevel new_level) {
+    return logging_engine()->current_level(new_level);
 }
 
 bool logging_should_log(loglevel level) {
@@ -71,14 +80,25 @@ const char * logging_level_name(loglevel level) {
     case loglevel::trace:
         return "TRACE";
     case loglevel::unknown:
-        return "UNKNOWN";
+        return "UNKNOWNLEVEL";
     }
 
-    return NULL;
+    log_fatal("switch() failed for loglevel enum: ", (int)level);
 }
 
-logevent::logevent(logsource source, loglevel level, const char *function, const char *path, const int linenum, string message)
-: source(source), level(level), function(function), path(path), linenum(linenum), message(message)
+const char * logging_source_name(logsource source) {
+    switch (source) {
+    case logsource::unknown:
+        return "UNKNOWNSOURCE";
+    case logsource::oemros:
+        return "oemros";
+    }
+
+    log_fatal("switch() failed for logsource enum: ", (int)source);
+}
+
+logevent::logevent(logsource source, loglevel level, const char *function, const char *path, const int line, string message)
+: source(source), level(level), function(function), path(path), line(line), message(message)
 { };
 
 loglevel logging::current_level(void) const {
@@ -91,12 +111,27 @@ loglevel logging::current_level(loglevel new_level) {
     return old_level;
 }
 
-void logging::input_event(const logevent& event) {
-    if (event.level < this->log_threshold) {
-        return;
-    }
+string logging::format_event(const logevent& event) {
+    stringstream buffer;
 
-    cout << "yep" << endl;
+    buffer << logging_source_name(event.source) << " ";
+    buffer << logging_level_name(event.level) << " ";
+    buffer << event.path << ":" << event.line << " ";
+    buffer << event.function << ": ";
+    buffer << event.message << endl;
+
+    return buffer.str();
+}
+
+void logging::input_event(const logevent& event) {
+    assert(event.level >= logging_get_level());
+    string formatted = format_event(event);
+
+    if (event.level >= loglevel::warn) {
+        cerr << formatted;
+    } else {
+        cout << formatted;
+    }
 }
 
 }

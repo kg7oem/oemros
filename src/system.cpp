@@ -21,17 +21,21 @@
 
 #include <cstdlib>
 
+#include "logging.h"
 #include "system.h"
 
 namespace oemros {
 
-[[ noreturn ]] void system_exit(exitvalue value) {
-    exit((int)value);
+// a panic must never use the logging system because the logging
+// system uses panic if it can't function
+[[ noreturn ]] void system_panic(const char *message) {
+    std::cerr << "PANIC! " << message << std::endl;
+    exit((int)exitvalue::panic);
 }
 
-void system_panic(const char *message) {
-    std::cerr << "PANIC! " << message << std::endl;
-    system_exit(exitvalue::panic);
+[[ noreturn ]] void system_exit(exitvalue value) {
+    log_debug("going to exit with value of ", (int)value);
+    exit((int)value);
 }
 
 }

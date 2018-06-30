@@ -13,6 +13,8 @@ int main(int argc, char **argv) {
 
     bootstrap();
 
+    logging_set_level(loglevel::trace);
+
     log_debug("test ", 1);
     log_debug("foo");
 
