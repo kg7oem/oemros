@@ -15,8 +15,14 @@ int main(int argc, char **argv) {
 
     logging_set_level(loglevel::trace);
 
-    log_debug("test ", 1);
-    log_debug("foo");
+    log_trace("tracing something");
+    log_lots("lots of logging");
+    log_debug("debugging it");
+    log_verbose("verbosity = high");
+    log_info("info: you have been told");
+    log_notice("notice notice notice");
+    log_warn("uhm that looks possibly not good");
+    log_error("yeah that was actually ", "bad");
 
     log_fatal("this should ", "totally abort");
 

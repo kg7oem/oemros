@@ -48,7 +48,14 @@ enum class logsource {
 };
 
 #define log_fatal(...) oemros::log__level_tf(oemros::logsource::oemros, oemros::loglevel::fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::error, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_warn(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::warn, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_notice(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::notice, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_info(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::info, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_verbose(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::verbose, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_debug(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::debug, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_lots(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::lots, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_trace(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::trace, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 
 class logevent {
 public:
