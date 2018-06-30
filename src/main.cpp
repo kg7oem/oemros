@@ -1,13 +1,13 @@
-#include <cstdlib>
-#include <FlexLexer.h>
 #include <iostream>
 
+#include "logging.h"
+
 int main(int argc, char **argv) {
-    std::cout << "I started executing\n";
 
-    auto *lexer = new yyFlexLexer;
-    while(lexer->yylex() != 0)
-        ;
+    log_debug("test ", 1);
+    log_debug("foo");
 
-    exit(1);
+    log_fatal("this should ", "totally abort");
+
+    return 0;
 }
