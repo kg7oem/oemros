@@ -4,7 +4,7 @@ FLEXPP=flex++
 
 COMMON_DEPS=Makefile
 
-OBJS=main.o turboini.flex.o
+OBJS=main.o turboini.flex.o logging.o system.o
 DEPS=${OBJS:.o=.d}
 
 OEMROS_BIN=oemros
