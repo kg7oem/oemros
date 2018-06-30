@@ -31,32 +31,39 @@ static oemros::logging *log_singleton = NULL;
 namespace oemros {
 
 void logging_bootstrap(void) {
-    if (log_singleton != NULL) {
-        system_panic("log_singleton was not NULL; attempt to double init logging system?");
-    }
-
+    assert(log_singleton == NULL);
     log_singleton = new logging();
 }
 
-logging * logging_engine(void) {
-    if (log_singleton == NULL) {
-        system_panic("log_singleton was NULL; attempt to get logging engine before bootstrap?");
-    }
+void logging_cleanup(void) {
+    assert(log_singleton != NULL);
+    delete log_singleton;
+}
 
+static logging * logging_get_engine(void) {
+    assert(log_singleton != NULL);
     return log_singleton;
 }
 
 loglevel logging_get_level(void) {
-    return logging_engine()->current_level();
+    return logging_get_engine()->current_level();
 }
 
 loglevel logging_set_level(loglevel new_level) {
-    return logging_engine()->current_level(new_level);
+    return logging_get_engine()->current_level(new_level);
 }
 
 bool logging_should_log(loglevel level) {
-    auto logging = logging_engine();
+    auto logging = logging_get_engine();
     return(level >= logging->current_level());
+}
+
+void logging_add_destination(shared_ptr<logdest> destination) {
+    logging_get_engine()->add_destination(destination);
+}
+
+void logging_input_event(const logevent& event) {
+    logging_get_engine()->input_event(event);
 }
 
 const char * logging_level_name(loglevel level) {
@@ -111,26 +118,41 @@ loglevel logging::current_level(loglevel new_level) {
     return old_level;
 }
 
-string logging::format_event(const logevent& event) {
+void logging::input_event(const logevent& event) {
+    assert(event.level >= logging_get_level());
+
+    for (auto i : this->destinations) {
+        i->event(event);
+    }
+}
+
+void logging::add_destination(shared_ptr<logdest> destination) {
+    this->destinations.push_back(destination);
+}
+
+void logdest::event(const logevent& event) { }
+
+string logdest::format_event(const logevent& event) {
     stringstream buffer;
 
     buffer << logging_source_name(event.source) << " ";
     buffer << logging_level_name(event.level) << " ";
     buffer << event.path << ":" << event.line << " ";
     buffer << event.function << ": ";
-    buffer << event.message << endl;
+    buffer << event.message;
 
     return buffer.str();
 }
 
-void logging::input_event(const logevent& event) {
-    assert(event.level >= logging_get_level());
-    string formatted = format_event(event);
+void logstdio::event(const logevent& event) {
+    logdest::event(event);
+
+    string formatted = this->format_event(event);
 
     if (event.level >= loglevel::warn) {
-        cerr << formatted;
+        cerr << formatted << endl;
     } else {
-        cout << formatted;
+        cout << formatted << endl;
     }
 }
 

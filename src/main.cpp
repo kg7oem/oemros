@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory.h>
 
 #include "logging.h"
 
@@ -9,11 +10,14 @@ static void bootstrap(void) {
     logging_bootstrap();
 }
 
-int main(int argc, char **argv) {
-
-    bootstrap();
-
+static void setup_logging(void) {
+    logging_add_destination(make_shared<logstdio>());
     logging_set_level(loglevel::trace);
+}
+
+int main(int argc, char **argv) {
+    bootstrap();
+    setup_logging();
 
     log_trace("tracing something");
     log_lots("lots of logging");
@@ -25,6 +29,8 @@ int main(int argc, char **argv) {
     log_error("yeah that was actually ", "bad");
 
     log_fatal("this should ", "totally abort");
+
+    logging_cleanup();
 
     return 0;
 }

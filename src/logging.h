@@ -22,7 +22,9 @@
 #ifndef SRC_LOGGING_H_
 #define SRC_LOGGING_H_
 
+#include <list>
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 #include "system.h"
@@ -69,23 +71,36 @@ public:
     logevent(logsource, loglevel, const char *, const char *, const int, const std::string);
 };
 
+class logdest {
+public:
+    virtual void event(const logevent&);
+    virtual std::string format_event(const logevent&);
+};
+
+class logstdio : public logdest {
+    virtual void event(const logevent&);
+};
+
 class logging {
 private:
     loglevel log_threshold = loglevel::error;
-
-    std::string format_event(const logevent&);
+    std::list<std::shared_ptr<logdest>> destinations;
 public:
     loglevel current_level(void) const;
     loglevel current_level(loglevel);
+
     void input_event(const logevent&);
+    void add_destination(std::shared_ptr<logdest>);
 };
 
 void logging_bootstrap(void);
-logging * logging_engine(void);
+void logging_cleanup(void);
 loglevel logging_get_level(void);
 loglevel logging_set_level(loglevel);
 const char * logging_level_name(loglevel);
 bool logging_should_log(loglevel);
+void logging_add_destination(std::shared_ptr<logdest>);
+void logging_input_event(const logevent&);
 
 template <typename T>
 void log__accumulate_value(std::stringstream& sstream, T t) {
@@ -105,7 +120,7 @@ void log__level_t(logsource source, loglevel level, const char *function, const 
         log__accumulate_value(sstream, t);
 
         logevent event(source, level, function, path, line, sstream.str());
-        logging_engine()->input_event(event);
+        logging_input_event(event);
     }
 }
 
@@ -117,7 +132,7 @@ void log__level_t(logsource source, loglevel level, const char *function, const 
         log__accumulate_value(sstream, args...);
 
         logevent event(source, level, function, path, line, sstream.str());
-        logging_engine()->input_event(event);
+        logging_input_event(event);
     }
 }
 
