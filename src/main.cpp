@@ -12,6 +12,8 @@ static void bootstrap(void) {
 
 static void setup_logging(void) {
     logging_add_destination(make_shared<logstdio>());
+    logging_add_destination(make_shared<logfile>("/home/tyler/test.log"));
+
     logging_set_level(loglevel::trace);
 }
 

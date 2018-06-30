@@ -22,6 +22,7 @@
 #ifndef SRC_LOGGING_H_
 #define SRC_LOGGING_H_
 
+#include <fstream>
 #include <list>
 #include <iostream>
 #include <memory>
@@ -75,16 +76,28 @@ class logdest {
 public:
     virtual void event(const logevent&);
     virtual std::string format_event(const logevent&);
+    virtual void output(const logevent&, const std::string);
 };
 
 class logstdio : public logdest {
-    virtual void event(const logevent&);
+public:
+    virtual void output(const logevent&, const std::string);
+};
+
+class logfile : public logdest {
+private:
+    std::ofstream outfile;
+
+public:
+    logfile(const char *);
+    virtual void output(const logevent&, const std::string);
 };
 
 class logging {
 private:
     loglevel log_threshold = loglevel::error;
     std::list<std::shared_ptr<logdest>> destinations;
+
 public:
     loglevel current_level(void) const;
     loglevel current_level(loglevel);

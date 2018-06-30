@@ -20,6 +20,8 @@
  */
 
 #include <cassert>
+#include <cerrno>
+#include <cstring>
 #include <iostream>
 
 #include "logging.h"
@@ -40,30 +42,29 @@ void logging_cleanup(void) {
     delete log_singleton;
 }
 
-static logging * logging_get_engine(void) {
-    assert(log_singleton != NULL);
-    return log_singleton;
-}
-
 loglevel logging_get_level(void) {
-    return logging_get_engine()->current_level();
+    assert(log_singleton != NULL);
+    return log_singleton->current_level();
 }
 
 loglevel logging_set_level(loglevel new_level) {
-    return logging_get_engine()->current_level(new_level);
+    assert(log_singleton != NULL);
+    return log_singleton->current_level(new_level);
 }
 
 bool logging_should_log(loglevel level) {
-    auto logging = logging_get_engine();
-    return(level >= logging->current_level());
+    assert(log_singleton != NULL);
+    return(level >= log_singleton->current_level());
 }
 
 void logging_add_destination(shared_ptr<logdest> destination) {
-    logging_get_engine()->add_destination(destination);
+    assert(log_singleton != NULL);
+    log_singleton->add_destination(destination);
 }
 
 void logging_input_event(const logevent& event) {
-    logging_get_engine()->input_event(event);
+    assert(log_singleton != NULL);
+    log_singleton->input_event(event);
 }
 
 const char * logging_level_name(loglevel level) {
@@ -130,7 +131,10 @@ void logging::add_destination(shared_ptr<logdest> destination) {
     this->destinations.push_back(destination);
 }
 
-void logdest::event(const logevent& event) { }
+void logdest::event(const logevent& event) {
+    string formatted = this->format_event(event);
+    this->output(event, formatted);
+}
 
 string logdest::format_event(const logevent& event) {
     stringstream buffer;
@@ -144,16 +148,28 @@ string logdest::format_event(const logevent& event) {
     return buffer.str();
 }
 
-void logstdio::event(const logevent& event) {
-    logdest::event(event);
+void logdest::output(const logevent& event, const string formatted) {
+    system_panic("this method should be overloaded");
+}
 
-    string formatted = this->format_event(event);
-
+void logstdio::output(const logevent& event, const string formatted) {
     if (event.level >= loglevel::warn) {
         cerr << formatted << endl;
     } else {
         cout << formatted << endl;
     }
+}
+
+logfile::logfile(const char *path) {
+    this->outfile.open(path, ofstream::app);
+
+    if (this->outfile.fail()) {
+        log_fatal("could not open ", path, " for write: ", strerror(errno));
+    }
+}
+
+void logfile::output(const logevent& event, const string formatted) {
+    this->outfile << formatted << endl;
 }
 
 }
