@@ -22,14 +22,18 @@
 #ifndef SRC_SYSTEM_H_
 #define SRC_SYSTEM_H_
 
+#include <iostream>
+
 namespace oemros {
 
 enum class exitvalue {
     ok = 0,
     fatal = 1,
+    panic = 100,
 };
 
 [[ noreturn ]] void system_exit(exitvalue);
+void system_panic(const char *);
 
 }
 

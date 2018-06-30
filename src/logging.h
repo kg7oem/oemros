@@ -47,6 +47,9 @@ enum class logsource {
     oemros = 1,
 };
 
+#define log_fatal(...) oemros::log__level_t(true, oemros::logsource::oemros, oemros::loglevel::fatal, __func__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_debug(...) oemros::log__level_t(false, oemros::logsource::oemros, oemros::loglevel::debug, __func__, __FILE__, __LINE__, __VA_ARGS__)
+
 class logevent {
 public:
     const logsource source = logsource::unknown;
@@ -59,8 +62,20 @@ public:
     logevent(logsource, loglevel, const char *, const char *, const int, const std::string);
 };
 
-#define log_fatal(...) oemros::log__level_t(true, oemros::logsource::oemros, oemros::loglevel::fatal, __func__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...) oemros::log__level_t(false, oemros::logsource::oemros, oemros::loglevel::debug, __func__, __FILE__, __LINE__, __VA_ARGS__)
+class logging {
+private:
+    loglevel log_threshold = loglevel::error;
+
+public:
+    loglevel current_level(void) const;
+    loglevel current_level(loglevel);
+    void input_event(const logevent&);
+};
+
+void logging_bootstrap(void);
+logging * logging_engine(void);
+const char * logging_level_name(loglevel);
+bool logging_should_log(loglevel);
 
 template <typename T>
 void log__accumulate_value(std::stringstream& sstream, T t) {
@@ -75,11 +90,13 @@ void log__accumulate_value(std::stringstream& sstream, T t, Args... args) {
 
 template <typename T>
 void log__level_t(bool fatal, logsource source, loglevel level, const char *function, const char *path, int line, T t) {
-    std::stringstream sstream;
-    log__accumulate_value(sstream, t);
+    if (logging_should_log(level)) {
+        std::stringstream sstream;
+        log__accumulate_value(sstream, t);
 
-    logevent event(source, level, function, path, line, sstream.str());
-    std::cout << function << "():" << line << " " << event.message << std::endl;
+        logevent event(source, level, function, path, line, sstream.str());
+        logging_engine()->input_event(event);
+    }
 
     if (fatal) {
         system_exit(exitvalue::fatal);
@@ -88,12 +105,14 @@ void log__level_t(bool fatal, logsource source, loglevel level, const char *func
 
 template<typename T, typename... Args>
 void log__level_t(bool fatal, logsource source, loglevel level, const char *function, const char *path, int line, T t, Args... args) {
-    std::stringstream sstream;
-    log__accumulate_value(sstream, t);
-    log__accumulate_value(sstream, args...);
+    if (logging_should_log(level)) {
+        std::stringstream sstream;
+        log__accumulate_value(sstream, t);
+        log__accumulate_value(sstream, args...);
 
-    logevent event(source, level, function, path, line, sstream.str());
-    std::cout << function << "():" << line << " " << event.message << std::endl;
+        logevent event(source, level, function, path, line, sstream.str());
+        logging_engine()->input_event(event);
+    }
 
     if (fatal) {
         system_exit(exitvalue::fatal);

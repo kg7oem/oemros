@@ -29,5 +29,10 @@ namespace oemros {
     exit((int)value);
 }
 
+void system_panic(const char *message) {
+    std::cerr << "PANIC! " << message << std::endl;
+    system_exit(exitvalue::panic);
+}
+
 }
 
