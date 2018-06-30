@@ -83,3 +83,47 @@ transmitter.mode = FM
 
 
 
+
+
+
+
+
+
+TURBOINI := ({COMMENT} | {DIRECTIVE} | {SECTION} | {ASSIGNMENT} | {BLANK})*
+
+BLANK := {WHITESPACE}* {EOL}
+
+COMMENT := {WHITESPACE}* '#' .* {EOL}
+
+DIRECTIVE := '!' {DIRECTIVES} {WHITESPACE}* {EOL}
+
+DIRECTIVES := {INCLUDE_DIRECTIVE}
+
+INCLUDE_DIRECTIVE := 'i' 'n' 'c' 'l' 'u' 'd' 'e' {WHITESPACE}* .+
+
+SECTION := '[' [^]]+ ']' {WHITESPACE}* {EOL}
+
+ASSIGNMENT := {KEY_PATH} {WHITESPACE}* '=' {WHITESPACE}* {VALUE} {WHITESPACE}* {EOL}
+
+VALUE := ({SCALAR} | {LIST} | {TABLE})
+
+SCALAR := {SQUOTED_STRING} | {DQUOTED_STRING} | {LQUOTED_STRING}
+
+# line quoted string
+LQUOTED_STRING := [^{TABLE_START}{LIST_START}] .*
+
+# single quoted string
+SQUOTED_STRING := '\'' [^']* '\''
+
+# double quoted string
+DQUOTED_STRING := '"' [^"]* '"'
+
+EOL := '\n'
+
+WHITESPACE := ' ' | '\t'
+
+
+
+
+
+
