@@ -164,7 +164,7 @@ logfile::logfile(const char *path) {
     this->outfile.open(path, ofstream::app);
 
     if (this->outfile.fail()) {
-        log_fatal("could not open ", path, " for write: ", strerror(errno));
+        log_fatal("could not open ", path, " for write: ", errstream);
     }
 }
 

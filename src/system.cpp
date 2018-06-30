@@ -20,11 +20,18 @@
  */
 
 #include <cstdlib>
+#include <cerrno>
+#include <sstream>
+#include <string>
+#include <string.h>
 
+#include "conf.h"
 #include "logging.h"
 #include "system.h"
 
 namespace oemros {
+
+errstream_t errstream;
 
 // a panic must never use the logging system because the logging
 // system uses panic if it can't function
@@ -36,6 +43,13 @@ namespace oemros {
 [[ noreturn ]] void system_exit(exitvalue value) {
     log_debug("going to exit with value of ", (int)value);
     exit((int)value);
+}
+
+std::ostream& operator<<(std::ostream& os, const errstream_t& error) {
+    char buf[CONF_ERRMSG_BUFLEN];
+    char *message = strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
+    os << message;
+    return os;
 }
 
 }

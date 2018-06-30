@@ -1,7 +1,7 @@
 /*
- * system.h
+ * conf.h
  *
- *  Created on: Jun 29, 2018
+ *  Created on: Jun 30, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,31 +19,9 @@
  *
  */
 
-#ifndef SRC_SYSTEM_H_
-#define SRC_SYSTEM_H_
+#ifndef SRC_CONF_H_
+#define SRC_CONF_H_
 
-#include <iostream>
-#include <ostream>
-#include <thread>
+#define CONF_ERRMSG_BUFLEN 256
 
-namespace oemros {
-
-enum class exitvalue {
-    ok = 0,
-    fatal = 1,
-    panic = 100,
-};
-
-class errstream_t {
-public:
-    friend std::ostream& operator<<(std::ostream& os, const errstream_t&);
-};
-
-extern errstream_t errstream;
-
-[[ noreturn ]] void system_exit(exitvalue);
-void system_panic(const char *);
-
-}
-
-#endif /* SRC_SYSTEM_H_ */
+#endif /* SRC_CONF_H_ */
