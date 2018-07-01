@@ -108,7 +108,11 @@ public:
 class logging {
 private:
     loglevel log_threshold = loglevel::error;
+    bool buffer_events = false;
     std::list<std::shared_ptr<logdest>> destinations;
+    std::list<logevent> event_buffer;
+
+    void deliver_event(const logevent&);
 
 public:
     loglevel current_level(void) const;

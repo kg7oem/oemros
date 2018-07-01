@@ -6,21 +6,9 @@
 using namespace oemros;
 using namespace std;
 
-static void bootstrap(void) {
-
-}
-
-static void setup_logging(void) {
-    logging_add_destination(make_shared<logstdio>());
-//    logging_add_destination(make_shared<logfile>("/home/tyler/test.log"));
-
-    logging_set_level(loglevel::error);
-}
-
 int main(int argc, char **argv) {
-    bootstrap();
-    setup_logging();
 
+    logging_add_destination(make_shared<logstdio>());
     log_error("testing: ", errstream);
 
     return 0;

@@ -135,15 +135,33 @@ const char * logging::source_name(logsource source) {
     log_fatal("switch() failed for logsource enum: ", (int)source);
 }
 
-void logging::input_event(const logevent& event) {
-    assert(event.level >= logging_get_level());
-
+void logging::deliver_event(const logevent& event) {
     for (auto&& i : this->destinations) {
         i->event(event);
     }
 }
 
+void logging::input_event(const logevent& event) {
+    assert(event.level >= logging_get_level());
+
+    if (this->buffer_events && this->destinations.size() == 0) {
+        this->event_buffer.push_back(event);
+    } else {
+        this->deliver_event(event);
+    }
+}
+
 void logging::add_destination(shared_ptr<logdest> destination) {
+    if (this->destinations.size() == 0) {
+        // deliver the events that were stored before any
+        // destination was available
+        for (auto&& i : this->event_buffer) {
+            destination->event(i);
+        }
+
+        this->event_buffer.clear();
+    }
+
     this->destinations.push_back(destination);
 }
 
