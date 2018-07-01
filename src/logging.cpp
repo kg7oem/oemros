@@ -122,7 +122,7 @@ loglevel logging::current_level(loglevel new_level) {
 void logging::input_event(const logevent& event) {
     assert(event.level >= logging_get_level());
 
-    for (auto i : this->destinations) {
+    for (auto&& i : this->destinations) {
         i->event(event);
     }
 }
