@@ -38,6 +38,8 @@ static logging * get_engine(void) {
     static oemros::logging *log_singleton = NULL;
 
     if (log_singleton == NULL) {
+        // FIXME this makes it so this can't be a shared library
+        // and configurable by the user
         log_singleton = LOGGING_ENGINE_CREATE;
 
         if (log_singleton == NULL) {
