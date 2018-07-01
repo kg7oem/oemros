@@ -84,8 +84,8 @@ const char * logging_source_name(logsource source) {
     return get_engine()->source_name(source);
 }
 
-logevent::logevent(logsource source, loglevel level, const char *function, const char *path, const int line, string message)
-: source(source), level(level), function(function), path(path), line(line), message(message)
+logevent::logevent(logsource source, loglevel level, const struct timeval timestamp, const char *function, const char *path, const int line, string message)
+: source(source), level(level), timestamp(timestamp), function(function), path(path), line(line), message(message)
 { };
 
 loglevel logging::current_level(void) const {
@@ -172,9 +172,32 @@ void logdest::event(const logevent& event) {
     this->output(event, formatted);
 }
 
-string logdest::format_event(const logevent& event) {
-    stringstream buffer;
+string logdest::format_time(const struct timeval& when) {
+    struct tm tmbuf;
+    struct tm* timevals = gmtime_r(&when.tv_sec, &tmbuf);
+    char buf[LOGGING_TIMESTR_BUFLEN];
 
+    if (timevals == NULL) {
+        // FIXME ignores errno
+        system_panic("gmtime_r() failed");
+    }
+
+    int result = snprintf(
+            buf, LOGGING_TIMESTR_BUFLEN,
+            "%02d:%02d:%02d", timevals->tm_hour, timevals->tm_min, timevals->tm_sec);
+
+    if (result >= LOGGING_TIMESTR_BUFLEN) {
+        // FIXME this ignores errno
+        system_panic("formatted time string was truncated");
+    }
+
+    return string(buf);
+}
+
+string logdest::format_event(const logevent& event) {
+
+    stringstream buffer;
+    buffer << this->format_time(event.timestamp) << " ";
     buffer << logging_source_name(event.source) << " ";
     buffer << logging_level_name(event.level) << " ";
     buffer << event.path << ":" << event.line << " ";

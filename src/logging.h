@@ -27,11 +27,16 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <sys/time.h>
 
 #include "conf.h"
 #include "system.h"
 
 namespace oemros {
+
+#ifndef LOGGING_TIMESTR_BUFLEN
+#define LOGGING_TIMESTR_BUFLEN 128
+#endif
 
 #ifndef LOGGING_SOURCE_T
 #define LOGGING_SOURCE_T logsource_t
@@ -76,17 +81,19 @@ class logevent {
 public:
     const logsource source = logsource::unknown;
     const loglevel level = loglevel::unknown;
+    const struct timeval timestamp = { };
     const char *function = NULL;
     const char *path = NULL;
     const int line = 0;
     const std::string message;
 
-    logevent(logsource, loglevel, const char *, const char *, const int, const std::string);
+    logevent(logsource, loglevel, const struct timeval when, const char *, const char *, const int, const std::string);
 };
 
 class logdest {
 public:
     virtual void event(const logevent&);
+    std::string format_time(const struct timeval&);
     virtual std::string format_event(const logevent&);
     virtual void output(const logevent&, const std::string);
 };
@@ -146,10 +153,17 @@ void log__accumulate_value(std::stringstream& sstream, T t, Args... args) {
 template <typename T>
 void log__level_t(logsource source, loglevel level, const char *function, const char *path, int line, T t) {
     if (logging_should_log(level)) {
+        struct timeval when;
+        int result = gettimeofday(&when, NULL);
+        if (result != 0) {
+            // FIXME this is eating the error reason, no errno usage
+            system_panic("gettimeofday() failed");
+        }
+
         std::stringstream sstream;
         log__accumulate_value(sstream, t);
 
-        logevent event(source, level, function, path, line, sstream.str());
+        logevent event(source, level, when, function, path, line, sstream.str());
         logging_input_event(event);
     }
 }
@@ -157,11 +171,18 @@ void log__level_t(logsource source, loglevel level, const char *function, const 
 template<typename T, typename... Args>
 void log__level_t(logsource source, loglevel level, const char *function, const char *path, int line, T t, Args... args) {
     if (logging_should_log(level)) {
+        struct timeval when;
+        int result = gettimeofday(&when, NULL);
+        if (result != 0) {
+            // FIXME this is eating the error reason, no errno usage
+            system_panic("gettimeofday() failed");
+        }
+
         std::stringstream sstream;
         log__accumulate_value(sstream, t);
         log__accumulate_value(sstream, args...);
 
-        logevent event(source, level, function, path, line, sstream.str());
+        logevent event(source, level, when, function, path, line, sstream.str());
         logging_input_event(event);
     }
 }
