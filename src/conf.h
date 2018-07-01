@@ -22,6 +22,8 @@
 #ifndef SRC_CONF_H_
 #define SRC_CONF_H_
 
+#define LOGGING_MACROS
+
 #define CONF_ERRMSG_BUFLEN 256
 
 #endif /* SRC_CONF_H_ */

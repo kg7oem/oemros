@@ -28,6 +28,7 @@
 #include <memory>
 #include <sstream>
 
+#include "conf.h"
 #include "system.h"
 
 namespace oemros {
@@ -59,6 +60,7 @@ enum class loglevel_t {
 typedef LOGGING_SOURCE_T logsource;
 typedef LOGGING_LEVEL_T loglevel;
 
+#ifdef LOGGING_MACROS
 #define log_fatal(...) oemros::log__level_tf(oemros::logsource::oemros, oemros::loglevel::fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_error(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::error, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_warn(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::warn, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
@@ -68,6 +70,7 @@ typedef LOGGING_LEVEL_T loglevel;
 #define log_debug(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::debug, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_lots(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::lots, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_trace(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::trace, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#endif
 
 class logevent {
 public:
