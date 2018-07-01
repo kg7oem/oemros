@@ -7,7 +7,7 @@ using namespace oemros;
 using namespace std;
 
 static void bootstrap(void) {
-    logging_bootstrap();
+
 }
 
 static void setup_logging(void) {

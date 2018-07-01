@@ -32,7 +32,17 @@
 
 namespace oemros {
 
-enum class loglevel {
+#ifndef LOGGING_SOURCE_T
+#define LOGGING_SOURCE_T logsource_t
+enum class logsource_t {
+    unknown = 0,
+    oemros = 1,
+};
+#endif // LOGGING_SOURCE_T
+
+#ifndef LOGGING_LEVEL_T
+#define LOGGING_LEVEL_T loglevel_t
+enum class loglevel_t {
     fatal = 100,  // execution will stop
     error = 8,
     warn = 7,     // output to stderr
@@ -44,11 +54,10 @@ enum class loglevel {
     trace = 1,    // log input and output of subsystems
     unknown = 0,
 };
+#endif // LOGGING_LEVEL_T
 
-enum class logsource {
-    unknown = 0,
-    oemros = 1,
-};
+typedef LOGGING_SOURCE_T logsource;
+typedef LOGGING_LEVEL_T loglevel;
 
 #define log_fatal(...) oemros::log__level_tf(oemros::logsource::oemros, oemros::loglevel::fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_error(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::error, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
@@ -101,12 +110,13 @@ private:
 public:
     loglevel current_level(void) const;
     loglevel current_level(loglevel);
+    const char * level_name(loglevel);
+    const char * source_name(logsource);
 
     void input_event(const logevent&);
     void add_destination(std::shared_ptr<logdest>);
 };
 
-void logging_bootstrap(void);
 void logging_cleanup(void);
 loglevel logging_get_level(void);
 loglevel logging_set_level(loglevel);

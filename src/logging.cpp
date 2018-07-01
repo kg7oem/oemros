@@ -28,46 +28,75 @@
 
 using namespace std;
 
-static oemros::logging *log_singleton = NULL;
-
 namespace oemros {
 
-void logging_bootstrap(void) {
-    assert(log_singleton == NULL);
-    log_singleton = new logging();
+#ifndef LOGGING_ENGINE_CREATE
+#define LOGGING_ENGINE_CREATE new logging()
+#endif
+
+static logging * get_engine(void) {
+    static oemros::logging *log_singleton = NULL;
+
+    if (log_singleton == NULL) {
+        log_singleton = LOGGING_ENGINE_CREATE;
+
+        if (log_singleton == NULL) {
+            system_panic("got NULL from logging engine creator");
+        }
+    }
+
+    return log_singleton;
 }
 
 void logging_cleanup(void) {
-    assert(log_singleton != NULL);
-    delete log_singleton;
+    auto logging = get_engine();
+    assert(logging != NULL);
+    delete logging;
 }
 
 loglevel logging_get_level(void) {
-    assert(log_singleton != NULL);
-    return log_singleton->current_level();
+    return get_engine()->current_level();
 }
 
 loglevel logging_set_level(loglevel new_level) {
-    assert(log_singleton != NULL);
-    return log_singleton->current_level(new_level);
+    return get_engine()->current_level(new_level);
 }
 
 bool logging_should_log(loglevel level) {
-    assert(log_singleton != NULL);
-    return(level >= log_singleton->current_level());
+    return(level >= get_engine()->current_level());
 }
 
 void logging_add_destination(shared_ptr<logdest> destination) {
-    assert(log_singleton != NULL);
-    log_singleton->add_destination(destination);
+    get_engine()->add_destination(destination);
 }
 
 void logging_input_event(const logevent& event) {
-    assert(log_singleton != NULL);
-    log_singleton->input_event(event);
+    get_engine()->input_event(event);
 }
 
 const char * logging_level_name(loglevel level) {
+    return get_engine()->level_name(level);
+}
+
+const char * logging_source_name(logsource source) {
+    return get_engine()->source_name(source);
+}
+
+logevent::logevent(logsource source, loglevel level, const char *function, const char *path, const int line, string message)
+: source(source), level(level), function(function), path(path), line(line), message(message)
+{ };
+
+loglevel logging::current_level(void) const {
+    return this->log_threshold;
+}
+
+loglevel logging::current_level(loglevel new_level) {
+    loglevel old_level = this->log_threshold;
+    this->log_threshold = new_level;
+    return old_level;
+}
+
+const char * logging::level_name(loglevel level) {
     switch (level) {
     case loglevel::fatal:
         return "FATAL";
@@ -94,7 +123,8 @@ const char * logging_level_name(loglevel level) {
     log_fatal("switch() failed for loglevel enum: ", (int)level);
 }
 
-const char * logging_source_name(logsource source) {
+
+const char * logging::source_name(logsource source) {
     switch (source) {
     case logsource::unknown:
         return "UNKNOWNSOURCE";
@@ -103,20 +133,6 @@ const char * logging_source_name(logsource source) {
     }
 
     log_fatal("switch() failed for logsource enum: ", (int)source);
-}
-
-logevent::logevent(logsource source, loglevel level, const char *function, const char *path, const int line, string message)
-: source(source), level(level), function(function), path(path), line(line), message(message)
-{ };
-
-loglevel logging::current_level(void) const {
-    return this->log_threshold;
-}
-
-loglevel logging::current_level(loglevel new_level) {
-    loglevel old_level = this->log_threshold;
-    this->log_threshold = new_level;
-    return old_level;
 }
 
 void logging::input_event(const logevent& event) {
