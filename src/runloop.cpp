@@ -87,8 +87,13 @@ std::list<runloopitem*> runloop::get_items(void) {
 }
 
 runloopitem::runloopitem(runloop* loop)
-: loop(loop) {
-    log_trace("finished constructing");
+: loop(loop), id(++loop->prev_item_id) {
+    log_trace("finished constructing runloop item #", this->id);
+}
+
+std::ostream& operator<<(std::ostream& os, const runloopitem& item) {
+    os << "THIS------> " << typeid(item).name() << " <---- THAT";
+    return os;
 }
 
 void runloopitem::init(void) {

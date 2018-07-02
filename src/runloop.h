@@ -27,6 +27,7 @@
 
 namespace oemros {
 
+typedef uint64_t runloop_item_id_t;
 typedef void (*runloop_cb_t)(void);
 
 class runloopitem;
@@ -36,6 +37,7 @@ class runloop {
 
 private:
     uv_loop_t uv_loop;
+    runloop_item_id_t prev_item_id = 0;
 
     runloop(const runloop&);
     std::list<runloopitem*> get_items(void);
@@ -61,6 +63,7 @@ protected:
     uv_loop_t* get_uvloop(void);
 
 public:
+    const runloop_item_id_t id = 0;
     virtual void start(void);
     virtual void stop(void);
 };
@@ -95,15 +98,10 @@ void runloop_enter(void);
 
 }
 
-template<typename T>
-std::shared_ptr<T> runloop_item(void) {
-    std::shared_ptr<T> thing = std::make_shared<T>(oemros::runloop_get());
-    return thing;
-}
-
 template<typename T, typename... Args>
 std::shared_ptr<T> runloop_item(Args... args) {
-    std::shared_ptr<T> thing = std::make_shared<T>(oemros::runloop_get(), args...);
+    auto loop = oemros::runloop_get();
+    std::shared_ptr<T> thing = std::make_shared<T>(loop, args...);
     return thing;
 }
 
