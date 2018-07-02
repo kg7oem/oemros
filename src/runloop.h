@@ -29,6 +29,8 @@ namespace oemros {
 
 typedef void (*runloop_cb_t)(void);
 
+class runloopitem;
+
 class runloop {
     friend class runloopitem;
 
@@ -36,6 +38,7 @@ private:
     uv_loop_t uv_loop;
 
     runloop(const runloop&);
+    std::list<runloopitem*> get_items(void);
 
 public:
     runloop();
@@ -44,14 +47,17 @@ public:
     void enter(void);
 };
 
-class runloopitem {
+class runloopitem : public std::enable_shared_from_this<runloopitem> {
 private:
     runloopitem(const runloopitem&);
+    bool stopped = true;
 
 protected:
     runloop* loop = NULL;
 
     runloopitem(runloop*);
+    virtual void init(void);
+    virtual uv_handle_t* uv_handle(void);
     uv_loop_t* get_uvloop(void);
 
 public:
@@ -59,15 +65,16 @@ public:
     virtual void stop(void);
 };
 
-class runlooptimer : protected runloopitem {
+class runlooptimer : public runloopitem {
 private:
     uv_timer_t uv_timer;
     runloop_cb_t cb;
 
     runlooptimer(const runlooptimer&);
-    void init(void);
 
 protected:
+    virtual void init(void);
+    virtual uv_handle_t* uv_handle(void);
     virtual void execute(void);
 
 public:

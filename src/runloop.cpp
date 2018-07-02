@@ -71,18 +71,49 @@ void runloop::enter(void) {
     log_debug("got control back from libuv; reval=", retval);
 }
 
+std::list<runloopitem*> runloop::get_items(void) {
+    log_trace("starting to enumerate runloop items in uv");
+    std::list<runloopitem*> item_list;
+
+    uv_walk(&this->uv_loop, [](uv_handle_t* handle, void* arg){
+        auto&& item_list = static_cast<std::list<runloopitem*>*>(arg);
+        runloopitem* item = static_cast<runloopitem*>(handle->data);
+        item_list->push_back(item);
+    }, &item_list);
+
+    log_trace("found ", item_list.size(), " items in the runloop");
+
+    return item_list;
+}
+
 runloopitem::runloopitem(runloop* loop)
 : loop(loop) {
     log_trace("finished constructing");
+}
+
+void runloopitem::init(void) {
+    // FIXME this needs to undergo automatic memory management
+    // and be refcounted as it goes in and out of the uv_handle
+    uv_handle()->data = this;
+}
+
+uv_handle_t* runloopitem::uv_handle(void) {
+    log_fatal("this method must be overloaded");
 }
 
 uv_loop_t* runloopitem::get_uvloop(void) {
     return &this->loop->uv_loop;
 }
 
-void runloopitem::start(void) { }
+void runloopitem::start(void) {
+    log_trace("setting stopped to be false");
+    this->stopped = false;
+}
 
-void runloopitem::stop(void) { }
+void runloopitem::stop(void) {
+    log_trace("setting stopped to be true");
+    this->stopped = true;
+}
 
 runlooptimer::runlooptimer(runloop* loop, uint64_t initial)
 : runloopitem(loop), initial(initial)
@@ -103,24 +134,33 @@ runlooptimer::runlooptimer(runloop* loop, uint64_t initial, runloop_cb_t cb)
     this->init();
 }
 
+uv_handle_t* runlooptimer::uv_handle(void) {
+    return (uv_handle_t*)&this->uv_timer;
+}
+
 void runlooptimer::init(void) {
+    runloopitem::init();
+
     log_trace("initializing libuv parts of timer");
-    this->uv_timer.data = this;
     uv_timer_init(this->get_uvloop(), &this->uv_timer);
 }
 
 void runlooptimer::start(void) {
     log_trace("starting timer");
+
+    runloopitem::start();
+
     uv_timer_start(
             &this->uv_timer,
             [](uv_timer_t *arg) {
                 runlooptimer* timer = static_cast<runlooptimer*>(arg->data);
                 timer->execute(); },
             this->initial, this->repeat);
+
 }
 
 void runlooptimer::stop(void) {
-
+    runloopitem::stop();
 }
 
 void runlooptimer::execute(void) {
