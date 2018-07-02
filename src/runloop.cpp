@@ -26,15 +26,26 @@
 
 namespace oemros {
 
-//static runloop* get_loop(void) {
-//    static thread_local runloop* thread_singleton = NULL;
-//
-//    if (thread_singleton == NULL) {
-//        thread_singleton = new runloop();
-//    }
-//
-//    return thread_singleton;
-//}
+// shorter function name for internal use, does not need
+// to follow naming guidelines
+static runloop* get_loop(void) {
+    static thread_local runloop* thread_singleton = NULL;
+
+    if (thread_singleton == NULL) {
+        thread_singleton = new runloop();
+    }
+
+    return thread_singleton;
+}
+
+// public function that follows naming convention
+runloop* runloop_get(void) {
+    return get_loop();
+}
+
+void runloop_enter(void) {
+    get_loop()->enter();
+}
 
 runloop::runloop() {
     if (uv_loop_init(&this->uv_loop) != 0) {
@@ -52,6 +63,72 @@ runloop::~runloop() {
     log_trace("destroyed a runloop");
 }
 
+void runloop::enter(void) {
+    auto loop = get_loop();
+
+    log_debug("giving control to libuv");
+    bool retval = uv_run(&loop->uv_loop, UV_RUN_DEFAULT);
+    log_debug("got control back from libuv; reval=", retval);
 }
 
+runloopitem::runloopitem(runloop* loop)
+: loop(loop) {
+    log_trace("finished constructing");
+}
+
+uv_loop_t* runloopitem::get_uvloop(void) {
+    return &this->loop->uv_loop;
+}
+
+runlooptimer::runlooptimer(runloop* loop, uint64_t initial)
+: runloopitem(loop), initial(initial)
+{
+    log_trace("constructing with initial=", initial);
+    this->init();
+}
+runlooptimer::runlooptimer(runloop* loop, uint64_t initial, uint64_t repeat)
+: runloopitem(loop), initial(initial), repeat(repeat)
+{
+    log_trace("constructing with initial=", initial, "; repeat=", repeat);
+    this->init();
+}
+
+runlooptimer::runlooptimer(runloop* loop, uint64_t initial, runloop_cb_t cb)
+: runloopitem(loop), cb(cb), initial(initial) {
+    log_trace("constructing with initial=", initial);
+    this->init();
+}
+
+void runlooptimer::init(void) {
+    log_trace("initializing libuv parts of timer");
+    this->uv_timer.data = this;
+    uv_timer_init(this->get_uvloop(), &this->uv_timer);
+}
+
+void runlooptimer::start(void) {
+    log_trace("starting timer");
+    uv_timer_start(
+            &this->uv_timer,
+            [](uv_timer_t *arg) {
+                runlooptimer* timer = static_cast<runlooptimer*>(arg->data);
+                timer->execute(); },
+            3000, 0);
+}
+
+void runlooptimer::stop(void) {
+
+}
+
+void runlooptimer::execute(void) {
+    log_trace("executing a timer callback");
+
+    if (this->cb == NULL) {
+        log_trace("callback was null, not doing anything");
+        return;
+    }
+
+    this->cb();
+}
+
+}
 
