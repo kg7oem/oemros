@@ -112,7 +112,7 @@ void runlooptimer::start(void) {
             [](uv_timer_t *arg) {
                 runlooptimer* timer = static_cast<runlooptimer*>(arg->data);
                 timer->execute(); },
-            3000, 0);
+            this->initial, this->repeat);
 }
 
 void runlooptimer::stop(void) {

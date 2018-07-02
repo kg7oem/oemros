@@ -9,8 +9,8 @@ using namespace std;
 
 class sometimer : public runlooptimer {
 public:
-    sometimer(oemros::runloop* loop, uint64_t initial)
-        : runlooptimer(loop, initial) { };
+    sometimer(oemros::runloop* loop, uint64_t initial, uint64_t repeat)
+        : runlooptimer(loop, initial, repeat) { };
 
     virtual void execute(void) {
         log_info("that wasn't so bad");
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
     __attribute__((unused)) auto timer = runloop_make<runlooptimer>(500, cb);
     timer->start();
 
-    __attribute__((unused)) auto timer2 = runloop_make<sometimer>(500);
+    __attribute__((unused)) auto timer2 = runloop_make<sometimer>(0, 50);
     timer2->start();
 
     runloop_enter();
