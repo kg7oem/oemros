@@ -53,6 +53,10 @@ protected:
 
     runloopitem(runloop*);
     uv_loop_t* get_uvloop(void);
+
+public:
+    virtual void start(void);
+    virtual void stop(void);
 };
 
 class runlooptimer : protected runloopitem {
@@ -75,8 +79,8 @@ public:
     runlooptimer(runloop*, uint64_t, runloop_cb_t);
     runlooptimer(runloop*, uint64_t, uint64_t, runloop_cb_t);
 
-    void start(void);
-    void stop(void);
+    virtual void start(void);
+    virtual void stop(void);
 };
 
 oemros::runloop* runloop_get(void);
@@ -85,17 +89,22 @@ void runloop_enter(void);
 }
 
 template<typename T>
-std::shared_ptr<T> runloop_make(void) {
+std::shared_ptr<T> runloop_item(void) {
     std::shared_ptr<T> thing = std::make_shared<T>(oemros::runloop_get());
+    return thing;
+}
 
+template<typename T, typename... Args>
+std::shared_ptr<T> runloop_item(Args... args) {
+    std::shared_ptr<T> thing = std::make_shared<T>(oemros::runloop_get(), args...);
     return thing;
 }
 
 template<typename T, typename... Args>
 std::shared_ptr<T> runloop_make(Args... args) {
-    std::shared_ptr<T> thing = std::make_shared<T>(oemros::runloop_get(), args...);
-
-    return thing;
+    std::shared_ptr<T> item = runloop_item<T>(args...);
+    item->start();
+    return item;
 }
 
 #endif /* SRC_RUNLOOP_H_ */

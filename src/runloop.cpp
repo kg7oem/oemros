@@ -80,6 +80,10 @@ uv_loop_t* runloopitem::get_uvloop(void) {
     return &this->loop->uv_loop;
 }
 
+void runloopitem::start(void) { }
+
+void runloopitem::stop(void) { }
+
 runlooptimer::runlooptimer(runloop* loop, uint64_t initial)
 : runloopitem(loop), initial(initial)
 {

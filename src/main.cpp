@@ -23,10 +23,8 @@ int main(int argc, char **argv) {
 
     runloop_cb_t cb = [](){ log_debug("welp here I am!"); };
     __attribute__((unused)) auto timer = runloop_make<runlooptimer>(500, cb);
-    timer->start();
 
-    __attribute__((unused)) auto timer2 = runloop_make<sometimer>(0, 50);
-    timer2->start();
+    __attribute__((unused)) auto timer2 = runloop_make<sometimer>(10, 0);
 
     runloop_enter();
 
