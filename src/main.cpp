@@ -15,6 +15,9 @@ int main(int argc, char **argv) {
     auto loop = runloop::create();
     auto item = loop->create_item<rlitem>();
 
+    log_debug("This thing --> ", item);
+    log_debug("Other stuff: ", errstream);
+
     log_debug("going to exit main");
 
     return 0;

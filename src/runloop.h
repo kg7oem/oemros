@@ -45,11 +45,13 @@ REFCOUNTED(runloop) {
         std::shared_ptr<T> create_item(Args... args) { return T::create(this->shared_from_this(), args...); }
 };
 
+// runloop items (rlitem) are things that are managed
+// by the runloop
 REFCOUNTED(rlitem) {
     friend class runloop;
 
     private:
-        runloop_s loop;
+        runloop_s loop = NULL;
         const uint64_t item_id = 0;
 
     public:

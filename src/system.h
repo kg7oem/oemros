@@ -25,6 +25,8 @@
 #include <iostream>
 #include <memory>
 #include <ostream>
+#include <sstream>
+#include <string>
 #include <thread>
 
 #define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; class name : public refcounted<name> ,##__VA_ARGS__
@@ -39,16 +41,32 @@ enum class exitvalue {
 
 template<class T>
 class refcounted : public std::enable_shared_from_this<T> {
+    friend std::ostream& operator<<(std::ostream& os, const T& t) {
+        os << t.description();
+        return os;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<T>& t) {
+        os << "shared_ptr(use=" << t.use_count();
+        os << " " << *t.get() << ")";
+        return os;
+    }
+
     private:
-        // copy constructor
+        // disable copy constructor
         refcounted(const refcounted&) = delete;
-        // move constructor
+        // disable move constructor
         refcounted(const refcounted&&) = delete;
-        // assignment operator
+        // disable assignment operator
         refcounted& operator=(const refcounted&) = delete;
 
     public:
         refcounted() = default;
+        virtual std::string description(void) const {
+            std::stringstream ss;
+            ss << "refcounted(" << this << ")";
+            return ss.str();
+        }
         template<typename... Args>
         static std::shared_ptr<T> create(Args&&...args) {
             // https://stackoverflow.com/questions/7257144/when-to-use-stdforward-to-forward-arguments
@@ -57,7 +75,6 @@ class refcounted : public std::enable_shared_from_this<T> {
 };
 
 class errstream_t {
-public:
     friend std::ostream& operator<<(std::ostream& os, const errstream_t&);
 };
 

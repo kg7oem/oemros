@@ -21,6 +21,7 @@
 
 #include <typeinfo>
 
+#include <cassert>
 #include "logging.h"
 #include "runloop.h"
 
@@ -28,6 +29,8 @@ namespace oemros {
 
 rlitem::rlitem(runloop_s loop_arg)
 : loop(loop_arg), item_id(++loop_arg->prev_item_id) {
+    assert(this->loop != NULL);
+
     log_trace("constructed a new runloop item #", this->item_id);
 }
 
