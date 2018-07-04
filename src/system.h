@@ -27,7 +27,7 @@
 #include <ostream>
 #include <thread>
 
-#define REFCOUNTED(name, ...) class name : public refcounted<name> ,##__VA_ARGS__
+#define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; class name : public refcounted<name> ,##__VA_ARGS__
 
 namespace oemros {
 

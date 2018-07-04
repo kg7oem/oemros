@@ -29,19 +29,34 @@
 
 namespace oemros {
 
-REFCOUNTED(rlitem) {
-    public:
-        rlitem();
-        ~rlitem();
-};
+class rlitem;
 
 REFCOUNTED(runloop) {
+    friend class rlitem;
+
     private:
         uv_loop_t uv_loop;
+        uint64_t prev_item_id = 0;
 
     public:
         runloop();
         ~runloop();
+        template<typename T, typename... Args>
+        std::shared_ptr<T> create_item(Args... args) { return T::create(this->shared_from_this(), args...); }
+};
+
+REFCOUNTED(rlitem) {
+    friend class runloop;
+
+    private:
+        runloop_s loop;
+        const uint64_t item_id = 0;
+
+    public:
+        // FIXME if this is made protected then it can't be
+        // run by the allocator - how does that get fixed?
+        rlitem(runloop_s);
+        ~rlitem();
 };
 
 }
