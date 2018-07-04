@@ -22,8 +22,27 @@
 #ifndef SRC_RUNLOOP_H_
 #define SRC_RUNLOOP_H_
 
+#include <uv.h>
 
+#include "system.h"
 
+namespace oemros {
 
+class rlitem : public refcounted<rlitem> {
+    public:
+        rlitem();
+        ~rlitem();
+};
+
+class runloop : public refcounted<runloop> {
+    private:
+        uv_loop_t uv_loop;
+
+    public:
+        runloop();
+        ~runloop();
+};
+
+}
 
 #endif /* SRC_RUNLOOP_H_ */

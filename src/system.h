@@ -23,6 +23,7 @@
 #define SRC_SYSTEM_H_
 
 #include <iostream>
+#include <memory>
 #include <ostream>
 #include <thread>
 
@@ -31,7 +32,26 @@ namespace oemros {
 enum class exitvalue {
     ok = 0,
     fatal = 1,
-    panic = 100,
+    panic = 101,
+};
+
+template<class T>
+class refcounted : public std::enable_shared_from_this<T> {
+    private:
+        // copy constructor
+        refcounted(const refcounted&) = delete;
+        // move constructor
+        refcounted(const refcounted&&) = delete;
+        // assignment operator
+        refcounted& operator=(const refcounted&) = delete;
+
+    public:
+        refcounted() = default;
+        template<typename... Args>
+        static std::shared_ptr<T> create(Args&&...args) {
+            // https://stackoverflow.com/questions/7257144/when-to-use-stdforward-to-forward-arguments
+            return std::make_shared<T>(std::forward<Args>(args)...);
+        };
 };
 
 class errstream_t {

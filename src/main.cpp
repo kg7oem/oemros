@@ -2,6 +2,7 @@
 #include <memory.h>
 
 #include "logging.h"
+#include "runloop.h"
 
 using namespace oemros;
 using namespace std;
@@ -9,7 +10,11 @@ using namespace std;
 int main(int argc, char **argv) {
 
     logging_add_destination(make_shared<logstdio>());
-    log_error("testing: ", errstream);
+    logging_set_level(loglevel::trace);
+
+    auto loop = runloop::create();
+
+    log_debug("going to exit main");
 
     return 0;
 }

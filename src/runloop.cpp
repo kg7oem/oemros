@@ -19,6 +19,28 @@
  *
  */
 
+#include <typeinfo>
 
+#include "logging.h"
+#include "runloop.h"
 
+namespace oemros {
+
+rlitem::rlitem() {
+    log_trace("constructed a new runloop item");
+}
+
+rlitem::~rlitem() {
+    log_trace("deconstructed a runloop item");
+}
+
+runloop::runloop() {
+    log_trace("constructing a runloop");
+}
+
+runloop::~runloop() {
+    log_trace("deconstructing a runloop");
+}
+
+}
 
