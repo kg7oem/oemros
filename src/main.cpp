@@ -3,9 +3,15 @@
 
 #include "logging.h"
 #include "runloop.h"
+#include "system.h"
 
 using namespace oemros;
 using namespace std;
+
+REFCOUNTED(mctesterson) {
+    public:
+        mctesterson() = default;
+};
 
 int main(int argc, char **argv) {
 
@@ -14,9 +20,9 @@ int main(int argc, char **argv) {
 
     auto loop = runloop::create();
     auto item = loop->create_item<rlitem>();
+    auto welp = mctesterson::create();
 
-    log_debug("This thing --> ", item);
-    log_debug("Other stuff: ", errstream);
+    log_debug("This thing --> ", welp);
 
     log_debug("going to exit main");
 

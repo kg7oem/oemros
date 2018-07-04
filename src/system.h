@@ -39,6 +39,33 @@ enum class exitvalue {
     panic = 101,
 };
 
+template <class T>
+class classname_t {
+    public:
+        static std::string get(void) {
+            std::string gcc_pretty = __PRETTY_FUNCTION__;
+
+            // FIXME this is not good enough
+            size_t bracket_pos = gcc_pretty.find_first_of('[');
+            if (bracket_pos == std::string::npos) {
+                return gcc_pretty;
+            }
+
+            size_t semicolon_pos = gcc_pretty.find_first_of(';', bracket_pos);
+            if (bracket_pos == std::string::npos) {
+                return gcc_pretty;
+            }
+
+            size_t name_start = bracket_pos + 10;
+            return gcc_pretty.substr(name_start, semicolon_pos - name_start);
+        }
+};
+
+template <class T>
+std::string classname(const T* _this = NULL) {
+    return classname_t<T>::get();
+}
+
 template<class T>
 class refcounted : public std::enable_shared_from_this<T> {
     friend std::ostream& operator<<(std::ostream& os, const T& t) {
@@ -64,7 +91,7 @@ class refcounted : public std::enable_shared_from_this<T> {
         refcounted() = default;
         virtual std::string description(void) const {
             std::stringstream ss;
-            ss << "refcounted(" << this << ")";
+            ss << "refcounted(" << classname<T>() << ")";
             return ss.str();
         }
         template<typename... Args>
