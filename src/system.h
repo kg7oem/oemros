@@ -27,6 +27,8 @@
 #include <ostream>
 #include <thread>
 
+#define REFCOUNTED(name, ...) class name : public refcounted<name> ,##__VA_ARGS__
+
 namespace oemros {
 
 enum class exitvalue {
