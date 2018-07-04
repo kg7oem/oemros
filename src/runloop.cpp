@@ -40,10 +40,26 @@ rlitem::~rlitem() {
 
 runloop::runloop() {
     log_trace("constructing a runloop");
+
+    int result = uv_loop_init(&this->uv_loop);
+
+    if (result) {
+        system_panic("uv_loop_init() failed");
+    }
 }
 
 runloop::~runloop() {
     log_trace("deconstructing a runloop");
+
+    int result = uv_loop_close(&this->uv_loop);
+
+    if (result) {
+        if (result == UV_EBUSY) {
+            log_fatal("uv_loop_close() failed because the runloop was not empty");
+        } else {
+            log_fatal("uv_loop_close() failed; result=", result);
+        }
+    }
 }
 
 }
