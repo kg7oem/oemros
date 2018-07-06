@@ -41,6 +41,10 @@ REFCOUNTED(runloop) {
     public:
         runloop();
         ~runloop();
+        template<typename... Args>
+        static runloop_s create(Args... args) {
+            return std::make_shared<runloop>(args...);
+        }
         template<typename T, typename... Args>
         std::shared_ptr<T> create_item(Args... args) { return T::create(this->shared_from_this(), args...); }
 };
@@ -51,14 +55,33 @@ REFCOUNTED(rlitem) {
     friend class runloop;
 
     private:
-        runloop_s loop = NULL;
         const uint64_t item_id = 0;
+
+    protected:
+        const runloop_s loop = NULL;
+//        virtual uv_handle_t* uv_handle(void) = 0;
 
     public:
         // FIXME if this is made protected then it can't be
         // run by the allocator - how does that get fixed?
+        rlitem() = default;
         rlitem(runloop_s);
         ~rlitem();
+};
+
+REFCOUNTED(rlonce, public rlitem) {
+    private:
+        uv_idle_t* uv_idle = NULL;
+
+    protected:
+//        virtual uv_handle_t* uv_handle(void);
+
+    public:
+        rlonce(runloop_s);
+        template<typename... Args>
+        static rlonce_s create(Args... args) {
+            return std::make_shared<rlonce>(args...);
+        }
 };
 
 }
