@@ -213,10 +213,11 @@ string logdest::format_event(const logevent& event) {
 }
 
 void logdest::output(const logevent& event, const string formatted) {
-    system_panic("this method should be overloaded");
+    std::lock_guard<std::mutex> lock(this->output_mutex);
+    this->output__child(event, formatted);
 }
 
-void logstdio::output(const logevent& event, const string formatted) {
+void logstdio::output__child(const logevent& event, const string formatted) {
     if (event.level >= loglevel::warn) {
         cerr << formatted << endl;
     } else {
@@ -232,7 +233,7 @@ logfile::logfile(const char *path) {
     }
 }
 
-void logfile::output(const logevent& event, const string formatted) {
+void logfile::output__child(const logevent& event, const string formatted) {
     this->outfile << formatted << endl;
 }
 

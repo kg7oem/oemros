@@ -94,16 +94,20 @@ public:
 };
 
 class logdest {
+private:
+    std::mutex output_mutex;
+
 public:
     virtual void event(const logevent&);
     std::string format_time(const struct timeval&);
     virtual std::string format_event(const logevent&);
-    virtual void output(const logevent&, const std::string);
+    void output(const logevent&, const std::string);
+    virtual void output__child(const logevent&, const std::string) = 0;
 };
 
 class logstdio : public logdest {
 public:
-    virtual void output(const logevent&, const std::string);
+    virtual void output__child(const logevent&, const std::string);
 };
 
 class logfile : public logdest {
@@ -112,7 +116,7 @@ private:
 
 public:
     logfile(const char *);
-    virtual void output(const logevent&, const std::string);
+    virtual void output__child(const logevent&, const std::string);
 };
 
 class logging {
