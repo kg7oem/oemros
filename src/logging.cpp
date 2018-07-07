@@ -84,8 +84,8 @@ const char * logging_source_name(logsource source) {
     return get_engine()->source_name(source);
 }
 
-logevent::logevent(logsource source, loglevel level, const struct timeval timestamp, const char *function, const char *path, const int line, string message)
-: source(source), level(level), timestamp(timestamp), function(function), path(path), line(line), message(message)
+logevent::logevent(logsource source, loglevel level, const struct timeval timestamp, std::thread::id tid, const char *function, const char *path, const int line, string message)
+: source(source), level(level), timestamp(timestamp), tid(tid), function(function), path(path), line(line), message(message)
 { };
 
 loglevel logging::current_level(void) const {
@@ -202,6 +202,7 @@ string logdest::format_event(const logevent& event) {
 
     stringstream buffer;
     buffer << this->format_time(event.timestamp) << " ";
+    buffer << event.tid << " ";
     buffer << logging_source_name(event.source) << " ";
     buffer << logging_level_name(event.level) << " ";
     buffer << event.path << ":" << event.line << " ";

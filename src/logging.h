@@ -28,6 +28,7 @@
 #include <memory>
 #include <sstream>
 #include <sys/time.h>
+#include <thread>
 
 #include "conf.h"
 #include "system.h"
@@ -83,12 +84,13 @@ public:
     const logsource source = logsource::unknown;
     const loglevel level = loglevel::unknown;
     const struct timeval timestamp = { };
+    const std::thread::id tid;
     const char *function = NULL;
     const char *path = NULL;
     const int line = 0;
     const std::string message;
 
-    logevent(logsource, loglevel, const struct timeval when, const char *, const char *, const int, const std::string);
+    logevent(logsource, loglevel, const struct timeval when, std::thread::id, const char *, const char *, const int, const std::string);
 };
 
 class logdest {
@@ -164,7 +166,8 @@ void log__level_t(logsource source, loglevel level, const char *function, const 
         std::stringstream sstream;
         log__accumulate_value(sstream, t);
 
-        logevent event(source, level, when, function, path, line, sstream.str());
+        auto tid = std::this_thread::get_id();
+        logevent event(source, level, when, tid, function, path, line, sstream.str());
         logging_input_event(event);
     }
 }
@@ -183,7 +186,8 @@ void log__level_t(logsource source, loglevel level, const char *function, const 
         log__accumulate_value(sstream, t);
         log__accumulate_value(sstream, args...);
 
-        logevent event(source, level, when, function, path, line, sstream.str());
+        auto tid = std::this_thread::get_id();
+        logevent event(source, level, when, tid, function, path, line, sstream.str());
         logging_input_event(event);
     }
 }
