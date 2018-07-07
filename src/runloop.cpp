@@ -237,7 +237,24 @@ void rlonce::execute(void) {
 
 rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, runloopcb_f cb_arg)
 : rlitem(loop_arg), cb(cb_arg), initial(initial_arg) {
+    if (! this->check_intervals()) {
+        log_fatal("invalid intervals given to the timer");
+    }
+}
 
+rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, uint64_t repeat_arg, runloopcb_f cb_arg)
+: rlitem(loop_arg), cb(cb_arg), initial(initial_arg), repeat(repeat_arg) {
+    if (! this->check_intervals()) {
+        log_fatal("invalid intervals given to the timer");
+    }
+}
+
+bool rltimer::check_intervals(void) {
+    if (this->initial == 0 && this->repeat == 0) {
+        return false;
+    }
+
+    return true;
 }
 
 rlitem_s rltimer::get_shared__child(void) {
@@ -254,11 +271,21 @@ void rltimer::execute(void) {
 }
 
 void rltimer::uv_start(void) {
+    uint64_t uv_initial, uv_repeat = 0;
+
+    if (this->initial == 0) {
+        uv_initial = uv_repeat = this->repeat;
+    } else {
+        uv_initial = this->initial;
+        uv_repeat = this->repeat;
+    }
+
     log_trace("adding myself to the uv runloop");
     this->get_uv_handle()->data = this;
     assert(uv_timer_init(this->get_uv_loop(), &this->uv_timer) == 0);
 
     log_trace("starting the libuv timer; initial=", this->initial, " repeat=", this->repeat);
+    log_trace("uv timer values; initial = ", uv_initial, " repeat = ", uv_repeat);
 
     uv_timer_start(&this->uv_timer, [](uv_timer_t* uv_timer) {
         log_trace("inside the lambda");
@@ -269,7 +296,7 @@ void rltimer::uv_start(void) {
         if (us->repeat == 0) {
             us->stop();
         }
-    }, this->initial, this->repeat);
+    }, uv_initial, uv_repeat);
 }
 
 void rltimer::uv_stop(void) {

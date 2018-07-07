@@ -142,11 +142,13 @@ REFLEAF(rltimer, public rlitem) {
 
     protected:
         const runloopcb_f cb = NULL;
+        bool check_intervals(void);
 
     public:
         const uint64_t initial = 0;
         const uint64_t repeat = 0;
         rltimer(runloop_s, uint64_t, runloopcb_f);
+        rltimer(runloop_s, uint64_t, uint64_t, runloopcb_f);
         template<typename... Args>
         static rltimer_s create(Args... args) {
             return std::make_shared<rltimer>(args...);
