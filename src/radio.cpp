@@ -30,9 +30,34 @@ using namespace hl;
 namespace oemros {
 
 void radio_bootstrap(void) {
-    rig_set_debug_callback([](enum rig_debug_level_e debug_level, UNUSED rig_ptr_t user_data, UNUSED const char *fmt, UNUSED va_list arg) -> int {
-        return true;
-    }, NULL);
+//    rig_set_debug_callback([](enum rig_debug_level_e debug_level, UNUSED rig_ptr_t user_data, UNUSED const char *fmt, UNUSED va_list arg) -> int {
+//        return true;
+//    }, NULL);
+}
+
+radiomode::radiomode(const modulation_t& modulation_arg, const data_mode_t& data_mode_arg)
+: modulation_mem(modulation_arg), data_mode_mem(data_mode_arg) {
+
+}
+
+modulation_t radiomode::modulation(void) {
+    return this->modulation_mem;
+}
+
+modulation_t radiomode::modulation(modulation_t new_modulation) {
+    modulation_t old_modulation = this->modulation_mem;
+    this->modulation_mem = new_modulation;
+    return old_modulation;
+}
+
+data_mode_t radiomode::data_mode(void) {
+    return this->data_mode_mem;
+}
+
+data_mode_t radiomode::data_mode(data_mode_t new_data_mode) {
+    data_mode_t old_data_mode = this->data_mode_mem;
+    this->data_mode_mem = new_data_mode;
+    return old_data_mode;
 }
 
 hamlib::hamlib(rig_model_t model_arg)
@@ -120,6 +145,217 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_ptt(vfo_t vfo, bool ptt_ac
     return promise;
 }
 
+std::shared_ptr<oemros::promise<radiomode_s>> hamlib::hl_get_mode(vfo_t vfo) {
+    log_trace("going to get the radio mode with hamlib");
+
+    auto promise = make_promise<radiomode_s>([this, vfo]{
+        hl::rmode_t rmode;
+        hl::pbwidth_t width;
+        int result;
+
+        result = rig_get_mode(this->hl_rig, (int)vfo, &rmode, &width);
+        if (result != RIG_OK) {
+            log_fatal("rig_get_mode() failed");
+        }
+
+        log_trace("back from hamlib");
+
+        modulation_t modulation;
+        data_mode_t datamode;
+        switch (rmode) {
+        case RIG_MODE_NONE:
+            modulation = modulation_t::none;
+            datamode = false;
+            break;
+        case RIG_MODE_AM:
+            modulation = modulation_t::am;
+            datamode = false;
+            break;
+        case RIG_MODE_CW:
+            modulation = modulation_t::cw;
+            datamode = false;
+            break;
+        case RIG_MODE_USB:
+            modulation = modulation_t::usb;
+            datamode = false;
+            break;
+        case RIG_MODE_LSB:
+            modulation = modulation_t::lsb;
+            datamode = false;
+            break;
+        case RIG_MODE_RTTY:
+            modulation = modulation_t::rtty;
+            break;
+        case RIG_MODE_FM:
+            modulation = modulation_t::fm;
+            break;
+        case RIG_MODE_WFM:
+            modulation = modulation_t::wfm;
+            datamode = false;
+            break;
+        case RIG_MODE_CWR:
+            modulation = modulation_t::cwr;
+            datamode = false;
+            break;
+        case RIG_MODE_RTTYR:
+            modulation = modulation_t::rttyr;
+            datamode = false;
+            break;
+        case RIG_MODE_AMS:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_PKTLSB:
+            modulation = modulation_t::lsb;
+            break;
+        case RIG_MODE_PKTUSB:
+            modulation = modulation_t::usb;
+            break;
+        case RIG_MODE_PKTFM:
+            modulation = modulation_t::fm;
+            break;
+        case RIG_MODE_ECSSUSB:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_ECSSLSB:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_FAX:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_SAM:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_SAL:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_SAH:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_DSB:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_FMN:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        case RIG_MODE_TESTS_MAX:
+            modulation = modulation_t::unsupported;
+            datamode = false;
+            break;
+        }
+
+        return radiomode::create(modulation, datamode);
+    });
+
+    return promise;
+}
+
+std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_mode(vfo_t vfo, radiomode_s mode) {
+    log_trace("going to set the radio mode with hamlib");
+
+    auto promise = make_promise<bool>([this, vfo, mode]{
+        hl::rmode_t rmode;
+
+        switch (mode->modulation()) {
+        case modulation_t::unspecified:
+            log_fatal("can't yet use an unspecified modulation when setting a mode");
+            break;
+        case modulation_t::unsupported:
+            log_fatal("attempt to set modulation type to 'unsupported'");
+            break;
+        case modulation_t::none:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with a modulation of 'none' with hamlib");
+            }
+            rmode = RIG_MODE_NONE;
+            break;
+        case modulation_t::cw:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with CW with hamlib");
+            }
+            rmode = RIG_MODE_CW;
+            break;
+        case modulation_t::cwr:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with CWR with hamlib");
+            }
+            rmode = RIG_MODE_CWR;
+            break;
+        case modulation_t::rtty:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with RTTY with hamlib");
+            }
+            rmode = RIG_MODE_RTTY;
+            break;
+        case modulation_t::rttyr:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with RTTYR with hamlib");
+            }
+            rmode = RIG_MODE_RTTYR;
+            break;
+        case modulation_t::usb:
+            if (mode->data_mode()) {
+                rmode = RIG_MODE_PKTUSB;
+            } else {
+                rmode = RIG_MODE_USB;
+            }
+            break;
+        case modulation_t::lsb:
+            if (mode->data_mode()) {
+                rmode = RIG_MODE_PKTLSB;
+            } else {
+                rmode = RIG_MODE_LSB;
+            }
+            break;
+        case modulation_t::am:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with AM with hamlib");
+            }
+            rmode = RIG_MODE_AM;
+            break;
+        case modulation_t::fm:
+            if (mode->data_mode()) {
+                rmode = RIG_MODE_PKTFM;
+            } else {
+                rmode = RIG_MODE_FM;
+            }
+            break;
+        case modulation_t::wfm:
+            if (mode->data_mode()) {
+                log_fatal("can not set datamode with WFM with hamlib");
+            }
+            rmode = RIG_MODE_WFM;
+            break;
+        }
+
+        hl::pbwidth_t width;
+        hl::rmode_t old_rmode;
+        int result;
+
+        result = rig_get_mode(this->hl_rig, (int)vfo, &old_rmode, &width);
+        if (result != RIG_OK) {
+            log_fatal("rig_get_mode() failed: ", rigerror(result));
+        }
+
+        result = rig_set_mode(this->hl_rig, (int)vfo, rmode, width);
+        if (result != RIG_OK) {
+            log_fatal("rig_set_mode() failed");
+        }
+
+        return true;
+    });
+
+    return promise;
+}
+
 std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency(vfo_t vfo) {
     return this->hl_get_freq(vfo);
 }
@@ -152,4 +388,15 @@ std::shared_ptr<oemros::promise<bool>> hamlib::ptt(vfo_t vfo, bool ptt_active) {
     return this->hl_set_ptt(vfo, ptt_active);
 }
 
+std::shared_ptr<oemros::promise<radiomode_s>> hamlib::mode(void) {
+    return this->hl_get_mode(vfo_t::CURR);
+}
+
+std::shared_ptr<oemros::promise<bool>> hamlib::mode(radiomode_s mode) {
+    return this->hl_set_mode(vfo_t::CURR, mode);
+}
+
+std::shared_ptr<oemros::promise<bool>> hamlib::mode(modulation_t mod_arg, data_mode_t data_arg) {
+    return this->hl_set_mode(vfo_t::CURR, radiomode::create(mod_arg, data_arg));
+}
 }

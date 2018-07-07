@@ -30,5 +30,19 @@ int main(int argc, char **argv) {
     radio->ptt(false)->wait();
     log_info("and then: ", radio->ptt()->get());
 
+    auto mode = radio->mode()->get();
+    log_info("got mode back: modulation = ", (int)mode->modulation());
+    if (mode->data_mode()) {
+        log_info("data mode is on");
+    } else {
+        log_info("data mode is off");
+    }
+
+    mode->data_mode(false);
+    mode->modulation(modulation_t::wfm);
+    radio->mode(mode)->wait();
+
+
+
     return 0;
 }

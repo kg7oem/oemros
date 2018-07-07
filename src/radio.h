@@ -43,6 +43,37 @@ enum class vfo_t {
 
 using freq_t = hl::freq_t;
 using ptt_t = bool;
+using data_mode_t = bool;
+
+enum class modulation_t {
+    unspecified = 0, unsupported, none,
+    cw, cwr, rtty, rttyr,
+    usb, lsb, am, fm, wfm,
+};
+
+REFLEAF(radiomode) {
+    private:
+        modulation_t modulation_mem = modulation_t::unspecified;
+        data_mode_t data_mode_mem = false;
+        // disable copy constructor
+        radiomode(const radiomode&) = delete;
+        // disable move constructor
+        radiomode(const radiomode&&) = delete;
+        // disable assignment operator
+        radiomode& operator=(const radiomode&) = delete;
+
+    public:
+        radiomode(void) = default;
+        radiomode(const modulation_t&, const data_mode_t&);
+        template<typename... Args>
+        static radiomode_s create(Args&&...args) {
+            return std::make_shared<radiomode>(args...);
+        }
+        modulation_t modulation(void);
+        modulation_t modulation(modulation_t);
+        data_mode_t data_mode(void);
+        data_mode_t data_mode(data_mode_t);
+};
 
 class radio {
     private:
@@ -61,18 +92,29 @@ class radio {
         virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(vfo_t) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(ptt_t) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, ptt_t) = 0;
+        virtual std::shared_ptr<oemros::promise<radiomode_s>> mode(void) = 0;
+        virtual std::shared_ptr<oemros::promise<bool>> mode(radiomode_s) = 0;
+        virtual std::shared_ptr<oemros::promise<bool>> mode(modulation_t, data_mode_t) = 0;
 };
 
 REFLEAF(hamlib, public radio) {
     private:
         hl::rig_model_t hl_model = 0;
         hl::rig* hl_rig = NULL;
+        // disable copy constructor
+        hamlib(const hamlib&) = delete;
+        // disable move constructor
+        hamlib(const hamlib&&) = delete;
+        // disable assignment operator
+        radiomode& operator=(const hamlib&) = delete;
 
     protected:
         std::shared_ptr<oemros::promise<freq_t>> hl_get_freq(vfo_t);
         std::shared_ptr<oemros::promise<bool>> hl_set_freq(vfo_t, freq_t);
         std::shared_ptr<oemros::promise<ptt_t>> hl_get_ptt(vfo_t);
         std::shared_ptr<oemros::promise<bool>> hl_set_ptt(vfo_t, ptt_t);
+        std::shared_ptr<oemros::promise<radiomode_s>> hl_get_mode(vfo_t);
+        std::shared_ptr<oemros::promise<bool>> hl_set_mode(vfo_t, radiomode_s);
 
     public:
         hamlib(hl::rig_model_t);
@@ -88,6 +130,9 @@ REFLEAF(hamlib, public radio) {
         virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(vfo_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(ptt_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, ptt_t) override;
+        virtual std::shared_ptr<oemros::promise<radiomode_s>> mode(void) override;
+        virtual std::shared_ptr<oemros::promise<bool>> mode(modulation_t, data_mode_t) override;
+        virtual std::shared_ptr<oemros::promise<bool>> mode(radiomode_s) override;
 };
 
 void radio_bootstrap(void);
