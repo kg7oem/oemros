@@ -179,9 +179,12 @@ void rlitem::close(void) {
 
 void rlitem::close_resume(void) {
     log_trace("continuing on with the close workflow");
-    this->state = rlitemstate::closed;
-    this->get_loop()->remove_item(this->get_shared());
-    this->did_close();
+    // hold a local copy so the object is guranteed to be alive
+    // after it is removed from the active list
+    rlitem_s us = this->get_shared();
+    us->state = rlitemstate::closed;
+    us->get_loop()->remove_item(us);
+    us->did_close();
 }
 
 rlonce::rlonce(runloop_s loop_arg, runloopcb_f cb_arg)
