@@ -3,7 +3,7 @@ CXXFLAGS+=-std=c++11 -Wall -Werror -MMD -ggdb
 FLEXPP=flex++
 
 COMMON_DEPS=Makefile
-LIBS=-luv
+LIBS=-luv -lhamlib -lpthread
 
 OBJS=main.o turboini.flex.o logging.o system.o runloop.o radio.o
 DEPS=${OBJS:.o=.d}

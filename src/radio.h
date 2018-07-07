@@ -22,6 +22,7 @@
 #ifndef SRC_RADIO_H_
 #define SRC_RADIO_H_
 
+#include <future>
 #include <iostream>
 
 namespace hamlib {
@@ -32,6 +33,15 @@ namespace hamlib {
 
 namespace oemros {
 
+enum class vfo {
+    CURR = RIG_VFO_CURR,
+    A = RIG_VFO_A,
+    B = RIG_VFO_B,
+    C = RIG_VFO_C,
+};
+
+using freq_t = hamlib::freq_t;
+
 REFLEAF(radio) {
     private:
         hamlib::rig_model_t hl_model = 0;
@@ -39,7 +49,14 @@ REFLEAF(radio) {
 
     public:
         radio(hamlib::rig_model_t);
+        template<typename... Args>
+        static radio_s create(Args&&...args) {
+            return std::make_shared<radio>(args...);
+        }
+        std::future<freq_t> frequency(void);
 };
+
+void radio_bootstrap(void);
 
 }
 

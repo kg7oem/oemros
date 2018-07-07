@@ -22,8 +22,10 @@
 #ifndef SRC_SYSTEM_H_
 #define SRC_SYSTEM_H_
 
+#include <condition_variable>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -31,6 +33,8 @@
 
 #define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::refcounted<name> ,##__VA_ARGS__
 #define REFLEAF(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::refcounted<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+
+#define UNUSED __attribute__((unused))
 
 namespace oemros {
 
@@ -107,6 +111,26 @@ class errstream_t {
 };
 
 extern errstream_t errstream;
+
+using threadpool_cb = std::function<void (void)>;
+
+class threadpool {
+    private:
+        threadpool(const threadpool&) = delete;
+        threadpool(const threadpool&&) = delete;
+        threadpool& operator=(const threadpool&) = delete;
+        std::list<std::thread*> thread_list;
+        std::list<threadpool_cb> work_queue;
+        std::mutex pool_mutex;
+        std::condition_variable pool_cond;
+
+    public:
+        const size_t size = 0;
+        threadpool(size_t);
+        void schedule(threadpool_cb);
+};
+
+void threadpool_schedule(threadpool_cb);
 
 [[ noreturn ]] void system_exit(exitvalue);
 void system_panic(const char *);

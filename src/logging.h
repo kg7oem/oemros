@@ -43,6 +43,7 @@ namespace oemros {
 enum class logsource_t {
     unknown = 0,
     oemros = 1,
+    hamlib = 2,
 };
 #endif // LOGGING_SOURCE_T
 

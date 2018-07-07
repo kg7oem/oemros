@@ -132,6 +132,8 @@ const char * logging::source_name(logsource source) {
         return "UNKNOWNSOURCE";
     case logsource::oemros:
         return "oemros";
+    case logsource::hamlib:
+        return "hamlib";
     }
 
     log_fatal("switch() failed for logsource enum: ", (int)source);
