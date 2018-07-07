@@ -5,7 +5,7 @@ FLEXPP=flex++
 COMMON_DEPS=Makefile
 LIBS=-luv -lhamlib -lpthread
 
-OBJS=main.o turboini.flex.o logging.o system.o runloop.o radio.o
+OBJS=main.o turboini.flex.o logging.o system.o thread.o runloop.o radio.o
 DEPS=${OBJS:.o=.d}
 
 OEMROS_BIN=oemros

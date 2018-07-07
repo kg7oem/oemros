@@ -30,6 +30,7 @@ namespace hamlib {
 }
 
 #include "system.h"
+#include "thread.h"
 
 namespace oemros {
 
@@ -50,6 +51,8 @@ REFLEAF(radio) {
     protected:
         std::shared_ptr<oemros::promise<freq_t>> hl_get_freq(vfo_t);
         std::shared_ptr<oemros::promise<bool>> hl_set_freq(vfo_t, freq_t);
+        std::shared_ptr<oemros::promise<bool>> hl_get_ptt(vfo_t);
+        std::shared_ptr<oemros::promise<bool>> hl_set_ptt(vfo_t, bool);
 
     public:
         radio(hamlib::rig_model_t);
@@ -61,6 +64,10 @@ REFLEAF(radio) {
         std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t);
         std::shared_ptr<oemros::promise<bool>> frequency(freq_t);
         std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t);
+        std::shared_ptr<oemros::promise<bool>> ptt(void);
+        std::shared_ptr<oemros::promise<bool>> ptt(vfo_t);
+        std::shared_ptr<oemros::promise<bool>> ptt(bool);
+        std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, bool);
 };
 
 void radio_bootstrap(void);
