@@ -42,6 +42,10 @@ runloop::runloop() {
 runloop::~runloop() {
     log_trace("deconstructing a runloop");
 
+    if (size_t size = this->active_items.size() != 0) {
+        log_fatal("attempt stop a runloop with items in the active items set: size = ", size);
+    }
+
     int result = uv_loop_close(&this->uv_loop);
 
     if (result) {
@@ -77,7 +81,7 @@ void runloop::remove_item(rlitem_s item) {
 
 rlitem::rlitem(runloop_s loop_arg)
 : loop(loop_arg), item_id(++loop_arg->prev_item_id) {
-    assert(this->loop != NULL);
+    assert(this->loop.expired() == false);
 
     log_trace("constructed a new runloop item #", this->item_id, " ", this->description());
 }
@@ -90,12 +94,17 @@ rlitem::~rlitem() {
     }
 }
 
+runloop_s rlitem::get_loop(void) {
+    assert(this->loop.expired() == false);
+    return this->loop.lock();
+}
+
 rlitem_s rlitem::get_shared(void) {
     return this->get_shared__child();
 }
 
 uv_loop_t* rlitem::get_uv_loop(void) {
-    return this->loop->get_uv_loop();
+    return this->get_loop()->get_uv_loop();
 }
 
 void rlitem::start(void) {
@@ -103,7 +112,7 @@ void rlitem::start(void) {
 
     this->will_start();
     this->uv_start();
-    this->loop->add_item(this->get_shared());
+    this->get_loop()->add_item(this->get_shared());
     this->state = rlitemstate::started;
     this->did_start();
 }
@@ -122,6 +131,8 @@ void rlitem::stop(void) {
 }
 
 void rlitem::close(void) {
+    assert(this->state == rlitemstate::stopped);
+
     this->will_close();
 
     this->state = rlitemstate::closing;
@@ -135,7 +146,7 @@ void rlitem::close(void) {
 void rlitem::close_resume(void) {
     log_trace("continuing on with the close workflow");
     this->state = rlitemstate::closed;
-    this->loop->remove_item(this->get_shared());
+    this->get_loop()->remove_item(this->get_shared());
     this->did_close();
 }
 

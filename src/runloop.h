@@ -78,12 +78,13 @@ REFCOUNTED(rlitem) {
     friend class runloop;
 
     private:
+        const runloop_w loop;
         rlitemstate state = rlitemstate::unstarted;
         bool autoclose = true;
 
     protected:
-        const runloop_s loop = NULL;
         const uint64_t item_id = 0;
+        runloop_s get_loop(void);
         libuv::uv_loop_t* get_uv_loop(void);
         virtual libuv::uv_handle_t* get_uv_handle(void) = 0;
         virtual void will_start(void) { };
