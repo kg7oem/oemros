@@ -25,7 +25,7 @@
 #include <future>
 #include <iostream>
 
-namespace hamlib {
+namespace hl {
 #include <hamlib/rig.h>
 }
 
@@ -41,33 +41,53 @@ enum class vfo_t {
     C = RIG_VFO_C,
 };
 
-using freq_t = hamlib::freq_t;
+using freq_t = hl::freq_t;
+using ptt_t = bool;
 
-REFLEAF(radio) {
+class radio {
     private:
-        hamlib::rig_model_t hl_model = 0;
-        hamlib::rig* hl_rig = NULL;
+        radio(const radio&) = delete;
+        radio(const radio&&) = delete;
+        radio& operator=(const radio&) = delete;
+
+    public:
+        radio() = default;
+        virtual ~radio() = default;
+        virtual std::shared_ptr<oemros::promise<freq_t>> frequency(void) = 0;
+        virtual std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t) = 0;
+        virtual std::shared_ptr<oemros::promise<bool>> frequency(freq_t) = 0;
+        virtual std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t) = 0;
+        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(void) = 0;
+        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(vfo_t) = 0;
+        virtual std::shared_ptr<oemros::promise<bool>> ptt(ptt_t) = 0;
+        virtual std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, ptt_t) = 0;
+};
+
+REFLEAF(hamlib, public radio) {
+    private:
+        hl::rig_model_t hl_model = 0;
+        hl::rig* hl_rig = NULL;
 
     protected:
         std::shared_ptr<oemros::promise<freq_t>> hl_get_freq(vfo_t);
         std::shared_ptr<oemros::promise<bool>> hl_set_freq(vfo_t, freq_t);
-        std::shared_ptr<oemros::promise<bool>> hl_get_ptt(vfo_t);
-        std::shared_ptr<oemros::promise<bool>> hl_set_ptt(vfo_t, bool);
+        std::shared_ptr<oemros::promise<ptt_t>> hl_get_ptt(vfo_t);
+        std::shared_ptr<oemros::promise<bool>> hl_set_ptt(vfo_t, ptt_t);
 
     public:
-        radio(hamlib::rig_model_t);
+        hamlib(hl::rig_model_t);
         template<typename... Args>
-        static radio_s create(Args&&...args) {
-            return std::make_shared<radio>(args...);
+        static hamlib_s create(Args&&...args) {
+            return std::make_shared<hamlib>(args...);
         }
-        std::shared_ptr<oemros::promise<freq_t>> frequency(void);
-        std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t);
-        std::shared_ptr<oemros::promise<bool>> frequency(freq_t);
-        std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t);
-        std::shared_ptr<oemros::promise<bool>> ptt(void);
-        std::shared_ptr<oemros::promise<bool>> ptt(vfo_t);
-        std::shared_ptr<oemros::promise<bool>> ptt(bool);
-        std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, bool);
+        virtual std::shared_ptr<oemros::promise<freq_t>> frequency(void) override;
+        virtual std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t) override;
+        virtual std::shared_ptr<oemros::promise<bool>> frequency(freq_t) override;
+        virtual std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t) override;
+        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(void) override;
+        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(vfo_t) override;
+        virtual std::shared_ptr<oemros::promise<bool>> ptt(ptt_t) override;
+        virtual std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, ptt_t) override;
 };
 
 void radio_bootstrap(void);

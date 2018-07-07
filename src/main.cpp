@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 
     bootstrap();
 
-    auto radio = radio::create(1);
+    auto radio = hamlib::create(1);
 
     log_info("start: ", radio->ptt()->get());
     radio->ptt(true)->wait();
