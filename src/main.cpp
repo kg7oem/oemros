@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
         log_info("I set the value to: ", ++someint);
     })->start();
 
-    loop->create_item<rltimer>(3500, []{ log_info("I am a timer"); })->start();
+    loop->create_item<rltimer>(500, []{ log_info("I am a timer"); })->start();
 
     loop->enter();
 

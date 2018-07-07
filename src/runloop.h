@@ -128,11 +128,11 @@ REFLEAF(rlonce, public rlitem) {
         static rlonce_s create(Args&&...args) {
             return std::make_shared<rlonce>(args...);
         }
-        virtual rlitem_s get_shared__child(void);
+        virtual rlitem_s get_shared__child(void) override;
         libuv::uv_handle_t* get_uv_handle(void);
-        virtual void uv_start(void);
-        virtual void uv_stop(void);
-        virtual void uv_close(void);
+        virtual void uv_start(void) override;
+        virtual void uv_stop(void) override;
+        virtual void uv_close(void) override;
         void execute(void);
 };
 
@@ -153,11 +153,11 @@ REFLEAF(rltimer, public rlitem) {
         static rltimer_s create(Args&&...args) {
             return std::make_shared<rltimer>(args...);
         }
-        virtual rlitem_s get_shared__child(void);
+        virtual rlitem_s get_shared__child(void) override;
         libuv::uv_handle_t* get_uv_handle(void);
-        virtual void uv_start(void);
-        virtual void uv_stop(void);
-        virtual void uv_close(void);
+        virtual void uv_start(void) override;
+        virtual void uv_stop(void) override;
+        virtual void uv_close(void) override;
         void execute(void);
 };
 
