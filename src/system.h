@@ -144,13 +144,15 @@ class promise {
         std::function<T (void)> cb;
 
     public:
-        T get(void) {
-            return this->promobj.get_future().get();
-        }
         void set(T value) {
             this->promobj.set_value(value);
         }
-
+        T get(void) {
+            return this->promobj.get_future().get();
+        }
+        void wait(void) {
+            this->promobj.get_future().wait();
+        }
         promise(void) = default;
         promise(std::function<T (void)> cb_arg)
         : cb(cb_arg)

@@ -206,8 +206,8 @@ string logdest::format_event(const logevent& event) {
     buffer << logging_source_name(event.source) << " ";
     buffer << logging_level_name(event.level) << " ";
     buffer << event.path << ":" << event.line << " ";
-    buffer << event.function << ": ";
-    buffer << event.message;
+    buffer << event.function << ": " << endl;
+    buffer << "  " << event.message;
 
     return buffer.str();
 }

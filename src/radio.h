@@ -33,7 +33,7 @@ namespace hamlib {
 
 namespace oemros {
 
-enum class vfo {
+enum class vfo_t {
     CURR = RIG_VFO_CURR,
     A = RIG_VFO_A,
     B = RIG_VFO_B,
@@ -47,6 +47,10 @@ REFLEAF(radio) {
         hamlib::rig_model_t hl_model = 0;
         hamlib::rig* hl_rig = NULL;
 
+    protected:
+        std::shared_ptr<oemros::promise<freq_t>> hl_get_freq(vfo_t);
+        std::shared_ptr<oemros::promise<bool>> hl_set_freq(vfo_t, freq_t);
+
     public:
         radio(hamlib::rig_model_t);
         template<typename... Args>
@@ -54,6 +58,9 @@ REFLEAF(radio) {
             return std::make_shared<radio>(args...);
         }
         std::shared_ptr<oemros::promise<freq_t>> frequency(void);
+        std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t);
+        std::shared_ptr<oemros::promise<bool>> frequency(freq_t);
+        std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t);
 };
 
 void radio_bootstrap(void);

@@ -23,6 +23,9 @@ int main(int argc, char **argv) {
     bootstrap();
 
     auto thing = radio::create(1);
+
+    thing->frequency(100)->wait();
+
     auto freq = thing->frequency();
 
     log_fatal("got freq: ", freq->get());
