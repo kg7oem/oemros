@@ -51,12 +51,14 @@ REFLEAF(runloop) {
     friend class rlitem;
 
     private:
+        bool inside_runloop = false;
         libuv::uv_loop_t uv_loop;
         uint64_t prev_item_id = 0;
         libuv::uv_loop_t* get_uv_loop(void);
         std::set<std::shared_ptr<rlitem>> active_items;
         void add_item(std::shared_ptr<rlitem>);
         void remove_item(std::shared_ptr<rlitem>);
+        std::list<libuv::uv_handle_t*> get_handles(void);
 
     public:
         runloop();
@@ -70,6 +72,7 @@ REFLEAF(runloop) {
             return T::create(this->shared_from_this(), args...);
         }
         void enter(void);
+        void shutdown(void);
 };
 
 // runloop items (rlitem) are things that are managed

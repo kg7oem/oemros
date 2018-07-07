@@ -63,10 +63,44 @@ uv_loop_t* runloop::get_uv_loop(void) {
 
 void runloop::enter(void) {
     log_debug("giving uv_run() control of the thread");
+    this->inside_runloop = true;
     int result = uv_run(&this->uv_loop, UV_RUN_DEFAULT);
+    this->inside_runloop = false;
     log_debug("got control back from uv_run()");
 
     assert(result == 0);
+}
+
+void runloop::shutdown(void) {
+    log_debug("shutting down the runloop");
+
+    for(auto&& i : this->active_items) {
+        log_trace("stopping ", i->description());
+        i->stop();
+
+        if (! i->autoclose) {
+            log_trace("autoclose is not enabled so closing explicitly");
+            i->close();
+        }
+    }
+
+    if (! this->inside_runloop) {
+        // give the libuv close callbacks a chance to run
+        this->enter();
+    }
+}
+
+std::list<uv_handle_t*> runloop::get_handles(void) {
+    log_trace("generating a list of handles in the libuv runloop");
+    std::list<uv_handle_t*> list;
+
+    uv_walk(&this->uv_loop, [](uv_handle_t* handle, void* arg) -> void {
+        auto list = static_cast<std::list<uv_handle_t*>*>(arg);
+        list->push_front(handle);
+    }, &list);
+
+    log_trace("found ", list.size(), " handles in the libuv runloop");
+    return list;
 }
 
 void runloop::add_item(rlitem_s item) {

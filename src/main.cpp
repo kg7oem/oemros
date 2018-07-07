@@ -25,6 +25,8 @@ int main(int argc, char **argv) {
 
     loop->create_item<rltimer>(3500, []{ log_info("I am a timer"); })->start();
 
+    loop->shutdown();
+
     loop->enter();
 
     log_debug("going to exit main; someint = ", someint);
