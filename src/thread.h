@@ -59,6 +59,12 @@ class promise {
         std::function<T (void)> cb;
 
     public:
+        // FIXME this doesn't work - because of the shared_ptr that
+        // always wraps it?
+//        operator T() const {
+//            log_debug("automatically getting future value");
+//            return this->get;
+//        }
         void set(T value) {
             this->promobj.set_value(value);
         }
