@@ -30,6 +30,7 @@
 #include <thread>
 
 #define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; class name : public refcounted<name> ,##__VA_ARGS__
+#define REFLEAF(name, ...) class name; typedef std::shared_ptr<name> name##_s; class name : public refcounted<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
 
 namespace oemros {
 

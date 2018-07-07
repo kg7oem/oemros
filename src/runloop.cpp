@@ -190,5 +190,55 @@ void rlonce::execute(void) {
     this->cb();
 }
 
+rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, runloopcb_f cb_arg)
+: rlitem(loop_arg), cb(cb_arg), initial(initial_arg) {
+
 }
 
+rlitem_s rltimer::get_shared__child(void) {
+    return this->shared_from_this();
+}
+
+uv_handle_t* rltimer::get_uv_handle(void) {
+    return (uv_handle_t*)&this->uv_timer;
+}
+
+void rltimer::execute(void) {
+    log_trace("inside the execute handler for #", this->item_id);
+    this->cb();
+}
+
+void rltimer::uv_start(void) {
+    log_trace("adding myself to the uv runloop");
+    this->get_uv_handle()->data = this;
+    assert(uv_timer_init(this->get_uv_loop(), &this->uv_timer) == 0);
+
+    log_trace("starting the libuv timer; initial=", this->initial, " repeat=", this->repeat);
+
+    uv_timer_start(&this->uv_timer, [](uv_timer_t* uv_timer) {
+        log_trace("inside the lambda");
+        auto us = static_cast<rltimer*>(uv_timer->data);
+        log_trace("going to execute timer callback for #", us->item_id);
+        us->execute();
+
+        if (us->repeat == 0) {
+            us->stop();
+        }
+    }, this->initial, this->repeat);
+}
+
+void rltimer::uv_stop(void) {
+    log_trace("stopping libuv timer");
+    uv_timer_stop(&this->uv_timer);
+}
+
+void rltimer::uv_close(void) {
+    log_trace("closing libuv timer");
+
+    libuv::uv_close(this->get_uv_handle(), [](uv_handle_t* handle) -> void {
+        log_trace("inside the lambda");
+        static_cast<rltimer*>(handle->data)->close_resume();
+    });
+}
+
+}

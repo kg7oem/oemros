@@ -47,7 +47,7 @@ typedef std::function<void (void)> runloopcb_f;
 
 class rlitem;
 
-REFCOUNTED(runloop, public std::enable_shared_from_this<runloop>) {
+REFLEAF(runloop) {
     friend class rlitem;
 
     private:
@@ -111,18 +111,41 @@ REFCOUNTED(rlitem) {
         void close_resume(void);
 };
 
-REFCOUNTED(rlonce, public rlitem, public std::enable_shared_from_this<rlonce>) {
+REFLEAF(rlonce, public rlitem) {
     private:
         libuv::uv_idle_t uv_idle;
 
     protected:
-        runloopcb_f cb = NULL;
+        const runloopcb_f cb = NULL;
 
     public:
         rlonce(runloop_s, runloopcb_f);
         template<typename... Args>
         static rlonce_s create(Args... args) {
             return std::make_shared<rlonce>(args...);
+        }
+        virtual rlitem_s get_shared__child(void);
+        libuv::uv_handle_t* get_uv_handle(void);
+        virtual void uv_start(void);
+        virtual void uv_stop(void);
+        virtual void uv_close(void);
+        void execute(void);
+};
+
+REFLEAF(rltimer, public rlitem) {
+    private:
+        libuv::uv_timer_t uv_timer;
+
+    protected:
+        const runloopcb_f cb = NULL;
+
+    public:
+        const uint64_t initial = 0;
+        const uint64_t repeat = 0;
+        rltimer(runloop_s, uint64_t, runloopcb_f);
+        template<typename... Args>
+        static rltimer_s create(Args... args) {
+            return std::make_shared<rltimer>(args...);
         }
         virtual rlitem_s get_shared__child(void);
         libuv::uv_handle_t* get_uv_handle(void);
