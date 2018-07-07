@@ -66,7 +66,13 @@ void runloop::enter(void) {
 }
 
 void runloop::add_item(rlitem_s item) {
+    log_trace("adding runloop item to the active list: #", item->item_id);
+    this->active_items.insert(item);
+}
 
+void runloop::remove_item(rlitem_s item) {
+    log_trace("removing runloop item from the active list: #", item->item_id);
+    assert(this->active_items.erase(item) == 1);
 }
 
 rlitem::rlitem(runloop_s loop_arg)
@@ -84,6 +90,10 @@ rlitem::~rlitem() {
     }
 }
 
+rlitem_s rlitem::get_shared(void) {
+    return this->get_shared__child();
+}
+
 uv_loop_t* rlitem::get_uv_loop(void) {
     return this->loop->get_uv_loop();
 }
@@ -93,7 +103,7 @@ void rlitem::start(void) {
 
     this->will_start();
     this->uv_start();
-    this->loop->add_item(this->shared_from_this());
+    this->loop->add_item(this->get_shared());
     this->state = rlitemstate::started;
     this->did_start();
 }
@@ -125,6 +135,7 @@ void rlitem::close(void) {
 void rlitem::close_resume(void) {
     log_trace("continuing on with the close workflow");
     this->state = rlitemstate::closed;
+    this->loop->remove_item(this->get_shared());
     this->did_close();
 }
 
@@ -135,8 +146,8 @@ rlonce::rlonce(runloop_s loop_arg, runloopcb_f cb_arg)
     }
 }
 
-rlitem_s rlonce::get_shared(void) {
-    return this->rlonce::shared_from_this();
+rlitem_s rlonce::get_shared__child(void) {
+    return this->shared_from_this();
 }
 
 uv_handle_t* rlonce::get_uv_handle(void) {

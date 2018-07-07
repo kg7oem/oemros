@@ -23,6 +23,7 @@
 #define SRC_RUNLOOP_H_
 
 #include <functional>
+#include <set>
 #include <list>
 
 namespace libuv {
@@ -46,14 +47,16 @@ typedef std::function<void (void)> runloopcb_f;
 
 class rlitem;
 
-REFCOUNTED(runloop) {
+REFCOUNTED(runloop, public std::enable_shared_from_this<runloop>) {
     friend class rlitem;
 
     private:
         libuv::uv_loop_t uv_loop;
         uint64_t prev_item_id = 0;
         libuv::uv_loop_t* get_uv_loop(void);
+        std::set<std::shared_ptr<rlitem>> active_items;
         void add_item(std::shared_ptr<rlitem>);
+        void remove_item(std::shared_ptr<rlitem>);
 
     public:
         runloop();
@@ -100,14 +103,15 @@ REFCOUNTED(rlitem) {
         rlitem() = default;
         rlitem(runloop_s);
         ~rlitem();
-        virtual rlitem_s get_shared(void) = 0;
+        rlitem_s get_shared(void);
+        virtual rlitem_s get_shared__child(void) = 0;
         void start(void);
         void stop(void);
         void close(void);
         void close_resume(void);
 };
 
-REFCOUNTED(rlonce, public rlitem) {
+REFCOUNTED(rlonce, public rlitem, public std::enable_shared_from_this<rlonce>) {
     private:
         libuv::uv_idle_t uv_idle;
 
@@ -120,7 +124,7 @@ REFCOUNTED(rlonce, public rlitem) {
         static rlonce_s create(Args... args) {
             return std::make_shared<rlonce>(args...);
         }
-        virtual rlitem_s get_shared(void);
+        virtual rlitem_s get_shared__child(void);
         libuv::uv_handle_t* get_uv_handle(void);
         virtual void uv_start(void);
         virtual void uv_stop(void);

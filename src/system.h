@@ -67,15 +67,15 @@ std::string classname(const T* _this = NULL) {
 }
 
 template<class T>
-class refcounted : public std::enable_shared_from_this<T> {
-    friend std::ostream& operator<<(std::ostream& os, const T& t) {
-        os << t.description();
+class refcounted {
+    friend std::ostream& operator<<(std::ostream& os, const refcounted& obj) {
+        os << obj.description();
         return os;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<T>& t) {
-        os << "shared_ptr(use=" << t.use_count();
-        os << " " << *t.get() << ")";
+    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<refcounted>& obj) {
+        os << "shared_ptr(use=" << obj.use_count();
+        os << " " << *obj.get() << ")";
         return os;
     }
 
