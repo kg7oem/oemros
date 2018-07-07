@@ -30,7 +30,6 @@
 #include <thread>
 
 #define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; class name : public refcounted<name> ,##__VA_ARGS__
-#define EXTEND(child, parent, ...) class child; typedef std::shared_ptr<child> child##_s; class child : parent ,##__VA_ARGS__
 
 namespace oemros {
 
@@ -95,11 +94,11 @@ class refcounted : public std::enable_shared_from_this<T> {
             ss << "refcounted(" << classname<T>() << ")";
             return ss.str();
         }
-//        template<typename... Args>
-//        static std::shared_ptr<T> create(Args&&...args) {
-//            // https://stackoverflow.com/questions/7257144/when-to-use-stdforward-to-forward-arguments
-//            return std::make_shared<T>(std::forward<Args>(args)...);
-//        };
+        template<typename... Args>
+        static std::shared_ptr<T> create(Args&&...args) {
+            // https://stackoverflow.com/questions/7257144/when-to-use-stdforward-to-forward-arguments
+            return std::make_shared<T>(std::forward<Args>(args)...);
+        };
 };
 
 class errstream_t {
