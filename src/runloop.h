@@ -64,11 +64,11 @@ REFLEAF(runloop) {
         runloop();
         ~runloop();
         template<typename... Args>
-        static runloop_s create(Args... args) {
+        static runloop_s create(Args&&...args) {
             return std::make_shared<runloop>(args...);
         }
         template<typename T, typename... Args>
-        std::shared_ptr<T> create_item(Args... args) {
+        std::shared_ptr<T> create_item(Args&&...args) {
             return T::create(this->shared_from_this(), args...);
         }
         void enter(void);
@@ -125,7 +125,7 @@ REFLEAF(rlonce, public rlitem) {
     public:
         rlonce(runloop_s, runloopcb_f);
         template<typename... Args>
-        static rlonce_s create(Args... args) {
+        static rlonce_s create(Args&&...args) {
             return std::make_shared<rlonce>(args...);
         }
         virtual rlitem_s get_shared__child(void);
@@ -150,7 +150,7 @@ REFLEAF(rltimer, public rlitem) {
         rltimer(runloop_s, uint64_t, runloopcb_f);
         rltimer(runloop_s, uint64_t, uint64_t, runloopcb_f);
         template<typename... Args>
-        static rltimer_s create(Args... args) {
+        static rltimer_s create(Args&&...args) {
             return std::make_shared<rltimer>(args...);
         }
         virtual rlitem_s get_shared__child(void);
