@@ -252,7 +252,7 @@ rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, uint64_t repeat_arg, 
     }
 }
 
-bool rltimer::check_intervals(void) {
+bool rltimer::check_intervals(void) const {
     if (this->initial == 0 && this->repeat == 0) {
         return false;
     }

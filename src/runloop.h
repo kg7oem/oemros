@@ -142,7 +142,7 @@ REFLEAF(rltimer, public rlitem) {
 
     protected:
         const runloopcb_f cb = NULL;
-        bool check_intervals(void);
+        bool check_intervals(void) const;
 
     public:
         const uint64_t initial = 0;
