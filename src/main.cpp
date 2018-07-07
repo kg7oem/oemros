@@ -18,17 +18,17 @@ void bootstrap(void) {
 
 int main(int argc, char **argv) {
     logging_add_destination(make_shared<logstdio>());
-    logging_set_level(loglevel::trace);
+    logging_set_level(loglevel::info);
 
     bootstrap();
 
-    auto thing = radio::create(1);
+    auto radio = radio::create(1);
 
-    thing->frequency(100)->wait();
-
-    auto freq = thing->frequency();
-
-    log_fatal("got freq: ", freq->get());
+    log_info("start: ", radio->ptt()->get());
+    radio->ptt(true)->wait();
+    log_info("now: ", radio->ptt()->get());
+    radio->ptt(false)->wait();
+    log_info("and then: ", radio->ptt()->get());
 
     return 0;
 }

@@ -83,6 +83,43 @@ std::shared_ptr<oemros::promise<bool>> radio::hl_set_freq(vfo_t vfo, freq_t freq
     return promise;
 }
 
+std::shared_ptr<oemros::promise<bool>> radio::hl_get_ptt(vfo_t vfo) {
+    log_trace("going to get the PTT state from hamlib");
+
+    auto promise = make_promise<bool>([this, vfo] {
+        ptt_t ptt;
+        int result = rig_get_ptt(this->hl_rig, (int)vfo, &ptt);
+        if (result != RIG_OK) {
+            log_fatal("rig_get_ptt() failed");
+        }
+        log_trace("back from rig_get_ptt()");
+        return ptt == RIG_PTT_ON;
+    });
+
+    return promise;
+}
+
+std::shared_ptr<oemros::promise<bool>> radio::hl_set_ptt(vfo_t vfo, bool ptt_active) {
+    log_trace("going to set the PTT state with hamlib");
+    ptt_t hl_ptt;
+
+    if (ptt_active) {
+        hl_ptt = RIG_PTT_ON;
+    } else {
+        hl_ptt = RIG_PTT_OFF;
+    }
+
+    auto promise = make_promise<bool>([this, vfo, hl_ptt] {
+        int result = rig_set_ptt(this->hl_rig, (int)vfo, hl_ptt);
+        if (result != RIG_OK) {
+            log_fatal("rig_set_ptt() failed");
+        }
+        return true;
+    });
+
+    return promise;
+}
+
 std::shared_ptr<oemros::promise<freq_t>> radio::frequency(vfo_t vfo) {
     return this->hl_get_freq(vfo);
 }
@@ -97,6 +134,22 @@ std::shared_ptr<oemros::promise<bool>> radio::frequency(freq_t freq) {
 
 std::shared_ptr<oemros::promise<bool>> radio::frequency(vfo_t vfo, freq_t freq) {
     return this->hl_set_freq(vfo, freq);
+}
+
+std::shared_ptr<oemros::promise<bool>> radio::ptt(void) {
+    return this->hl_get_ptt(vfo_t::CURR);
+}
+
+std::shared_ptr<oemros::promise<bool>> radio::ptt(vfo_t vfo) {
+    return this->hl_get_ptt(vfo);
+}
+
+std::shared_ptr<oemros::promise<bool>> radio::ptt(bool ptt_active) {
+    return this->hl_set_ptt(vfo_t::CURR, ptt_active);
+}
+
+std::shared_ptr<oemros::promise<bool>> radio::ptt(vfo_t vfo, bool ptt_active) {
+    return this->hl_set_ptt(vfo, ptt_active);
 }
 
 }
