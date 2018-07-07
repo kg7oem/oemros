@@ -23,6 +23,7 @@
 #define SRC_SYSTEM_H_
 
 #include <condition_variable>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -130,7 +131,41 @@ class threadpool {
         void schedule(threadpool_cb);
 };
 
+void threadpool_bootstrap(void);
 void threadpool_schedule(threadpool_cb);
+
+template <class T>
+class promise {
+    private:
+        promise(const promise&) = delete;
+        promise(const promise&&) = delete;
+        promise& operator=(const promise&) = delete;
+        std::promise<T> promobj;
+        std::function<T (void)> cb;
+
+    public:
+        T get(void) {
+            return this->promobj.get_future().get();
+        }
+        void set(T value) {
+            this->promobj.set_value(value);
+        }
+
+        promise(void) = default;
+        promise(std::function<T (void)> cb_arg)
+        : cb(cb_arg)
+        {
+            threadpool_schedule([&]{
+                T result = cb();
+                this->promobj.set_value(result);
+            });
+        }
+};
+
+template <typename T, typename... Args>
+std::shared_ptr<oemros::promise<T>> make_promise(Args&&...args) {
+    return std::make_shared<oemros::promise<T>>(args...);
+}
 
 [[ noreturn ]] void system_exit(exitvalue);
 void system_panic(const char *);

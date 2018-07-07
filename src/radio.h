@@ -53,7 +53,7 @@ REFLEAF(radio) {
         static radio_s create(Args&&...args) {
             return std::make_shared<radio>(args...);
         }
-        std::future<freq_t> frequency(void);
+        std::shared_ptr<oemros::promise<freq_t>> frequency(void);
 };
 
 void radio_bootstrap(void);

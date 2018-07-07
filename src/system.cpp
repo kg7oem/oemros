@@ -83,14 +83,24 @@ threadpool::threadpool(size_t size_arg)
 
 void threadpool::schedule(threadpool_cb cb) {
     log_trace("got a schedule request");
-    // FIXME this needs to lock and work the condition variable
-    this->work_queue.push_back(cb);
+
+    {
+        std::lock_guard<std::mutex> lock(this->pool_mutex);
+        this->work_queue.push_back(cb);
+    }
+
+    this->pool_cond.notify_one();
 }
 
 static threadpool& threadpool_get(void) {
     static threadpool* pool_singleton = new threadpool(2);
 
     return *pool_singleton;
+}
+
+void threadpool_bootstrap(void) {
+    log_trace("bootstrapping the threadpool");
+    threadpool_get();
 }
 
 void threadpool_schedule(threadpool_cb cb) {

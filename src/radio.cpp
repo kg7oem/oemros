@@ -23,6 +23,7 @@
 
 #include "logging.h"
 #include "radio.h"
+#include "system.h"
 
 using namespace hamlib;
 
@@ -52,10 +53,19 @@ radio::radio(hamlib::rig_model_t model_arg)
     log_trace("finished initializing hamlib");
 }
 
-std::future<freq_t> radio::frequency(void) {
-    std::promise<freq_t> prom;
+std::shared_ptr<oemros::promise<freq_t>> radio::frequency(void) {
+    log_trace("Going to read the frequency from hamlib");
+    auto promise = make_promise<freq_t>([&] {
+            freq_t cur_freq;
+            int result = rig_get_freq(this->hl_rig, RIG_VFO_CURR, &cur_freq);
+            if (result != RIG_OK) {
+                log_fatal("rig_get_freq() failed (and this should really do an exception for the future");
+            }
+            log_trace("back from hamlib");
+            return cur_freq;
+    });
 
-    return prom.get_future();
+    return promise;
 }
 
 }
