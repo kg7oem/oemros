@@ -134,6 +134,7 @@ public:
     const char * level_name(loglevel);
     const char * source_name(logsource);
 
+    logging(void);
     void input_event(const logevent&);
     void add_destination(std::shared_ptr<logdest>);
 };

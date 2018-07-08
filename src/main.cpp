@@ -20,6 +20,8 @@ OBJECT(B, public A) {
 };
 
 void bootstrap(void) {
+    logging_add_destination(make_shared<logstdio>());
+
     thread_bootstrap();
     radio_bootstrap();
 }
@@ -51,9 +53,6 @@ void run(void) {
 }
 
 int main(int argc, char **argv) {
-    logging_add_destination(make_shared<logstdio>());
-    logging_set_level(loglevel::trace);
-
     bootstrap();
     run();
     cleanup();

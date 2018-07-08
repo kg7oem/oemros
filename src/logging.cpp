@@ -22,6 +22,7 @@
 #include <cassert>
 #include <cerrno>
 #include <cstring>
+#include <cstdlib>
 #include <iostream>
 
 #include "logging.h"
@@ -37,6 +38,7 @@ namespace oemros {
 static logging * get_engine(void) {
     static oemros::logging *log_singleton = NULL;
 
+    // FIXME this initializer is not thread safe
     if (log_singleton == NULL) {
         // FIXME this makes it so this can't be a shared library
         // and configurable by the user
@@ -87,6 +89,17 @@ const char * logging_source_name(logsource source) {
 logevent::logevent(logsource source, loglevel level, const struct timeval timestamp, std::thread::id tid, const char *function, const char *path, const int line, string message)
 : source(source), level(level), timestamp(timestamp), tid(tid), function(function), path(path), line(line), message(message)
 { };
+
+logging::logging(void) {
+    const char* env_value = getenv("OEMROS_TRACE");
+    loglevel_t level = loglevel_t::info;
+
+    if (env_value != NULL) {
+        level = loglevel_t::trace;
+    }
+
+    this->log_threshold = level;
+}
 
 loglevel logging::current_level(void) const {
     return this->log_threshold;
