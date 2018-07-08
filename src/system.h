@@ -23,6 +23,7 @@
 #define SRC_SYSTEM_H_
 
 #include <condition_variable>
+#include <exception>
 #include <future>
 #include <iostream>
 #include <memory>
@@ -32,6 +33,7 @@
 #include <string>
 #include <thread>
 
+#define MIXIN(name, ...) class name; class name ,##__VA_ARGS__
 #define ABSTRACT(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::object<name> ,##__VA_ARGS__
 #define OBJECT(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
 // private members come last so it is the default when the macro ends
@@ -58,6 +60,13 @@ enum class exitvalue {
     fatal = 1,
     panic = 101,
 };
+
+class generic_error : public std::runtime_error {
+    public:
+        generic_error(const char*);
+};
+
+std::exception_ptr make_error(const char*);
 
 template <class T>
 class classname_t {

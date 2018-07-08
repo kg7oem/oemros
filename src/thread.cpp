@@ -58,6 +58,13 @@ void threadpool_be_worker(threadpool* pool) {
     lock.unlock();
 }
 
+lock_t lockable::lock(void) {
+    log_trace("creating a new lock and acquiring the mutex");
+    lock_t new_lock(this->lock_mutex);
+    log_trace("got the lock");
+    return new_lock;
+}
+
 threadpool::threadpool(size_t size_arg)
 : size(size_arg) {
     log_trace("constructing a threadpool; size = ", this->size);
@@ -67,13 +74,6 @@ threadpool::threadpool(size_t size_arg)
         log_trace("creating new thread; i = ", i);
         this->thread_list.push_back(new std::thread(threadpool_be_worker, this));
     }
-}
-
-std::unique_lock<std::mutex> threadpool::lock(void) {
-    log_trace("creating a new lock and getting control of the mutex");
-    std::unique_lock<std::mutex> new_lock(this->pool_mutex);
-    log_trace("returning the new lock");
-    return new_lock;
 }
 
 void threadpool::shutdown(void) {

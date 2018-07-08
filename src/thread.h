@@ -23,26 +23,35 @@
 #define SRC_THREAD_H_
 
 #include <condition_variable>
+#include <exception>
 #include <future>
+#include <memory>
 #include <thread>
 
 namespace oemros {
 
+using mutex_t = std::mutex;
+using lock_t = std::unique_lock<mutex_t>;
+
+MIXIN(lockable) {
+    protected:
+        mutex_t lock_mutex;
+        lock_t lock(void);
+};
+
 using threadpool_cb = std::function<void (void)>;
 
-class threadpool {
+class threadpool : public lockable {
     friend void threadpool_be_worker(threadpool*);
 
     private:
         bool should_run = true;
-        std::mutex pool_mutex;
         std::condition_variable pool_cond;
         std::list<std::thread*> thread_list;
         std::list<threadpool_cb> work_queue;
         threadpool(const threadpool&) = delete;
         threadpool(const threadpool&&) = delete;
         threadpool& operator=(const threadpool&) = delete;
-        std::unique_lock<std::mutex> lock(void);
 
     public:
         const size_t size = 0;
@@ -56,13 +65,15 @@ void thread_cleanup(void);
 void threadpool_schedule(threadpool_cb);
 
 template <class T>
-class promise {
+class promise : public lockable {
     private:
         promise(const promise&) = delete;
         promise(const promise&&) = delete;
         promise& operator=(const promise&) = delete;
+        bool pending = true;
+        bool cancelled = false;
         std::promise<T> promobj;
-        std::function<T (void)> cb;
+        const std::function<T (void)> cb;
 
     public:
         promise(void) = default;
@@ -70,7 +81,8 @@ class promise {
         {
             threadpool_schedule([&]{
                 T result = cb();
-                this->promobj.set_value(result);
+                log_trace("setting the result in the promise");
+                this->set(result);
             });
         }
         // FIXME this doesn't work - because of the shared_ptr that
@@ -79,16 +91,25 @@ class promise {
 //            log_debug("automatically getting future value");
 //            return this->get;
 //        }
-        void shutdown(void);
+        void cancel(void) {
+            if (! this->pending) {
+                log_fatal("attempt to cancel  a promise that is not pending");
+            }
+            this->pending = false;
+            this->cancelled = true;
+            auto exception = make_error("this promise has been cancelled");
+            this->promobj.set_exception(exception);
+        }
         void set(T value) {
+            auto lock = this->lock();
+            if (! this->pending) {
+                log_fatal("attempt to set the value for a promise that is not pending");
+            }
+            this->pending = false;
             this->promobj.set_value(value);
         }
-        T get(void) {
-            return this->promobj.get_future().get();
-        }
-        void wait(void) {
-            this->promobj.get_future().wait();
-        }
+        T get(void) { return this->promobj.get_future().get(); }
+        void merge(void) { this->promobj.get_future().wait(); }
 };
 
 template <typename T, typename... Args>

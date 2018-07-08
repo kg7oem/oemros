@@ -34,9 +34,9 @@ void run(void) {
     auto radio = hamlib::create(1);
 
     log_info("start: ", radio->ptt()->get());
-    radio->ptt(true)->wait();
+    radio->ptt(true)->merge();
     log_info("now: ", radio->ptt()->get());
-    radio->ptt(false)->wait();
+    radio->ptt(false)->merge();
     log_info("and then: ", radio->ptt()->get());
 
     auto mode = radio->mode()->get();
@@ -49,7 +49,7 @@ void run(void) {
 
     mode->data(false);
     mode->modulation(modulation_t::wfm);
-    radio->mode(mode)->wait();
+    radio->mode(mode)->merge();
 }
 
 int main(int argc, char **argv) {

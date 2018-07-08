@@ -34,6 +34,14 @@ namespace oemros {
 
 errstream_t errstream;
 
+generic_error::generic_error(const char* message_arg)
+: std::runtime_error(message_arg) { }
+
+std::exception_ptr make_error(const char* message) {
+    auto error = generic_error(message);
+    return std::make_exception_ptr(error);
+};
+
 // a panic must never use the logging system because the logging
 // system uses panic if it can't function
 [[ noreturn ]] void system_panic(const char *message) {
