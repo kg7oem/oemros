@@ -11,6 +11,14 @@
 using namespace oemros;
 using namespace std;
 
+ABSTRACT(A) {
+
+};
+
+OBJECT(B, public A) {
+    OBJSTUFF(B);
+};
+
 void bootstrap(void) {
     thread_bootstrap();
     radio_bootstrap();

@@ -32,16 +32,16 @@
 #include <string>
 #include <thread>
 
-#define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::refcounted<name> ,##__VA_ARGS__
-#define REFLEAF(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name final : public oemros::refcounted<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+#define ABSTRACT(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::object<name> ,##__VA_ARGS__
+#define OBJECT(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
 // private members come last so it is the default when the macro ends
-#define REFBOILER(name) \
+#define OBJSTUFF(name) \
     public:\
         template<typename... Args> \
         static name##_s create(Args&&...args) { \
             return std::make_shared<name>(args...); \
         } \
-        virtual const char* type(void) const override { return #name; };\
+        virtual const char* type(void) const override { return #name; }; \
  \
     private: \
         virtual void ____has_boilerplate(void) override { }; \
@@ -87,13 +87,13 @@ std::string classname(const T* _this = NULL) {
 }
 
 template<class T>
-class refcounted {
-    friend std::ostream& operator<<(std::ostream& os, const refcounted& obj) {
+class object {
+    friend std::ostream& operator<<(std::ostream& os, const object& obj) {
         os << obj.description();
         return os;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<refcounted>& obj) {
+    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<object>& obj) {
         os << "shared_ptr(use=" << obj.use_count();
         os << " " << *obj.get() << ")";
         return os;
@@ -102,14 +102,14 @@ class refcounted {
     private:
         virtual void ____has_boilerplate(void) = 0;
         // disable copy constructor
-        refcounted(const refcounted&) = delete;
+        object(const object&) = delete;
         // disable move constructor
-        refcounted(const refcounted&&) = delete;
+        object(const object&&) = delete;
         // disable assignment operator
-        refcounted& operator=(const refcounted&) = delete;
+        object& operator=(const object&) = delete;
 
     public:
-        refcounted() = default;
+        object() = default;
         virtual const char* type(void) const = 0;
         virtual std::string description(void) const {
             std::stringstream ss;

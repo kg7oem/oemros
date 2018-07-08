@@ -47,10 +47,10 @@ typedef std::function<void (void)> runloopcb_f;
 
 class rlitem;
 
-REFLEAF(runloop) {
+OBJECT(runloop) {
     friend class rlitem;
 
-    REFBOILER(runloop);
+    OBJSTUFF(runloop);
 
     private:
         bool inside_runloop = false;
@@ -75,7 +75,7 @@ REFLEAF(runloop) {
 
 // runloop items (rlitem) are things that are managed
 // by the runloop
-REFCOUNTED(rlitem) {
+ABSTRACT(rlitem) {
     friend class runloop;
 
     private:
@@ -113,8 +113,8 @@ REFCOUNTED(rlitem) {
         void close_resume(void);
 };
 
-REFLEAF(rlonce, public rlitem) {
-    REFBOILER(rlonce);
+OBJECT(rlonce, public rlitem) {
+    OBJSTUFF(rlonce);
 
     private:
         libuv::uv_idle_t uv_idle;
@@ -132,8 +132,8 @@ REFLEAF(rlonce, public rlitem) {
         void execute(void);
 };
 
-REFLEAF(rltimer, public rlitem) {
-    REFBOILER(rltimer);
+OBJECT(rltimer, public rlitem) {
+    OBJSTUFF(rltimer);
 
     private:
         libuv::uv_timer_t uv_timer;

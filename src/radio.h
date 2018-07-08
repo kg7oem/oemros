@@ -51,8 +51,8 @@ enum class modulation_t {
     usb, lsb, am, fm, wfm,
 };
 
-REFLEAF(radiomode) {
-    REFBOILER(radiomode);
+OBJECT(radiomode) {
+    OBJSTUFF(radiomode);
 
     private:
         modulation_t modulation_mem = modulation_t::unspecified;
@@ -89,8 +89,8 @@ class radio {
         virtual std::shared_ptr<oemros::promise<bool>> mode(modulation_t, data_mode_t) = 0;
 };
 
-REFLEAF(hamlib, public radio) {
-    REFBOILER(hamlib);
+OBJECT(hamlib, public radio) {
+    OBJSTUFF(hamlib);
 
     private:
         hl::rig_model_t hl_model = 0;
