@@ -26,21 +26,36 @@
 
 namespace oemros {
 
-static void threadpool_be_worker(std::mutex* pool_mutex, std::condition_variable* pool_cond, std::list<threadpool_cb>* work_queue) {
+//static void threadpool_be_worker(bool* should_run, std::mutex* pool_mutex, std::condition_variable* pool_cond, std::list<threadpool_cb>* work_queue) {
+void threadpool_be_worker(threadpool* pool) {
     log_trace("this is a brand new threadpool worker");
-    std::unique_lock<std::mutex> lock(*pool_mutex);
+    auto lock = pool->lock();
 
     while(1) {
-        log_trace("thread is about to wait on the condition variable; size = ", work_queue->size());
-        pool_cond->wait(lock, [work_queue] { return work_queue->size() > 0; });
-        log_trace("thread is done waiting for condition variable");
+        log_trace("thread is about to wait on the condition variable; size = ", pool->work_queue.size());
+        pool->pool_cond.wait(lock, [pool] {
+            log_trace("condition variable check: should_run: ", pool->should_run, "; size: ", pool->work_queue.size());
+            if (! pool->should_run) {
+                return true;
+            }
+            return pool->work_queue.size() > 0;
+        });
 
-        threadpool_cb cb = work_queue->front();
-        work_queue->pop_front();
+        log_trace("thread is done waiting for condition variable");
+        if (! pool->should_run) {
+            log_trace("breaking out of the dequeue loop");
+            break;
+        }
+
+        threadpool_cb cb = pool->work_queue.front();
+        pool->work_queue.pop_front();
         log_trace("will invoke callback from workqueue");
         cb();
         log_trace("done with callback from workqueue");
     }
+
+    log_trace("thread is out of workqueue dequeue loop");
+    lock.unlock();
 }
 
 threadpool::threadpool(size_t size_arg)
@@ -50,15 +65,54 @@ threadpool::threadpool(size_t size_arg)
 
     for(size_t i = 0; i < this->size; i++) {
         log_trace("creating new thread; i = ", i);
-        this->thread_list.push_back(new std::thread(threadpool_be_worker, &this->pool_mutex, &this->pool_cond, &this->work_queue));
+        this->thread_list.push_back(new std::thread(threadpool_be_worker, this));
     }
+}
+
+std::unique_lock<std::mutex> threadpool::lock(void) {
+    log_trace("creating a new lock and getting control of the mutex");
+    std::unique_lock<std::mutex> new_lock(this->pool_mutex);
+    log_trace("returning the new lock");
+    return new_lock;
+}
+
+void threadpool::shutdown(void) {
+    log_trace("starting threadpool shutdown");
+
+    {
+        log_trace("locking and setting should_run to false");
+        auto lock = this->lock();
+        this->should_run = false;
+        log_trace("done with locked phase");
+    }
+
+    log_trace("waking up all threads");
+    this->pool_cond.notify_all();
+
+    // FIXME there should be some kind of limit on the amount of time
+    // that it can take before the thread returns from join() or the
+    // thread is cancelled
+    for(auto&& i : this->thread_list) {
+        log_trace("joining thread ", i->get_id());
+        i->join();
+        log_trace("deleting old thread");
+        delete i;
+    }
+
+    log_trace("emptying the work queue; size = ", this->work_queue.size());
+    this->work_queue.clear();
 }
 
 void threadpool::schedule(threadpool_cb cb) {
     log_trace("got a schedule request");
 
     {
-        std::lock_guard<std::mutex> lock(this->pool_mutex);
+        auto lock = this->lock();
+
+        if (! this->should_run) {
+            log_fatal("attempt to schedule a job on a threadqueue that is not running");
+        }
+
         this->work_queue.push_back(cb);
     }
 
@@ -71,9 +125,14 @@ static threadpool& threadpool_get(void) {
     return *pool_singleton;
 }
 
-void threadpool_bootstrap(void) {
+void thread_bootstrap(void) {
     log_trace("bootstrapping the threadpool");
     threadpool_get();
+}
+
+void thread_cleanup(void) {
+    log_trace("shutting down the threadpool");
+    threadpool_get().shutdown();
 }
 
 void threadpool_schedule(threadpool_cb cb) {

@@ -12,16 +12,15 @@ using namespace oemros;
 using namespace std;
 
 void bootstrap(void) {
-    threadpool_bootstrap();
+    thread_bootstrap();
     radio_bootstrap();
 }
 
-int main(int argc, char **argv) {
-    logging_add_destination(make_shared<logstdio>());
-    logging_set_level(loglevel::info);
+void cleanup(void) {
+    thread_cleanup();
+}
 
-    bootstrap();
-
+void run(void) {
     auto radio = hamlib::create(1);
 
     log_info("start: ", radio->ptt()->get());
@@ -41,8 +40,15 @@ int main(int argc, char **argv) {
     mode->data_mode(false);
     mode->modulation(modulation_t::wfm);
     radio->mode(mode)->wait();
+}
 
+int main(int argc, char **argv) {
+    logging_add_destination(make_shared<logstdio>());
+    logging_set_level(loglevel::trace);
 
+    bootstrap();
+    run();
+    cleanup();
 
     return 0;
 }

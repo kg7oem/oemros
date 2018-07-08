@@ -31,22 +31,28 @@ namespace oemros {
 using threadpool_cb = std::function<void (void)>;
 
 class threadpool {
+    friend void threadpool_be_worker(threadpool*);
+
     private:
+        bool should_run = true;
+        std::mutex pool_mutex;
+        std::condition_variable pool_cond;
+        std::list<std::thread*> thread_list;
+        std::list<threadpool_cb> work_queue;
         threadpool(const threadpool&) = delete;
         threadpool(const threadpool&&) = delete;
         threadpool& operator=(const threadpool&) = delete;
-        std::list<std::thread*> thread_list;
-        std::list<threadpool_cb> work_queue;
-        std::mutex pool_mutex;
-        std::condition_variable pool_cond;
+        std::unique_lock<std::mutex> lock(void);
 
     public:
         const size_t size = 0;
         threadpool(size_t);
+        void shutdown(void);
         void schedule(threadpool_cb);
 };
 
-void threadpool_bootstrap(void);
+void thread_bootstrap(void);
+void thread_cleanup(void);
 void threadpool_schedule(threadpool_cb);
 
 template <class T>
@@ -65,6 +71,7 @@ class promise {
 //            log_debug("automatically getting future value");
 //            return this->get;
 //        }
+        void shutdown(void);
         void set(T value) {
             this->promobj.set_value(value);
         }
