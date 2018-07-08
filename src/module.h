@@ -19,15 +19,55 @@
  *
  */
 
+#include "runloop.h"
 #include "system.h"
 
 namespace oemros {
 
-ABSTRACT(module) {
+OBJECT(module_components) {
+    OBJSTUFF(module_components);
 
+    protected:
+        oemros::runloop_s runloop;
+
+    public:
+        module_components(void);
 };
 
-using module_create_t = module_s (*)(void);
+ABSTRACT(module) {
+    friend module_s module_create(const char*);
+
+    protected:
+        // only the module system is allowed to construct
+        // and initialize module objects
+        module();
+        virtual bool init(void) = 0;
+        oemros::module_components oemros;
+
+    public:
+        virtual ~module() = default;
+};
+
+using module_bootstrap_t = void(*)(void);
+using module_factory_t = module_s (*)(void);
+
+struct module_info_st {
+    const char* name = NULL;
+    module_bootstrap_t bootstrap = NULL;
+    module_factory_t create = NULL;
+};
+
+using module_info_t = struct module_info_st;
+using module_loader_t = const module_info_t* (*)(void);
+
+void module_bootstrap(void);
+module_s module_create(const char*);
+
+// per module functions to get module data if the module
+// is linked in
+extern "C" {
+    const oemros::module_info_t* module__test_load(void);
+}
 
 }
 

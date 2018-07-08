@@ -19,6 +19,77 @@
  *
  */
 
+#include <map>
+#include <string>
+
+#include "logging.h"
 #include "module.h"
 
+namespace oemros {
 
+static std::mutex module_mutex;
+static std::map<std::string, const module_info_t*> loaded_modules;
+
+static std::unique_lock<std::mutex> get_lock(void) {
+    log_trace("trying to acquire the module info mutex");
+    return std::unique_lock<std::mutex>(module_mutex);
+    log_trace("got the module info mutex");
+}
+
+static void load_module(const module_info_t* info) {
+    if (info->name == NULL) {
+        log_fatal("name of module passsed for initializtion was NULL");
+    }
+
+    log_trace("request to initialize module: ", info->name);
+
+    auto lock = get_lock();
+
+    if (loaded_modules.find(info->name) != loaded_modules.end()) {
+        log_fatal("attempt to load module with duplicate name: ", info->name);
+    }
+
+    if (info->bootstrap != NULL) {
+        log_trace("running bootstrap for module ", info->name);
+        info->bootstrap();
+        log_trace("done running bootstrap for module ", info->name);
+    } else {
+        log_trace("no bootstrap specified for module ", info->name);
+    }
+
+    log_trace("adding module info to the loaded module list");
+    loaded_modules[info->name] = info;
+}
+
+//static void unload_module(const char* name) {
+//
+//}
+
+void module_bootstrap(void) {
+    load_module(module__test_load());
+}
+
+module_s module_create(const char* module_name) {
+    log_trace("request to create an instance of a module with name: ", module_name);
+
+    auto found = loaded_modules.find(module_name);
+    if (found == loaded_modules.end()) {
+        log_fatal("could not find a module with name of ", module_name);
+    }
+    const module_info_t* info = found->second;
+    log_trace("calling the registered create function for module ", module_name);
+    module_s new_module = info->create();
+    log_trace("got control back from create function for module", module_name);
+
+    log_trace("going to call init() for module ", module_name);
+    new_module->init();
+    log_trace("got control back from init() for module ", module_name);
+
+    return new_module;
+}
+
+module_components::module_components(void) { }
+
+module::module(void) { }
+
+}

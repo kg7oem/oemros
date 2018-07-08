@@ -1,9 +1,10 @@
 #include <chrono>
 #include <iostream>
-#include <memory.h>
+#include <memory>
 #include <thread>
 
 #include "logging.h"
+#include "module.h"
 #include "runloop.h"
 #include "radio.h"
 #include "system.h"
@@ -11,19 +12,13 @@
 using namespace oemros;
 using namespace std;
 
-ABSTRACT(A) {
-
-};
-
-OBJECT(B, public A) {
-    OBJSTUFF(B);
-};
-
 void bootstrap(void) {
     logging_add_destination(make_shared<logstdio>());
 
     thread_bootstrap();
     radio_bootstrap();
+
+    module_bootstrap();
 }
 
 void cleanup(void) {
@@ -31,25 +26,7 @@ void cleanup(void) {
 }
 
 void run(void) {
-    auto radio = hamlib::create(1);
-
-    log_info("start: ", radio->ptt()->get());
-    radio->ptt(true)->merge();
-    log_info("now: ", radio->ptt()->get());
-    radio->ptt(false)->merge();
-    log_info("and then: ", radio->ptt()->get());
-
-    auto mode = radio->mode()->get();
-    log_info("got mode back: modulation = ", (int)mode->modulation());
-    if (mode->data()) {
-        log_info("data mode is on");
-    } else {
-        log_info("data mode is off");
-    }
-
-    mode->data(false);
-    mode->modulation(modulation_t::wfm);
-    radio->mode(mode)->merge();
+    auto test_module = module_create("test");
 }
 
 int main(int argc, char **argv) {

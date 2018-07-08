@@ -1,12 +1,12 @@
 CXX=g++
-CXXFLAGS+=-std=c++11 -Wall -Werror -MMD -ggdb
+CXXFLAGS+=-std=c++14 -Wall -Werror -MMD -ggdb
 FLEXPP=flex++
 
 COMMON_DEPS=Makefile
 LIBS=-luv -lhamlib -lpthread
 
 OBJS=main.o turboini.flex.o logging.o system.o thread.o runloop.o radio.o
-OBJS+=module.o
+OBJS+=module.o module.test.o
 
 DEPS=${OBJS:.o=.d}
 
