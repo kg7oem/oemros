@@ -52,23 +52,15 @@ enum class modulation_t {
 };
 
 REFLEAF(radiomode) {
+    REFBOILER(radiomode);
+
     private:
         modulation_t modulation_mem = modulation_t::unspecified;
         data_mode_t data_mode_mem = false;
-        // disable copy constructor
-        radiomode(const radiomode&) = delete;
-        // disable move constructor
-        radiomode(const radiomode&&) = delete;
-        // disable assignment operator
-        radiomode& operator=(const radiomode&) = delete;
 
     public:
         radiomode(void) = default;
         radiomode(const modulation_t&, const data_mode_t&);
-        template<typename... Args>
-        static radiomode_s create(Args&&...args) {
-            return std::make_shared<radiomode>(args...);
-        }
         modulation_t modulation(void);
         modulation_t modulation(modulation_t);
         data_mode_t data_mode(void);
@@ -98,15 +90,11 @@ class radio {
 };
 
 REFLEAF(hamlib, public radio) {
+    REFBOILER(hamlib);
+
     private:
         hl::rig_model_t hl_model = 0;
         hl::rig* hl_rig = NULL;
-        // disable copy constructor
-        hamlib(const hamlib&) = delete;
-        // disable move constructor
-        hamlib(const hamlib&&) = delete;
-        // disable assignment operator
-        radiomode& operator=(const hamlib&) = delete;
 
     protected:
         std::shared_ptr<oemros::promise<freq_t>> hl_get_freq(vfo_t);
@@ -118,10 +106,6 @@ REFLEAF(hamlib, public radio) {
 
     public:
         hamlib(hl::rig_model_t);
-        template<typename... Args>
-        static hamlib_s create(Args&&...args) {
-            return std::make_shared<hamlib>(args...);
-        }
         virtual std::shared_ptr<oemros::promise<freq_t>> frequency(void) override;
         virtual std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> frequency(freq_t) override;

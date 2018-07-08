@@ -33,7 +33,21 @@
 #include <thread>
 
 #define REFCOUNTED(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::refcounted<name> ,##__VA_ARGS__
-#define REFLEAF(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::refcounted<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+#define REFLEAF(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name final : public oemros::refcounted<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+// private members come last so it is the default when the macro ends
+#define REFBOILER(name) \
+    public:\
+        template<typename... Args> \
+        static name##_s create(Args&&...args) { \
+            return std::make_shared<name>(args...); \
+        } \
+        virtual const char* type(void) const override { return #name; };\
+ \
+    private: \
+        virtual void ____has_boilerplate(void) override { }; \
+        name(const name&) = delete; \
+        name(const name&&) = delete; \
+        name& operator=(const name&) = delete;
 
 #define UNUSED __attribute__((unused))
 
@@ -86,6 +100,7 @@ class refcounted {
     }
 
     private:
+        virtual void ____has_boilerplate(void) = 0;
         // disable copy constructor
         refcounted(const refcounted&) = delete;
         // disable move constructor
@@ -95,9 +110,10 @@ class refcounted {
 
     public:
         refcounted() = default;
+        virtual const char* type(void) const = 0;
         virtual std::string description(void) const {
             std::stringstream ss;
-            ss << "refcounted(" << classname<T>() << ")";
+            ss << "refcounted(" << this->type() << ")";
             return ss.str();
         }
         template<typename... Args>

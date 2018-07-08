@@ -50,6 +50,8 @@ class rlitem;
 REFLEAF(runloop) {
     friend class rlitem;
 
+    REFBOILER(runloop);
+
     private:
         bool inside_runloop = false;
         libuv::uv_loop_t uv_loop;
@@ -63,10 +65,6 @@ REFLEAF(runloop) {
     public:
         runloop();
         ~runloop();
-        template<typename... Args>
-        static runloop_s create(Args&&...args) {
-            return std::make_shared<runloop>(args...);
-        }
         template<typename T, typename... Args>
         std::shared_ptr<T> create_item(Args&&...args) {
             return T::create(this->shared_from_this(), args...);
@@ -116,6 +114,8 @@ REFCOUNTED(rlitem) {
 };
 
 REFLEAF(rlonce, public rlitem) {
+    REFBOILER(rlonce);
+
     private:
         libuv::uv_idle_t uv_idle;
 
@@ -124,10 +124,6 @@ REFLEAF(rlonce, public rlitem) {
 
     public:
         rlonce(runloop_s, runloopcb_f);
-        template<typename... Args>
-        static rlonce_s create(Args&&...args) {
-            return std::make_shared<rlonce>(args...);
-        }
         virtual rlitem_s get_shared__child(void) override;
         libuv::uv_handle_t* get_uv_handle(void);
         virtual void uv_start(void) override;
@@ -137,6 +133,8 @@ REFLEAF(rlonce, public rlitem) {
 };
 
 REFLEAF(rltimer, public rlitem) {
+    REFBOILER(rltimer);
+
     private:
         libuv::uv_timer_t uv_timer;
 
@@ -149,10 +147,6 @@ REFLEAF(rltimer, public rlitem) {
         const uint64_t repeat = 0;
         rltimer(runloop_s, uint64_t, runloopcb_f);
         rltimer(runloop_s, uint64_t, uint64_t, runloopcb_f);
-        template<typename... Args>
-        static rltimer_s create(Args&&...args) {
-            return std::make_shared<rltimer>(args...);
-        }
         virtual rlitem_s get_shared__child(void) override;
         libuv::uv_handle_t* get_uv_handle(void);
         virtual void uv_start(void) override;

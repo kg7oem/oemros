@@ -65,6 +65,14 @@ class promise {
         std::function<T (void)> cb;
 
     public:
+        promise(void) = default;
+        promise(std::function<T (void)> cb_arg) : cb(cb_arg)
+        {
+            threadpool_schedule([&]{
+                T result = cb();
+                this->promobj.set_value(result);
+            });
+        }
         // FIXME this doesn't work - because of the shared_ptr that
         // always wraps it?
 //        operator T() const {
@@ -80,14 +88,6 @@ class promise {
         }
         void wait(void) {
             this->promobj.get_future().wait();
-        }
-        promise(void) = default;
-        promise(std::function<T (void)> cb_arg) : cb(cb_arg)
-        {
-            threadpool_schedule([&]{
-                T result = cb();
-                this->promobj.set_value(result);
-            });
         }
 };
 
