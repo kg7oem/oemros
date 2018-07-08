@@ -120,8 +120,8 @@ void threadpool::schedule(threadpool_cb cb) {
 }
 
 static threadpool& threadpool_get(void) {
-    static threadpool* pool_singleton = new threadpool(2);
-
+    // TODO it would be nice if the thread pool size was dynamic
+    static threadpool* pool_singleton = new threadpool(CONF_THREADPOOL_SIZE);
     return *pool_singleton;
 }
 

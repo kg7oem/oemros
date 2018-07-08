@@ -25,5 +25,6 @@
 #define LOGGING_MACROS
 
 #define CONF_ERRMSG_BUFLEN 256
+#define CONF_THREADPOOL_SIZE 2
 
 #endif /* SRC_CONF_H_ */

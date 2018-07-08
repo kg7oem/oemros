@@ -82,8 +82,7 @@ class promise {
             this->promobj.get_future().wait();
         }
         promise(void) = default;
-        promise(std::function<T (void)> cb_arg)
-        : cb(cb_arg)
+        promise(std::function<T (void)> cb_arg) : cb(cb_arg)
         {
             threadpool_schedule([&]{
                 T result = cb();
