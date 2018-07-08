@@ -6,6 +6,8 @@ COMMON_DEPS=Makefile
 LIBS=-luv -lhamlib -lpthread
 
 OBJS=main.o turboini.flex.o logging.o system.o thread.o runloop.o radio.o
+OBJS+=module.o
+
 DEPS=${OBJS:.o=.d}
 
 OEMROS_BIN=oemros
