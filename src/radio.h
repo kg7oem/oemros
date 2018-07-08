@@ -63,8 +63,8 @@ OBJECT(radiomode) {
         radiomode(const modulation_t&, const data_mode_t&);
         modulation_t modulation(void);
         modulation_t modulation(modulation_t);
-        data_mode_t data_mode(void);
-        data_mode_t data_mode(data_mode_t);
+        data_mode_t data(void);
+        data_mode_t data(data_mode_t);
 };
 
 class radio {

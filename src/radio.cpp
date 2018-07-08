@@ -50,11 +50,11 @@ modulation_t radiomode::modulation(modulation_t new_modulation) {
     return old_modulation;
 }
 
-data_mode_t radiomode::data_mode(void) {
+data_mode_t radiomode::data(void) {
     return this->data_mode_mem;
 }
 
-data_mode_t radiomode::data_mode(data_mode_t new_data_mode) {
+data_mode_t radiomode::data(data_mode_t new_data_mode) {
     data_mode_t old_data_mode = this->data_mode_mem;
     this->data_mode_mem = new_data_mode;
     return old_data_mode;
@@ -272,64 +272,64 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_mode(vfo_t vfo, radiomode_
             log_fatal("attempt to set modulation type to 'unsupported'");
             break;
         case modulation_t::none:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with a modulation of 'none' with hamlib");
             }
             rmode = RIG_MODE_NONE;
             break;
         case modulation_t::cw:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with CW with hamlib");
             }
             rmode = RIG_MODE_CW;
             break;
         case modulation_t::cwr:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with CWR with hamlib");
             }
             rmode = RIG_MODE_CWR;
             break;
         case modulation_t::rtty:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with RTTY with hamlib");
             }
             rmode = RIG_MODE_RTTY;
             break;
         case modulation_t::rttyr:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with RTTYR with hamlib");
             }
             rmode = RIG_MODE_RTTYR;
             break;
         case modulation_t::usb:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 rmode = RIG_MODE_PKTUSB;
             } else {
                 rmode = RIG_MODE_USB;
             }
             break;
         case modulation_t::lsb:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 rmode = RIG_MODE_PKTLSB;
             } else {
                 rmode = RIG_MODE_LSB;
             }
             break;
         case modulation_t::am:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with AM with hamlib");
             }
             rmode = RIG_MODE_AM;
             break;
         case modulation_t::fm:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 rmode = RIG_MODE_PKTFM;
             } else {
                 rmode = RIG_MODE_FM;
             }
             break;
         case modulation_t::wfm:
-            if (mode->data_mode()) {
+            if (mode->data()) {
                 log_fatal("can not set datamode with WFM with hamlib");
             }
             rmode = RIG_MODE_WFM;

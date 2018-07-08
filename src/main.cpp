@@ -39,13 +39,13 @@ void run(void) {
 
     auto mode = radio->mode()->get();
     log_info("got mode back: modulation = ", (int)mode->modulation());
-    if (mode->data_mode()) {
+    if (mode->data()) {
         log_info("data mode is on");
     } else {
         log_info("data mode is off");
     }
 
-    mode->data_mode(false);
+    mode->data(false);
     mode->modulation(modulation_t::wfm);
     radio->mode(mode)->wait();
 }
