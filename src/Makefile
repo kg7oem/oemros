@@ -15,7 +15,7 @@ OEMROS_BIN=oemros
 all: $(OEMROS_BIN)
 
 clean:
-	rm -f $(OEMROS_BIN) turboini.flex.cpp $(OBJS) $(DEPS)
+	rm -f $(OEMROS_BIN) gmon.out turboini.flex.cpp $(OBJS) $(DEPS)
 
 $(OEMROS_BIN): $(OBJS) $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LIBS)
