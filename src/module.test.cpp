@@ -29,7 +29,7 @@ static void bootstrap_test(void) {
 }
 
 static oemros::module_s create_test(void) {
-    log_info("creating an instance of a test module");
+    log_trace("creating an instance of a test module");
     return std::dynamic_pointer_cast<oemros::module>(test::create());
 }
 
@@ -53,4 +53,7 @@ void test::will_start(void) {
 
 void test::did_start(void) {
     log_trace("did_start was called");
+    this->oemros->runloop->create_item<oemros::rlonce>([]{
+        log_info("This is the test module");
+    })->start();
 }
