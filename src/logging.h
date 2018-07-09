@@ -122,7 +122,8 @@ public:
 class logging {
 private:
     loglevel log_threshold = loglevel::error;
-    bool buffer_events = false;
+    bool buffer_events = true;
+    bool deliver_events = false;
     std::list<std::shared_ptr<logdest>> destinations;
     std::list<logevent> event_buffer;
 
@@ -135,6 +136,7 @@ public:
     const char * source_name(logsource);
 
     logging(void);
+    void start(void);
     void input_event(const logevent&);
     void add_destination(std::shared_ptr<logdest>);
 };
@@ -208,6 +210,8 @@ template<typename T, typename... Args>
     log__level_t(source, level, function, path, line, t, args...);
     system_exit(exitvalue::fatal);
 }
+
+void logging_start(void);
 
 }
 

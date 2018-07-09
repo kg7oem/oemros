@@ -52,6 +52,10 @@ static logging * get_engine(void) {
     return log_singleton;
 }
 
+void logging_start(void) {
+    get_engine()->start();
+}
+
 void logging_cleanup(void) {
     auto logging = get_engine();
     assert(logging != NULL);
@@ -99,6 +103,21 @@ logging::logging(void) {
     }
 
     this->log_threshold = level;
+}
+
+void logging::start(void) {
+    size_t delivered = 0;
+
+    if (this->event_buffer.size() > 0) {
+        for(auto&& i : this->event_buffer) {
+            this->deliver_event(i);
+            delivered++;
+        }
+    }
+
+    this->deliver_events = true;
+    // FIXME this is not good enough
+    assert(this->event_buffer.size() == delivered);
 }
 
 loglevel logging::current_level(void) const {
@@ -161,7 +180,7 @@ void logging::deliver_event(const logevent& event) {
 void logging::input_event(const logevent& event) {
     assert(event.level >= logging_get_level());
 
-    if (this->buffer_events && this->destinations.size() == 0) {
+    if (! this->deliver_events && this->buffer_events) {
         this->event_buffer.push_back(event);
     } else {
         this->deliver_event(event);
@@ -169,16 +188,6 @@ void logging::input_event(const logevent& event) {
 }
 
 void logging::add_destination(shared_ptr<logdest> destination) {
-    if (this->destinations.size() == 0) {
-        // deliver the events that were stored before any
-        // destination was available
-        for (auto&& i : this->event_buffer) {
-            destination->event(i);
-        }
-
-        this->event_buffer.clear();
-    }
-
     this->destinations.push_back(destination);
 }
 
