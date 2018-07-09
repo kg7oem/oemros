@@ -118,6 +118,7 @@ void logging::start(void) {
     this->deliver_events = true;
     // FIXME this is not good enough
     assert(this->event_buffer.size() == delivered);
+    this->event_buffer.clear();
 }
 
 loglevel logging::current_level(void) const {
