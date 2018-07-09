@@ -121,6 +121,7 @@ public:
 
 class logging {
 private:
+    std::mutex log_mutex;
     loglevel log_threshold = loglevel::error;
     bool buffer_events = true;
     bool deliver_events = false;
@@ -128,17 +129,18 @@ private:
     std::list<logevent> event_buffer;
 
     void deliver_event(const logevent&);
+    std::unique_lock<std::mutex> get_lock(void);
 
 public:
-    loglevel current_level(void) const;
-    loglevel current_level(loglevel);
-    const char * level_name(loglevel);
-    const char * source_name(logsource);
-
     logging(void);
     void start(void);
     void input_event(const logevent&);
     void add_destination(std::shared_ptr<logdest>);
+    loglevel current_level(void);
+    loglevel current_level(loglevel);
+    const char * level_name(loglevel);
+    const char * source_name(logsource);
+
 };
 
 void logging_cleanup(void);

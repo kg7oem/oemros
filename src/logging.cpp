@@ -105,7 +105,12 @@ logging::logging(void) {
     this->log_threshold = level;
 }
 
+std::unique_lock<std::mutex> logging::get_lock(void) {
+    return std::unique_lock<std::mutex>(this->log_mutex);
+}
+
 void logging::start(void) {
+    auto lock = this->get_lock();
     size_t delivered = 0;
 
     if (this->event_buffer.size() > 0) {
@@ -116,16 +121,18 @@ void logging::start(void) {
     }
 
     this->deliver_events = true;
-    // FIXME this is not good enough
+
     assert(this->event_buffer.size() == delivered);
     this->event_buffer.clear();
 }
 
-loglevel logging::current_level(void) const {
+loglevel logging::current_level(void) {
+    auto lock = this->get_lock();
     return this->log_threshold;
 }
 
 loglevel logging::current_level(loglevel new_level) {
+    auto lock = this->get_lock();
     loglevel old_level = this->log_threshold;
     this->log_threshold = new_level;
     return old_level;
@@ -179,7 +186,9 @@ void logging::deliver_event(const logevent& event) {
 }
 
 void logging::input_event(const logevent& event) {
-    if(event.level < logging_get_level()) {
+    auto lock = this->get_lock();
+
+    if(event.level < this->log_threshold) {
         return;
     }
 
@@ -191,6 +200,7 @@ void logging::input_event(const logevent& event) {
 }
 
 void logging::add_destination(shared_ptr<logdest> destination) {
+    auto lock = this->get_lock();
     this->destinations.push_back(destination);
 }
 
