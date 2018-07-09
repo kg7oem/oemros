@@ -28,14 +28,8 @@ void bootstrap(void) {
     module_bootstrap();
 }
 
-void cleanup(void) {
-    thread_cleanup();
-}
-
 int main(int argc, char **argv) {
     bootstrap();
     run();
-    cleanup();
-
     return 0;
 }

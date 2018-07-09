@@ -20,6 +20,7 @@
  */
 
 #include <cassert>
+#include <cstdlib>
 
 #include "logging.h"
 #include "thread.h"
@@ -128,6 +129,8 @@ static threadpool& threadpool_get(void) {
 void thread_bootstrap(void) {
     log_trace("bootstrapping the threadpool");
     threadpool_get();
+    log_trace("setting thread cleanup to happen via atexit()");
+    atexit(thread_cleanup);
 }
 
 void thread_cleanup(void) {
