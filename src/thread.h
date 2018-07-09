@@ -117,6 +117,8 @@ std::shared_ptr<oemros::promise<T>> make_promise(Args&&...args) {
     return std::make_shared<oemros::promise<T>>(args...);
 }
 
+lock_t make_lock(mutex_t&);
+
 }
 
 #endif /* SRC_THREAD_H_ */

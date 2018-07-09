@@ -61,7 +61,7 @@ void threadpool_be_worker(threadpool* pool) {
 
 lock_t lockable::lock(void) {
     log_trace("creating a new lock and acquiring the mutex");
-    lock_t new_lock(this->lock_mutex);
+    auto new_lock = make_lock(this->lock_mutex);
     log_trace("got the lock");
     return new_lock;
 }
@@ -118,6 +118,13 @@ void threadpool::schedule(threadpool_cb cb) {
     }
 
     this->pool_cond.notify_one();
+}
+
+lock_t make_lock(mutex_t& mutex) {
+    log_trace("creating lock object and acquiring mutex");
+    auto new_lock = lock_t(mutex);
+    log_trace("acquired the mutex");
+    return new_lock;
 }
 
 static threadpool& threadpool_get(void) {
