@@ -179,12 +179,14 @@ void logging::deliver_event(const logevent& event) {
 }
 
 void logging::input_event(const logevent& event) {
-    assert(event.level >= logging_get_level());
+    if(event.level < logging_get_level()) {
+        return;
+    }
 
-    if (! this->deliver_events && this->buffer_events) {
-        this->event_buffer.push_back(event);
-    } else {
+    if(this->deliver_events) {
         this->deliver_event(event);
+    } else if (this->buffer_events) {
+        this->event_buffer.push_back(event);
     }
 }
 
