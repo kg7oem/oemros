@@ -1,0 +1,11 @@
+This is documentation for people who want to work on the oemros source code.
+
+Module lifecycle:
+
+  0. Modules are loaded and bootstrapped in thread 0
+  1. New thread is started that will be exclusive to the module
+  2. The constructor specified in the module info is called in the new thread
+  3. The newly constructed module will have the will_start() method invoked
+  4. The newly constructed thread will enter into the module's runloop
+  5. The newly constructed module will have the did_start() method invoked
+     inside the context of the runloop.

@@ -21,6 +21,7 @@
 
 #include <map>
 #include <string>
+#include <thread>
 
 #include "logging.h"
 #include "module.h"
@@ -81,15 +82,37 @@ module_s module_create(const char* module_name) {
     module_s new_module = info->create();
     log_trace("got control back from create function for module", module_name);
 
-    log_trace("going to call init() for module ", module_name);
-    new_module->init();
-    log_trace("got control back from init() for module ", module_name);
-
     return new_module;
+}
+
+std::thread* module_spawn(const char* name) {
+    auto module_thread = new std::thread([name]{
+        log_trace("new module thread has just started");
+        auto module_instance = module_create(name);
+        module_instance->start();
+        module_instance->oemros->runloop->enter();
+    });
+
+    return module_thread;
 }
 
 module_components::module_components(void) { }
 
 module::module(void) { }
+
+void module::start(void) {
+    log_trace("notifying subclass that module is going to start");
+    this->will_start();
+
+    // FIXME check to see if the module decided to stop before continuing
+    log_trace("scheduling a runloop job to deliver the did_start() notification");
+    this->oemros->runloop->create_item<rlonce>([this] {
+        log_trace("got control inside start notifier runloop job");
+
+        log_trace("invoking the did_start() method");
+        this->did_start();
+        log_trace("done invoking the did_start method");
+    })->start();
+}
 
 }

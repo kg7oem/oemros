@@ -12,6 +12,13 @@
 using namespace oemros;
 using namespace std;
 
+void run(void) {
+    auto test_thread = module_spawn("test");
+    log_trace("joining to test module thread");
+    test_thread->join();
+    delete test_thread;
+}
+
 void bootstrap(void) {
     logging_add_destination(make_shared<logstdio>());
 
@@ -23,10 +30,6 @@ void bootstrap(void) {
 
 void cleanup(void) {
     thread_cleanup();
-}
-
-void run(void) {
-    auto test_module = module_create("test");
 }
 
 int main(int argc, char **argv) {

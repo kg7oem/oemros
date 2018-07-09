@@ -47,6 +47,10 @@ const oemros::module_info_t* oemros::module__test_load(void) {
 
 test::test(void) { }
 
-bool test::init(void) {
-    log_fatal("well this is where we are");
+void test::will_start(void) {
+    log_trace("will_start was called");
+}
+
+void test::did_start(void) {
+    log_trace("did_start was called");
 }

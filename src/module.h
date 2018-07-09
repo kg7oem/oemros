@@ -28,9 +28,9 @@ OBJECT(module_components) {
     OBJSTUFF(module_components);
 
     protected:
-        oemros::runloop_s runloop;
 
     public:
+        runloop_s runloop = runloop::create();
         module_components(void);
 };
 
@@ -41,10 +41,12 @@ ABSTRACT(module) {
         // only the module system is allowed to construct
         // and initialize module objects
         module();
-        virtual bool init(void) = 0;
-        oemros::module_components oemros;
+        virtual void will_start(void) = 0;
+        virtual void did_start(void) = 0;
 
     public:
+        module_components_s oemros = module_components::create();
+        void start(void);
         virtual ~module() = default;
 };
 
@@ -62,6 +64,7 @@ using module_loader_t = const module_info_t* (*)(void);
 
 void module_bootstrap(void);
 module_s module_create(const char*);
+std::thread* module_spawn(const char*);
 
 // per module functions to get module data if the module
 // is linked in
