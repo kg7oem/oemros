@@ -50,26 +50,30 @@ ABSTRACT(module) {
         virtual ~module() = default;
 };
 
-using module_bootstrap_t = void(*)(void);
-using module_factory_t = module_s (*)(void);
+struct module_info {
+    const std::string name;
 
-struct module_info_st {
-    const char* name = NULL;
-    module_bootstrap_t bootstrap = NULL;
-    module_factory_t create = NULL;
+    module_info(std::string in_name) 
+	: name(in_name)
+    {
+    }
+    virtual void bootstrap() const = 0;
+    virtual module_s create() const = 0;
+
+    private:
+	module_info& operator=(const module_info&) = delete;
+	module_info(const module_info&) = delete;
+	module_info(const module_info&&) = delete;
 };
 
-using module_info_t = struct module_info_st;
-using module_loader_t = const module_info_t* (*)(void);
-
 void module_bootstrap(void);
-module_s module_create(const char*);
-std::thread* module_spawn(const char*);
+module_s module_create(const std::string&);
+std::thread* module_spawn(const std::string&);
 
 // per module functions to get module data if the module
 // is linked in
 extern "C" {
-    const oemros::module_info_t* module__test_load(void);
+    const oemros::module_info* module__test_load(void);
 }
 
 }

@@ -24,25 +24,27 @@
 #include "logging.h"
 #include "module.test.h"
 
-static void bootstrap_test(void) {
-    log_trace("bootstrapping the test module");
-}
+struct test_module_info : public oemros::module_info {
+    test_module_info(const std::string& name)
+	: oemros::module_info(name) { }
 
-static oemros::module_s create_test(void) {
-    log_trace("creating an instance of a test module");
-    return std::dynamic_pointer_cast<oemros::module>(test::create());
-}
+    void bootstrap(void) const override {
+	log_trace("bootstrapping the test module");
+    }
 
-const oemros::module_info_t* oemros::module__test_load(void) {
+    oemros::module_s create(void) const override {
+	log_trace("creating an instance of a test module");
+	return std::dynamic_pointer_cast<oemros::module>(test::create());
+    }
+
+};
+
+static const test_module_info test_module{"test"};
+
+const oemros::module_info* oemros::module__test_load(void) {
     log_trace("returning the info for the test module");
 
-    static const oemros::module_info_t info = {
-            name: "test",
-            bootstrap: bootstrap_test,
-            create: create_test,
-    };
-
-    return &info;
+    return &test_module;
 }
 
 test::test(void) { }
