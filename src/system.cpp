@@ -56,7 +56,14 @@ std::exception_ptr make_error(const char* message) {
 
 std::ostream& operator<<(std::ostream& os, const errstream_t& error) {
     char buf[CONF_ERRMSG_BUFLEN];
+
+#ifdef _GNU_SOURCE
     char *message = strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
+#else
+    strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
+    char *message = buf;
+#endif
+
     os << message;
     return os;
 }
