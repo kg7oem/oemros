@@ -162,7 +162,12 @@ std::shared_ptr<oemros::promise<radiomode_s>> hamlib::hl_get_mode(vfo_t vfo) {
 
         modulation_t modulation;
         data_mode_t datamode;
+
         switch (rmode) {
+	default:
+	    modulation = modulation_t::unsupported;
+            datamode = false;
+	    break;
         case RIG_MODE_NONE:
             modulation = modulation_t::none;
             datamode = false;
@@ -201,10 +206,6 @@ std::shared_ptr<oemros::promise<radiomode_s>> hamlib::hl_get_mode(vfo_t vfo) {
             modulation = modulation_t::rttyr;
             datamode = false;
             break;
-        case RIG_MODE_AMS:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
         case RIG_MODE_PKTLSB:
             modulation = modulation_t::lsb;
             break;
@@ -214,44 +215,7 @@ std::shared_ptr<oemros::promise<radiomode_s>> hamlib::hl_get_mode(vfo_t vfo) {
         case RIG_MODE_PKTFM:
             modulation = modulation_t::fm;
             break;
-        case RIG_MODE_ECSSUSB:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_ECSSLSB:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_FAX:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_SAM:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_SAL:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_SAH:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_DSB:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_FMN:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
-        case RIG_MODE_TESTS_MAX:
-            modulation = modulation_t::unsupported;
-            datamode = false;
-            break;
         }
-
         return radiomode::create(modulation, datamode);
     });
 
