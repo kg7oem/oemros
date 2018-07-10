@@ -1,4 +1,5 @@
 %option noyywrap
+%option c++
 
 %{
 #include <iostream>
