@@ -36,19 +36,9 @@ namespace oemros {
 #endif
 
 static logging * get_engine(void) {
-    static oemros::logging *log_singleton = NULL;
-
-    // FIXME this initializer is not thread safe
-    if (log_singleton == NULL) {
-        // FIXME this makes it so this can't be a shared library
-        // and configurable by the user
-        log_singleton = LOGGING_ENGINE_CREATE;
-
-        if (log_singleton == NULL) {
-            system_panic("got NULL from logging engine creator");
-        }
-    }
-
+    // C++ gurantees thread safe static initialization
+    static oemros::logging *log_singleton = LOGGING_ENGINE_CREATE;
+    assert(log_singleton != NULL);
     return log_singleton;
 }
 
@@ -105,13 +95,24 @@ logging::logging(void) {
     this->log_threshold = level;
 }
 
-std::unique_lock<std::mutex> logging::get_lock(void) {
-    return std::unique_lock<std::mutex>(this->log_mutex);
+std::unique_lock<std::shared_timed_mutex> logging::get_lockex(void) {
+    return std::unique_lock<std::shared_timed_mutex>(this->log_mutex);
 }
 
+std::shared_lock<std::shared_timed_mutex> logging::get_locksh(void) {
+    return std::shared_lock<std::shared_timed_mutex>(this->log_mutex);
+}
+
+// THREAD this entire method needs exclusive access
 void logging::start(void) {
-    auto lock = this->get_lock();
+    auto lock = this->get_lockex();
     size_t delivered = 0;
+
+    // if start was called and no destination was ever specified
+    // then a default one is setup
+    if (this->destinations.size() == 0) {
+        this->destinations.push_back(std::make_shared<logconsole>());
+    }
 
     if (this->event_buffer.size() > 0) {
         for(auto&& i : this->event_buffer) {
@@ -126,18 +127,20 @@ void logging::start(void) {
     this->event_buffer.clear();
 }
 
+// THREAD this method relies on atomic variables
 loglevel logging::current_level(void) {
-    auto lock = this->get_lock();
     return this->log_threshold;
 }
 
+// THREAD this method relies on atomic variables
 loglevel logging::current_level(loglevel new_level) {
-    auto lock = this->get_lock();
     loglevel old_level = this->log_threshold;
+    // FIXME this could probably use a compare-and-swap since it is not locked
     this->log_threshold = new_level;
     return old_level;
 }
 
+// THREAD this method is inherently thread safe
 const char * logging::level_name(loglevel level) {
     switch (level) {
     case loglevel::fatal:
@@ -166,6 +169,7 @@ const char * logging::level_name(loglevel level) {
 }
 
 
+// THREAD this method is inherently thread safe
 const char * logging::source_name(logsource source) {
     switch (source) {
     case logsource::unknown:
@@ -179,28 +183,62 @@ const char * logging::source_name(logsource source) {
     log_fatal("switch() failed for logsource enum: ", (int)source);
 }
 
+// THREAD private method only called by methods already holding a lock
 void logging::deliver_event(const logevent& event) {
     for (auto&& i : this->destinations) {
         i->event(event);
     }
 }
 
+// THREAD starts off with no locking then acquires a shared lock and
+// THREAD might restart with an exclusive lock
 void logging::input_event(const logevent& event) {
-    auto lock = this->get_lock();
+    if (event.level == loglevel::unknown) {
+        system_panic("attempt to log an event with a level of unknown");
+    }
 
-    if(event.level < this->log_threshold) {
+    // atomic data type means this does not need to be locked
+    if (this->log_threshold == loglevel::unknown) {
+        return;
+    } else if(event.level < this->log_threshold) {
         return;
     }
 
+    // this function starts off with a shared lock then restarts
+    // with an exclusive lock if needed
+    bool shared = true;
+    std::shared_lock<std::shared_timed_mutex> shared_lock;
+    std::unique_lock<std::shared_timed_mutex> exclusive_lock;
+
+restart:
+
+    if (shared) {
+        shared_lock = this->get_locksh();
+    } else {
+        shared_lock.unlock();
+        exclusive_lock = this->get_lockex();
+    }
+
+    // event delivery and checking for buffering are ok with the shared lock
+    // and with the exclusive lock though the preferred case is to handle
+    // delivery with the shared lock - delivering on an exclusive lock
+    // will be limited to edge cases where this restarts immediately after
+    // moving from buffering events to delivery of events otherwise the
+    // exclusive lock is used to put events into the buffer
     if(this->deliver_events) {
         this->deliver_event(event);
     } else if (this->buffer_events) {
+        if (shared) {
+            shared = false;
+            goto restart;
+        }
         this->event_buffer.push_back(event);
     }
 }
 
+// THREAD this method needs exclusive access
 void logging::add_destination(shared_ptr<logdest> destination) {
-    auto lock = this->get_lock();
+    auto lock = this->get_lockex();
     this->destinations.push_back(destination);
 }
 
@@ -258,6 +296,20 @@ void logstdio::output__child(const logevent& event, const string formatted) {
     } else {
         cout << formatted << endl;
     }
+}
+
+std::string logconsole::format_event(const logevent& event) {
+    stringstream buffer;
+
+    if (event.level <= loglevel::debug) {
+        return logdest::format_event(event);
+    } else if ((event.level >= loglevel::verbose) && (event.level <= loglevel::warn)) {
+        buffer << logging_level_name(event.level) << " " << event.message;
+    } else {
+        return logdest::format_event(event);
+    }
+
+    return buffer.str();
 }
 
 logfile::logfile(const char *path) {

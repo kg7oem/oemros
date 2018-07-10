@@ -15,7 +15,7 @@ void run(void) {
 }
 
 void bootstrap(void) {
-    logging_add_destination(make_shared<logstdio>());
+//    logging_add_destination(make_shared<logstdio>());
     logging_start();
 
     thread_bootstrap();

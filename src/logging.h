@@ -22,10 +22,13 @@
 #ifndef SRC_LOGGING_H_
 #define SRC_LOGGING_H_
 
+#include <atomic>
 #include <fstream>
 #include <list>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <sstream>
 #include <sys/time.h>
 #include <thread>
@@ -34,6 +37,25 @@
 #include "system.h"
 
 namespace oemros {
+
+// The log level to use during construction of the logging engine.
+// This value will be used before the logging engine can be formally
+// configured and started after main() gets control. A value of unknown
+// causes the logging engine to not do anything when it receives a log
+// event.
+#ifndef LOGGING_INIT_LOG_THRESHOLD
+#define LOGGING_INIT_LOG_THRESHOLD loglevel::unknown
+#endif
+
+// The logging engine will be constructed the first time any log event
+// is generated which might be before it is configured and started through
+// the program logic. When a log event comes in to the engine if buffering
+// is enabled the event will go into a list. When the engine is started later
+// any buffered events will be delivered to any log destinations that are
+// present.
+#ifndef LOGGING_INIT_BUFFER_EVENTS
+#define LOGGING_INIT_BUFFER_EVENTS true
+#endif
 
 #ifndef LOGGING_TIMESTR_BUFLEN
 #define LOGGING_TIMESTR_BUFLEN 128
@@ -79,6 +101,7 @@ typedef LOGGING_LEVEL_T loglevel;
 #define log_trace(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::trace, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #endif
 
+// log events are not mutable - this property is used to gurantee thread safety
 class logevent {
 public:
     const logsource source = logsource::unknown;
@@ -87,7 +110,7 @@ public:
     const std::thread::id tid;
     const char *function = NULL;
     const char *path = NULL;
-    const int line = 0;
+    const int line = -1;
     const std::string message;
 
     logevent(logsource, loglevel, const struct timeval when, std::thread::id, const char *, const char *, const int, const std::string);
@@ -110,6 +133,10 @@ public:
     virtual void output__child(const logevent&, const std::string);
 };
 
+class logconsole : public logstdio {
+    virtual std::string format_event(const logevent&) override;
+};
+
 class logfile : public logdest {
 private:
     std::ofstream outfile;
@@ -121,22 +148,27 @@ public:
 
 class logging {
 private:
-    std::mutex log_mutex;
-    loglevel log_threshold = loglevel::error;
-    bool buffer_events = true;
+    std::shared_timed_mutex log_mutex;
+    std::atomic<loglevel> log_threshold = ATOMIC_VAR_INIT(LOGGING_INIT_LOG_THRESHOLD);
+    bool buffer_events = LOGGING_INIT_BUFFER_EVENTS;
     bool deliver_events = false;
     std::list<std::shared_ptr<logdest>> destinations;
     std::list<logevent> event_buffer;
 
     void deliver_event(const logevent&);
-    std::unique_lock<std::mutex> get_lock(void);
-
+    std::unique_lock<std::shared_timed_mutex> get_lockex(void);
+    std::shared_lock<std::shared_timed_mutex> get_locksh(void);
 public:
     logging(void);
+    // TODO needs exclusive lock
     void start(void);
+    // TODO shared and exclusive requirements
     void input_event(const logevent&);
+    // TODO exclusive requirements
     void add_destination(std::shared_ptr<logdest>);
+    // TODO atomic operation
     loglevel current_level(void);
+    // TODO atomic operation
     loglevel current_level(loglevel);
     const char * level_name(loglevel);
     const char * source_name(logsource);
