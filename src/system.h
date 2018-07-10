@@ -139,7 +139,7 @@ class errstream_t {
 extern errstream_t errstream;
 
 [[ noreturn ]] void system_exit(exitvalue);
-void system_panic(const char *);
+[[ noreturn ]] void system_panic(const char *);
 
 }
 
