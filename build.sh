@@ -10,3 +10,7 @@ mkdir build/
 pushd build
 cmake ..
 time make -j4
+
+if [ "$1" == "docs" ]; then
+    make docs
+fi
