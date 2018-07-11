@@ -1,4 +1,5 @@
 CXX=g++
+# c++14 is needed for std::shared_mutex
 CXXFLAGS+=-std=c++14 -Wall -Werror -MMD -ggdb
 FLEXPP=flex++
 
