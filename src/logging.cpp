@@ -261,7 +261,7 @@ string logdest::format_time(const struct timeval& when) {
             buf, LOGGING_TIMESTR_BUFLEN,
             "%02d:%02d:%02d.%06ld",
             timevals->tm_hour, timevals->tm_min,
-            timevals->tm_sec, when.tv_usec);
+            timevals->tm_sec, (long)when.tv_usec);
 
     if (result >= LOGGING_TIMESTR_BUFLEN) {
         // FIXME this ignores errno
@@ -320,7 +320,7 @@ logfile::logfile(const char *path) {
     }
 }
 
-void logfile::output__child(const logevent& event, const string formatted) {
+void logfile::output__child(const logevent& /* event */, const string formatted) {
     this->outfile << formatted << endl;
 }
 

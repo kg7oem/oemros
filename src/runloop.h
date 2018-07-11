@@ -126,7 +126,7 @@ OBJECT(rlonce, public rlitem) {
     public:
         rlonce(runloop_s, runloopcb_f);
         virtual rlitem_s get_shared__child(void) override;
-        libuv::uv_handle_t* get_uv_handle(void);
+        virtual libuv::uv_handle_t* get_uv_handle(void) override;
         virtual void uv_start(void) override;
         virtual void uv_stop(void) override;
         virtual void uv_close(void) override;
@@ -149,7 +149,7 @@ OBJECT(rltimer, public rlitem) {
         rltimer(runloop_s, uint64_t, runloopcb_f);
         rltimer(runloop_s, uint64_t, uint64_t, runloopcb_f);
         virtual rlitem_s get_shared__child(void) override;
-        libuv::uv_handle_t* get_uv_handle(void);
+        virtual libuv::uv_handle_t* get_uv_handle(void) override;
         virtual void uv_start(void) override;
         virtual void uv_stop(void) override;
         virtual void uv_close(void) override;

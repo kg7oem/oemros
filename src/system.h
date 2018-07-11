@@ -92,6 +92,7 @@ class classname_t {
 
 template <class T>
 std::string classname(const T* _this = NULL) {
+    (void)_this;
     return classname_t<T>::get();
 }
 
@@ -132,6 +133,8 @@ class object {
         };
 };
 
+const char* errnostr(int);
+
 class errstream_t {
     friend std::ostream& operator<<(std::ostream& os, const errstream_t&);
 };
@@ -139,7 +142,7 @@ class errstream_t {
 extern errstream_t errstream;
 
 [[ noreturn ]] void system_exit(exitvalue);
-void system_panic(const char *);
+[[ noreturn ]] void system_panic(const char *);
 
 }
 

@@ -29,7 +29,7 @@
 namespace oemros {
 
 static std::mutex module_mutex;
-static std::map<std::string, const module_info_t*> loaded_modules;
+static std::map<std::string, module_info_s> loaded_modules;
 
 static std::unique_lock<std::mutex> get_lock(void) {
     log_trace("trying to acquire the module info mutex");
@@ -37,8 +37,10 @@ static std::unique_lock<std::mutex> get_lock(void) {
     log_trace("got the module info mutex");
 }
 
-static void load_module(const module_info_t* info) {
-    if (info->name == NULL) {
+static void load_module(modinfo_func_t info_function) {
+    auto info = info_function();
+
+    if (info->name.empty()) {
         log_fatal("name of module passsed for initializtion was NULL");
     }
 
@@ -50,13 +52,9 @@ static void load_module(const module_info_t* info) {
         log_fatal("attempt to load module with duplicate name: ", info->name);
     }
 
-    if (info->bootstrap != NULL) {
-        log_trace("running bootstrap for module ", info->name);
-        info->bootstrap();
-        log_trace("done running bootstrap for module ", info->name);
-    } else {
-        log_trace("no bootstrap specified for module ", info->name);
-    }
+    log_trace("running bootstrap for module ", info->name);
+    info->bootstrap();
+    log_trace("done running bootstrap for module ", info->name);
 
     log_trace("adding module info to the loaded module list");
     loaded_modules[info->name] = info;
@@ -67,25 +65,25 @@ static void load_module(const module_info_t* info) {
 //}
 
 void module_bootstrap(void) {
-    load_module(module__test_load());
+    load_module(module__test_load);
 }
 
-module_s module_create(const char* module_name) {
+module_s module_create(const std::string& module_name) {
     log_trace("request to create an instance of a module with name: ", module_name);
 
     auto found = loaded_modules.find(module_name);
     if (found == loaded_modules.end()) {
         log_fatal("could not find a module with name of ", module_name);
     }
-    const module_info_t* info = found->second;
+    auto info = found->second;
     log_trace("calling the registered create function for module ", module_name);
-    module_s new_module = info->create();
+    module_s new_module = info->create_module();
     log_trace("got control back from create function for module", module_name);
 
     return new_module;
 }
 
-std::thread* module_spawn(const char* name) {
+std::thread* module_spawn(const std::string& name) {
     auto module_thread = new std::thread([name]{
         log_trace("new module thread has just started");
         auto module_instance = module_create(name);
@@ -97,6 +95,18 @@ std::thread* module_spawn(const char* name) {
 }
 
 module_components::module_components(void) { }
+
+void module_info::bootstrap(void) {
+    do_bootstrap();
+}
+
+void module_info::cleanup(void) {
+    do_cleanup();
+}
+
+module_s module_info::create_module(void) {
+    return do_create_module();
+}
 
 module::module(void) { }
 

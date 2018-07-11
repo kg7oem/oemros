@@ -19,6 +19,9 @@
  *
  */
 
+#ifndef SRC_MODULE_H_
+#define SRC_MODULE_H_
+
 #include "runloop.h"
 #include "system.h"
 
@@ -50,27 +53,56 @@ ABSTRACT(module) {
         virtual ~module() = default;
 };
 
-using module_bootstrap_t = void(*)(void);
-using module_factory_t = module_s (*)(void);
+ABSTRACT(module_info) {
+    private:
+        module_info& operator=(const module_info&) = delete;
+        module_info(const module_info&) = delete;
+        module_info(const module_info&&) = delete;
 
-struct module_info_st {
-    const char* name = NULL;
-    module_bootstrap_t bootstrap = NULL;
-    module_factory_t create = NULL;
+    protected:
+        virtual void do_bootstrap() = 0;
+        virtual void do_cleanup() = 0;
+        virtual module_s do_create_module() = 0;
+
+    public:
+        const std::string name;
+
+        module_info(std::string in_name) : name(in_name) { }
+        virtual ~module_info() = default;
+
+        void bootstrap();
+        void cleanup();
+        module_s create_module();
 };
 
-using module_info_t = struct module_info_st;
-using module_loader_t = const module_info_t* (*)(void);
+//struct module_info {
+//    const std::string name;
+//
+//    module_info(std::string in_name) : name(in_name) { }
+//    virtual void bootstrap() const = 0;
+//    virtual module_s create() const = 0;
+//
+//    private:
+//	module_info& operator=(const module_info&) = delete;
+//	module_info(const module_info&) = delete;
+//	module_info(const module_info&&) = delete;
+//};
 
 void module_bootstrap(void);
-module_s module_create(const char*);
-std::thread* module_spawn(const char*);
+module_s module_create(const std::string&);
+std::thread* module_spawn(const std::string&);
+
+using modinfo_func_t = module_info_s (*)();
 
 // per module functions to get module data if the module
 // is linked in
 extern "C" {
-    const oemros::module_info_t* module__test_load(void);
+    // FIXME this is broken in clang
+    // error: 'module__test_load' has C-linkage specified, but returns
+    // incomplete type 'module_info_s' (aka 'shared_ptr<oemros::module_info>') which could be incompatible with C
+    module_info_s module__test_load(void);
 }
 
 }
 
+#endif /* SRC_MODULE_H_ */

@@ -1,4 +1,5 @@
 CXX=g++
+# c++14 is needed for std::shared_mutex
 CXXFLAGS+=-std=c++14 -Wall -Werror -MMD -ggdb
 FLEXPP=flex++
 
@@ -23,7 +24,7 @@ $(OEMROS_BIN): $(OBJS) $(COMMON_DEPS)
 %.o: %.cpp %.h $(COMMON_DEPS)
 	$(CXX) $(CXXFLAGS) -c -o $@ $< $(CFLAGS)
 
-turboini.flex.o: CXXFLAGS+=-Wno-sign-compare
+turboini.flex.o: CXXFLAGS+=-Wno-sign-compare -Wno-deprecated-register
 
 turboini.flex.cpp: turboini.flexpp $(COMMON_DEPS)
 	$(FLEXPP) -o $@ $<
