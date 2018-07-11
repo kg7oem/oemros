@@ -8,7 +8,7 @@ using namespace oemros;
 using namespace std;
 
 void run(void) {
-    auto test_thread = module_spawn("test");
+    auto test_thread = module_spawn("test_module");
     log_trace("joining to test module thread");
     test_thread->join();
     delete test_thread;

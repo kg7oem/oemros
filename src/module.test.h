@@ -24,15 +24,5 @@
 
 #include "module.h"
 
-OBJECT(test, public oemros::module) {
-    OBJSTUFF(test);
-
-    protected:
-        virtual void will_start(void) override;
-        virtual void did_start(void) override;
-
-    public:
-        test();
-};
 
 #endif /* SRC_MODULE_TEST_H_ */

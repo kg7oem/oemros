@@ -19,6 +19,9 @@
  *
  */
 
+#ifndef SRC_MODULE_H_
+#define SRC_MODULE_H_
+
 #include "runloop.h"
 #include "system.h"
 
@@ -50,31 +53,53 @@ ABSTRACT(module) {
         virtual ~module() = default;
 };
 
-struct module_info {
-    const std::string name;
-
-    module_info(std::string in_name) 
-	: name(in_name)
-    {
-    }
-    virtual void bootstrap() const = 0;
-    virtual module_s create() const = 0;
-
+ABSTRACT(module_info) {
     private:
-	module_info& operator=(const module_info&) = delete;
-	module_info(const module_info&) = delete;
-	module_info(const module_info&&) = delete;
+        module_info& operator=(const module_info&) = delete;
+        module_info(const module_info&) = delete;
+        module_info(const module_info&&) = delete;
+
+    protected:
+        virtual void do_bootstrap() = 0;
+        virtual void do_cleanup() = 0;
+        virtual module_s do_create_module() = 0;
+
+    public:
+        const std::string name;
+
+        module_info(std::string in_name) : name(in_name) { }
+        virtual ~module_info() = default;
+
+        void bootstrap();
+        void cleanup();
+        module_s create_module();
 };
+
+//struct module_info {
+//    const std::string name;
+//
+//    module_info(std::string in_name) : name(in_name) { }
+//    virtual void bootstrap() const = 0;
+//    virtual module_s create() const = 0;
+//
+//    private:
+//	module_info& operator=(const module_info&) = delete;
+//	module_info(const module_info&) = delete;
+//	module_info(const module_info&&) = delete;
+//};
 
 void module_bootstrap(void);
 module_s module_create(const std::string&);
 std::thread* module_spawn(const std::string&);
 
+using modinfo_func_t = module_info_s (*)();
+
 // per module functions to get module data if the module
 // is linked in
 extern "C" {
-    const oemros::module_info* module__test_load(void);
+    module_info_s module__test_load(void);
 }
 
 }
 
+#endif /* SRC_MODULE_H_ */
