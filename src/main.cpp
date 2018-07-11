@@ -24,7 +24,7 @@ void bootstrap(void) {
     module_bootstrap();
 }
 
-int main(int argc, char **argv) {
+int main(int /* argc */, char ** /* argv */) {
     bootstrap();
     run();
     return 0;

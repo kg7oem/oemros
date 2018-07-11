@@ -92,6 +92,7 @@ class classname_t {
 
 template <class T>
 std::string classname(const T* _this = NULL) {
+    (void)_this;
     return classname_t<T>::get();
 }
 

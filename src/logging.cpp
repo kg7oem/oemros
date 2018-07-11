@@ -320,7 +320,7 @@ logfile::logfile(const char *path) {
     }
 }
 
-void logfile::output__child(const logevent& event, const string formatted) {
+void logfile::output__child(const logevent& /* event */, const string formatted) {
     this->outfile << formatted << endl;
 }
 
