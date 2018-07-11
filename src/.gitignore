@@ -3,3 +3,5 @@ oemros
 *.d
 turboini.flex.cpp
 turboini.flex.h
+
+build/
