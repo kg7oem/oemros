@@ -54,17 +54,23 @@ std::exception_ptr make_error(const char* message) {
     exit((int)value);
 }
 
-std::ostream& operator<<(std::ostream& os, const errstream_t& error) {
-    char buf[CONF_ERRMSG_BUFLEN];
+// thread safe GNU and non-gnu libc compatible alternative to strerror_r()
+const char* errnostr(int error_number) {
+    static thread_local char buf[CONF_ERRMSG_BUFLEN];
+    char *message;
 
 #ifdef _GNU_SOURCE
-    char *message = strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
+    message = strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
 #else
     strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
-    char *message = buf;
+    message = buf;
 #endif
 
-    os << message;
+    return message;
+}
+
+std::ostream& operator<<(std::ostream& os, const errstream_t& error) {
+    os << errnostr(errno);
     return os;
 }
 

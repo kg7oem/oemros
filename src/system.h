@@ -132,6 +132,8 @@ class object {
         };
 };
 
+const char* errnostr(int);
+
 class errstream_t {
     friend std::ostream& operator<<(std::ostream& os, const errstream_t&);
 };
