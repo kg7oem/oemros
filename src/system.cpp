@@ -60,9 +60,9 @@ const char* errnostr(int error_number) {
     char *message;
 
 #ifdef _GNU_SOURCE
-    message = strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
+    message = strerror_r(error_number, buf, CONF_ERRMSG_BUFLEN);
 #else
-    strerror_r(errno, buf, CONF_ERRMSG_BUFLEN);
+    strerror_r(error_number, buf, CONF_ERRMSG_BUFLEN);
     message = buf;
 #endif
 
@@ -70,6 +70,7 @@ const char* errnostr(int error_number) {
 }
 
 std::ostream& operator<<(std::ostream& os, const errstream_t& error) {
+    (void)error;
     os << errnostr(errno);
     return os;
 }
