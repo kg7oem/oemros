@@ -33,25 +33,54 @@
 #include <string>
 #include <thread>
 
-#define MIXIN(name, ...) class name; class name ,##__VA_ARGS__
-#define ABSTRACT(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name : public oemros::object<name> ,##__VA_ARGS__
-#define OBJECT(name, ...) class name; typedef std::shared_ptr<name> name##_s; typedef std::weak_ptr<name> name##_w; class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+#define UNUSED __attribute__((unused))
+
+#define MIXIN(name, ...) class name ,##__VA_ARGS__
+
+#define ABSTRACT(name, ...) \
+    class name; \
+    typedef std::shared_ptr<name> name##_s; \
+    typedef std::weak_ptr<name> name##_w; \
+    class name : public abstract ,##__VA_ARGS__
+
 // private members come last so it is the default when the macro ends
-#define OBJSTUFF(name) \
-    public:\
-        template<typename... Args> \
-        static name##_s create(Args&&...args) { \
-            return std::make_shared<name>(args...); \
-        } \
+//
+// FIXME this needs to have tests to make sure this macro doesn't ever
+// accidently flip the default to public
+#define ABSSTUFF(name) \
+    public: \
         virtual const char* type(void) const override { return #name; }; \
+ \
+    private: \
+
+#define OBJECT(name, ...) \
+    class name; \
+    typedef std::shared_ptr<name> name##_s; \
+    typedef std::weak_ptr<name> name##_w; \
+    class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+
+// private members come last so it is the default when the macro ends
+//
+// FIXME this needs to have tests to make sure this macro doesn't ever
+// accidently flip the default to public
+//
+// // FIXME if the description() method is in the object class then it won't
+// work for satisfying the pure virtual description() method from the
+// base classes - why?
+#define OBJSTUFF(name) \
+    public: \
+        virtual const char* type(void) const override { return #name; }; \
+        virtual const std::string description() const override { \
+            std::stringstream ss; \
+            ss << "refcounted(" << type() << ")"; \
+            return ss.str(); \
+        } \
  \
     private: \
         virtual void ____has_boilerplate(void) override { }; \
         name(const name&) = delete; \
         name(const name&&) = delete; \
-        name& operator=(const name&) = delete;
-
-#define UNUSED __attribute__((unused))
+        name& operator=(const name&) = delete; \
 
 namespace oemros {
 
@@ -96,14 +125,31 @@ std::string classname(const T* _this = NULL) {
     return classname_t<T>::get();
 }
 
+class object_interface {
+    public:
+        virtual ~object_interface() = default;
+        virtual const char* type() const = 0;
+        virtual const std::string description() const = 0;
+};
+
+class abstract : public object_interface {
+    public:
+        virtual ~abstract() = default;
+        virtual const char* type() const = 0;
+        virtual const std::string description() const override = 0;
+};
+
+// FIXME if the template is removed this breaks - why?
 template<class T>
-class object {
-    friend std::ostream& operator<<(std::ostream& os, const object& obj) {
+class object : public object_interface {
+    // FIXME does this need to be templated to work?
+    friend std::ostream& operator<<(std::ostream& os, const T& obj) {
         os << obj.description();
         return os;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<object>& obj) {
+    // FIXME does this need to be templated to work?
+    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<T>& obj) {
         os << "shared_ptr(use=" << obj.use_count();
         os << " " << *obj.get() << ")";
         return os;
@@ -120,17 +166,11 @@ class object {
 
     public:
         object() = default;
-        virtual const char* type(void) const = 0;
-        virtual std::string description(void) const {
-            std::stringstream ss;
-            ss << "refcounted(" << this->type() << ")";
-            return ss.str();
-        }
         template<typename... Args>
+        // FIXME rename create() to make()
         static std::shared_ptr<T> create(Args&&...args) {
-            // https://stackoverflow.com/questions/7257144/when-to-use-stdforward-to-forward-arguments
-            return std::make_shared<T>(std::forward<Args>(args)...);
-        };
+            return std::make_shared<T>(args...);
+        }
 };
 
 const char* errnostr(int);

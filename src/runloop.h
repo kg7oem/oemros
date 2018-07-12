@@ -77,6 +77,8 @@ OBJECT(runloop) {
 // runloop items (rlitem) are things that are managed
 // by the runloop
 ABSTRACT(rlitem) {
+    ABSSTUFF(rlitem);
+
     friend class runloop;
 
     private:

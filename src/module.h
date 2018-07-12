@@ -38,6 +38,8 @@ OBJECT(module_components) {
 };
 
 ABSTRACT(module) {
+    ABSSTUFF(module);
+
     friend module_s module_create(const char*);
 
     protected:
@@ -54,6 +56,8 @@ ABSTRACT(module) {
 };
 
 ABSTRACT(module_info) {
+    ABSSTUFF(module_info);
+
     private:
         module_info& operator=(const module_info&) = delete;
         module_info(const module_info&) = delete;
