@@ -7,8 +7,8 @@ BUILD=./build.sh
 
 export VERBOSE=1
 
-"$BUILD"
-CXX=g++ "$BUILD"
-CXX=clang++ "$BUILD"
+"$BUILD" && valgrind --error-exitcode=101 src/build/oemros
+CXX=g++ "$BUILD" && valgrind --error-exitcode=101 src/build/oemros
+CXX=clang++ "$BUILD" && valgrind --error-exitcode=101 src/build/oemros
 
 echo tests pass
