@@ -35,24 +35,24 @@ namespace oemros {
 #define LOGGING_ENGINE_CREATE new logging()
 #endif
 
-static logging * get_engine(void) {
+static logging * get_engine() {
     // C++ gurantees thread safe static initialization
     static oemros::logging *log_singleton = LOGGING_ENGINE_CREATE;
     assert(log_singleton != NULL);
     return log_singleton;
 }
 
-void logging_start(void) {
+void logging_start() {
     get_engine()->start();
 }
 
-void logging_cleanup(void) {
+void logging_cleanup() {
     auto logging = get_engine();
     assert(logging != NULL);
     delete logging;
 }
 
-loglevel logging_get_level(void) {
+loglevel logging_get_level() {
     return get_engine()->current_level();
 }
 
@@ -84,7 +84,7 @@ logevent::logevent(logsource source, loglevel level, const struct timeval timest
 : source(source), level(level), timestamp(timestamp), tid(tid), function(function), path(path), line(line), message(message)
 { };
 
-logging::logging(void) {
+logging::logging() {
     const char* env_value = getenv("OEMROS_TRACE");
     loglevel_t level = loglevel_t::info;
 
@@ -92,51 +92,51 @@ logging::logging(void) {
         level = loglevel_t::trace;
     }
 
-    this->log_threshold = level;
+    log_threshold = level;
 }
 
-std::unique_lock<std::shared_timed_mutex> logging::get_lockex(void) {
-    return std::unique_lock<std::shared_timed_mutex>(this->log_mutex);
+std::unique_lock<std::shared_timed_mutex> logging::get_lockex() {
+    return std::unique_lock<std::shared_timed_mutex>(log_mutex);
 }
 
-std::shared_lock<std::shared_timed_mutex> logging::get_locksh(void) {
-    return std::shared_lock<std::shared_timed_mutex>(this->log_mutex);
+std::shared_lock<std::shared_timed_mutex> logging::get_locksh() {
+    return std::shared_lock<std::shared_timed_mutex>(log_mutex);
 }
 
 // THREAD this entire method needs exclusive access
-void logging::start(void) {
-    auto lock = this->get_lockex();
+void logging::start() {
+    auto lock = get_lockex();
     size_t delivered = 0;
 
     // if start was called and no destination was ever specified
     // then a default one is setup
-    if (this->destinations.size() == 0) {
-        this->destinations.push_back(std::make_shared<logconsole>());
+    if (destinations.size() == 0) {
+        destinations.push_back(std::make_shared<logconsole>());
     }
 
-    if (this->event_buffer.size() > 0) {
-        for(auto&& i : this->event_buffer) {
-            this->deliver_event(i);
+    if (event_buffer.size() > 0) {
+        for(auto&& i : event_buffer) {
+            deliver_event(i);
             delivered++;
         }
     }
 
-    this->deliver_events = true;
+    deliver_events = true;
 
-    assert(this->event_buffer.size() == delivered);
-    this->event_buffer.clear();
+    assert(event_buffer.size() == delivered);
+    event_buffer.clear();
 }
 
 // THREAD this method relies on atomic variables
-loglevel logging::current_level(void) {
-    return this->log_threshold;
+loglevel logging::current_level() {
+    return log_threshold;
 }
 
 // THREAD this method relies on atomic variables
 loglevel logging::current_level(loglevel new_level) {
-    loglevel old_level = this->log_threshold;
+    loglevel old_level = log_threshold;
     // FIXME this could probably use a compare-and-swap since it is not locked
-    this->log_threshold = new_level;
+    log_threshold = new_level;
     return old_level;
 }
 
@@ -185,7 +185,7 @@ const char * logging::source_name(logsource source) {
 
 // THREAD private method only called by methods already holding a lock
 void logging::deliver_event(const logevent& event) {
-    for (auto&& i : this->destinations) {
+    for (auto&& i : destinations) {
         i->event(event);
     }
 }
@@ -198,9 +198,9 @@ void logging::input_event(const logevent& event) {
     }
 
     // atomic data type means this does not need to be locked
-    if (this->log_threshold == loglevel::unknown) {
+    if (log_threshold == loglevel::unknown) {
         return;
-    } else if(event.level < this->log_threshold) {
+    } else if(event.level < log_threshold) {
         return;
     }
 
@@ -213,10 +213,10 @@ void logging::input_event(const logevent& event) {
 restart:
 
     if (shared) {
-        shared_lock = this->get_locksh();
+        shared_lock = get_locksh();
     } else {
         shared_lock.unlock();
-        exclusive_lock = this->get_lockex();
+        exclusive_lock = get_lockex();
     }
 
     // event delivery and checking for buffering are ok with the shared lock
@@ -225,26 +225,29 @@ restart:
     // will be limited to edge cases where this restarts immediately after
     // moving from buffering events to delivery of events otherwise the
     // exclusive lock is used to put events into the buffer
-    if(this->deliver_events) {
-        this->deliver_event(event);
-    } else if (this->buffer_events) {
+    if(deliver_events) {
+        deliver_event(event);
+    } else if (buffer_events) {
         if (shared) {
             shared = false;
             goto restart;
         }
-        this->event_buffer.push_back(event);
+        // FIXME if this was a lockless queue then the locking requirements
+        // for everything else would be satisfied with only a shared (not exclusive)
+        // lock and this logic could be much more simple and the edge case removed
+        event_buffer.push_back(event);
     }
 }
 
 // THREAD this method needs exclusive access
 void logging::add_destination(shared_ptr<logdest> destination) {
-    auto lock = this->get_lockex();
-    this->destinations.push_back(destination);
+    auto lock = get_lockex();
+    destinations.push_back(destination);
 }
 
 void logdest::event(const logevent& event) {
-    string formatted = this->format_event(event);
-    this->output(event, formatted);
+    string formatted = format_event(event);
+    output(event, formatted);
 }
 
 string logdest::format_time(const struct timeval& when) {
@@ -274,7 +277,7 @@ string logdest::format_time(const struct timeval& when) {
 string logdest::format_event(const logevent& event) {
 
     stringstream buffer;
-    buffer << this->format_time(event.timestamp) << " ";
+    buffer << format_time(event.timestamp) << " ";
     buffer << event.tid << " ";
     buffer << logging_source_name(event.source) << " ";
     buffer << logging_level_name(event.level) << " ";
@@ -286,8 +289,8 @@ string logdest::format_event(const logevent& event) {
 }
 
 void logdest::output(const logevent& event, const string formatted) {
-    std::lock_guard<std::mutex> lock(this->output_mutex);
-    this->output__child(event, formatted);
+    std::lock_guard<std::mutex> lock(output_mutex);
+    output__child(event, formatted);
 }
 
 void logstdio::output__child(const logevent& event, const string formatted) {
@@ -313,15 +316,15 @@ std::string logconsole::format_event(const logevent& event) {
 }
 
 logfile::logfile(const char *path) {
-    this->outfile.open(path, ofstream::app);
+    outfile.open(path, ofstream::app);
 
-    if (this->outfile.fail()) {
+    if (outfile.fail()) {
         log_fatal("could not open ", path, " for write: ", errstream);
     }
 }
 
 void logfile::output__child(const logevent& /* event */, const string formatted) {
-    this->outfile << formatted << endl;
+    outfile << formatted << endl;
 }
 
 }

@@ -61,19 +61,19 @@ void threadpool_be_worker(threadpool* pool) {
 
 lock_t lockable::lock(void) {
     log_trace("creating a new lock and acquiring the mutex");
-    auto new_lock = make_lock(this->lock_mutex);
+    auto new_lock = make_lock(lock_mutex);
     log_trace("got the lock");
     return new_lock;
 }
 
 threadpool::threadpool(size_t size_arg)
 : size(size_arg) {
-    log_trace("constructing a threadpool; size = ", this->size);
-    assert(this->size > 0);
+    log_trace("constructing a threadpool; size = ", size);
+    assert(size > 0);
 
-    for(size_t i = 0; i < this->size; i++) {
+    for(size_t i = 0; i < size; i++) {
         log_trace("creating new thread; i = ", i);
-        this->thread_list.push_back(new std::thread(threadpool_be_worker, this));
+        thread_list.push_back(new std::thread(threadpool_be_worker, this));
     }
 }
 
@@ -82,42 +82,42 @@ void threadpool::shutdown(void) {
 
     {
         log_trace("locking and setting should_run to false");
-        auto lock = this->lock();
-        this->should_run = false;
+        auto lock = threadpool::lock();
+        should_run = false;
         log_trace("done with locked phase");
     }
 
     log_trace("waking up all threads");
-    this->pool_cond.notify_all();
+    pool_cond.notify_all();
 
     // FIXME there should be some kind of limit on the amount of time
     // that it can take before the thread returns from join() or the
     // thread is cancelled
-    for(auto&& i : this->thread_list) {
+    for(auto&& i : thread_list) {
         log_trace("joining thread ", i->get_id());
         i->join();
         log_trace("deleting old thread");
         delete i;
     }
 
-    log_trace("emptying the work queue; size = ", this->work_queue.size());
-    this->work_queue.clear();
+    log_trace("emptying the work queue; size = ", work_queue.size());
+    work_queue.clear();
 }
 
 void threadpool::schedule(threadpool_cb cb) {
     log_trace("got a schedule request");
 
     {
-        auto lock = this->lock();
+        auto lock = threadpool::lock();
 
-        if (! this->should_run) {
+        if (! should_run) {
             log_fatal("attempt to schedule a job on a threadqueue that is not running");
         }
 
-        this->work_queue.push_back(cb);
+        work_queue.push_back(cb);
     }
 
-    this->pool_cond.notify_one();
+    pool_cond.notify_one();
 }
 
 lock_t make_lock(mutex_t& mutex) {

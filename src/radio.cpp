@@ -29,7 +29,7 @@ using namespace hl;
 
 namespace oemros {
 
-void radio_bootstrap(void) {
+void radio_bootstrap() {
 //    rig_set_debug_callback([](enum rig_debug_level_e debug_level, UNUSED rig_ptr_t user_data, UNUSED const char *fmt, UNUSED va_list arg) -> int {
 //        return true;
 //    }, NULL);
@@ -40,37 +40,37 @@ radiomode::radiomode(const modulation_t& modulation_arg, const data_mode_t& data
 
 }
 
-modulation_t radiomode::modulation(void) {
-    return this->modulation_mem;
+modulation_t radiomode::modulation() {
+    return modulation_mem;
 }
 
 modulation_t radiomode::modulation(modulation_t new_modulation) {
-    modulation_t old_modulation = this->modulation_mem;
-    this->modulation_mem = new_modulation;
+    modulation_t old_modulation = modulation_mem;
+    modulation_mem = new_modulation;
     return old_modulation;
 }
 
-data_mode_t radiomode::data(void) {
-    return this->data_mode_mem;
+data_mode_t radiomode::data() {
+    return data_mode_mem;
 }
 
 data_mode_t radiomode::data(data_mode_t new_data_mode) {
-    data_mode_t old_data_mode = this->data_mode_mem;
-    this->data_mode_mem = new_data_mode;
+    data_mode_t old_data_mode = data_mode_mem;
+    data_mode_mem = new_data_mode;
     return old_data_mode;
 }
 
 hamlib::hamlib(rig_model_t model_arg)
 : hl_model(model_arg) {
-    assert(this->hl_rig == NULL);
+    assert(hl_rig == NULL);
 
-    log_trace("constructing a new radio object with hamlib rig id = ", this->hl_model);
-    this->hl_rig = rig_init(this->hl_model);
-    if (! this->hl_rig) {
+    log_trace("constructing a new radio object with hamlib rig id = ", hl_model);
+    hl_rig = rig_init(hl_model);
+    if (! hl_rig) {
         log_fatal("could not call rig_init()");
     }
 
-    int result = rig_open(this->hl_rig);
+    int result = rig_open(hl_rig);
     if (result != RIG_OK) {
         log_fatal("could not call rig_open()");
     }
@@ -78,11 +78,13 @@ hamlib::hamlib(rig_model_t model_arg)
     log_trace("finished initializing hamlib");
 }
 
-std::shared_ptr<oemros::promise<freq_t>> hamlib::hl_get_freq(vfo_t vfo) {
+std::shared_ptr<oemros::promise<freq_t>> hamlib::hl_get_freq(UNUSED vfo_t vfo) {
     log_trace("Going to read the frequency from hamlib");
-    auto promise = make_promise<freq_t>([this, vfo] {
+    // FIXME this ignores the vfo passed as an argument
+    // but this whole file is getting replaced anyway
+    auto promise = make_promise<freq_t>([this] {
             freq_t cur_freq;
-            int result = rig_get_freq(this->hl_rig, RIG_VFO_CURR, &cur_freq);
+            int result = rig_get_freq(hl_rig, RIG_VFO_CURR, &cur_freq);
             if (result != RIG_OK) {
                 log_fatal("rig_get_freq() failed (and this should really do an exception for the future");
             }
@@ -97,7 +99,7 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_freq(vfo_t vfo, freq_t fre
     log_trace("going to set the frequency with hamlib");
 
     auto promise = make_promise<bool>([this, vfo, freq] {
-        int result = rig_set_freq(this->hl_rig, (int)vfo, freq);
+        int result = rig_set_freq(hl_rig, (int)vfo, freq);
         if (result != RIG_OK) {
             log_fatal("rig_set_freq() failed");
         }
@@ -113,7 +115,7 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_get_ptt(vfo_t vfo) {
 
     auto promise = make_promise<bool>([this, vfo] {
         hl::ptt_t ptt;
-        int result = rig_get_ptt(this->hl_rig, (int)vfo, &ptt);
+        int result = rig_get_ptt(hl_rig, (int)vfo, &ptt);
         if (result != RIG_OK) {
             log_fatal("rig_get_ptt() failed");
         }
@@ -135,7 +137,7 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_ptt(vfo_t vfo, bool ptt_ac
     }
 
     auto promise = make_promise<bool>([this, vfo, hl_ptt] {
-        int result = rig_set_ptt(this->hl_rig, (int)vfo, hl_ptt);
+        int result = rig_set_ptt(hl_rig, (int)vfo, hl_ptt);
         if (result != RIG_OK) {
             log_fatal("rig_set_ptt() failed");
         }
@@ -153,7 +155,7 @@ std::shared_ptr<oemros::promise<radiomode_s>> hamlib::hl_get_mode(vfo_t vfo) {
         hl::pbwidth_t width;
         int result;
 
-        result = rig_get_mode(this->hl_rig, (int)vfo, &rmode, &width);
+        result = rig_get_mode(hl_rig, (int)vfo, &rmode, &width);
         if (result != RIG_OK) {
             log_fatal("rig_get_mode() failed");
         }
@@ -304,12 +306,12 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_mode(vfo_t vfo, radiomode_
         hl::rmode_t old_rmode;
         int result;
 
-        result = rig_get_mode(this->hl_rig, (int)vfo, &old_rmode, &width);
+        result = rig_get_mode(hl_rig, (int)vfo, &old_rmode, &width);
         if (result != RIG_OK) {
             log_fatal("rig_get_mode() failed: ", rigerror(result));
         }
 
-        result = rig_set_mode(this->hl_rig, (int)vfo, rmode, width);
+        result = rig_set_mode(hl_rig, (int)vfo, rmode, width);
         if (result != RIG_OK) {
             log_fatal("rig_set_mode() failed");
         }
@@ -321,46 +323,46 @@ std::shared_ptr<oemros::promise<bool>> hamlib::hl_set_mode(vfo_t vfo, radiomode_
 }
 
 std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency(vfo_t vfo) {
-    return this->hl_get_freq(vfo);
+    return hl_get_freq(vfo);
 }
 
-std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency(void) {
-    return this->hl_get_freq(vfo_t::CURR);
+std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency() {
+    return hl_get_freq(vfo_t::CURR);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::frequency(freq_t freq) {
-    return this->hl_set_freq(vfo_t::CURR, freq);
+    return hl_set_freq(vfo_t::CURR, freq);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::frequency(vfo_t vfo, freq_t freq) {
-    return this->hl_set_freq(vfo, freq);
+    return hl_set_freq(vfo, freq);
 }
 
-std::shared_ptr<oemros::promise<bool>> hamlib::ptt(void) {
-    return this->hl_get_ptt(vfo_t::CURR);
+std::shared_ptr<oemros::promise<bool>> hamlib::ptt() {
+    return hl_get_ptt(vfo_t::CURR);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::ptt(vfo_t vfo) {
-    return this->hl_get_ptt(vfo);
+    return hl_get_ptt(vfo);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::ptt(bool ptt_active) {
-    return this->hl_set_ptt(vfo_t::CURR, ptt_active);
+    return hl_set_ptt(vfo_t::CURR, ptt_active);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::ptt(vfo_t vfo, bool ptt_active) {
-    return this->hl_set_ptt(vfo, ptt_active);
+    return hl_set_ptt(vfo, ptt_active);
 }
 
-std::shared_ptr<oemros::promise<radiomode_s>> hamlib::mode(void) {
-    return this->hl_get_mode(vfo_t::CURR);
+std::shared_ptr<oemros::promise<radiomode_s>> hamlib::mode() {
+    return hl_get_mode(vfo_t::CURR);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::mode(radiomode_s mode) {
-    return this->hl_set_mode(vfo_t::CURR, mode);
+    return hl_set_mode(vfo_t::CURR, mode);
 }
 
 std::shared_ptr<oemros::promise<bool>> hamlib::mode(modulation_t mod_arg, data_mode_t data_arg) {
-    return this->hl_set_mode(vfo_t::CURR, radiomode::create(mod_arg, data_arg));
+    return hl_set_mode(vfo_t::CURR, radiomode::create(mod_arg, data_arg));
 }
 }

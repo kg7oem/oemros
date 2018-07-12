@@ -33,7 +33,12 @@
 #include <string>
 #include <thread>
 
+// g++ 6.3.0 as it comes in debian/stretch does not support maybe_unused
+#ifdef __GNUC__
 #define UNUSED __attribute__((unused))
+#else
+#define UNUSED [[ maybe_unused ]]
+#endif
 
 #define MIXIN(name, ...) class name ,##__VA_ARGS__
 
@@ -49,7 +54,7 @@
 // accidently flip the default to public
 #define ABSSTUFF(name) \
     public: \
-        virtual const char* type(void) const override { return #name; }; \
+        virtual const char* type() const override { return #name; }; \
  \
     private: \
 
@@ -69,7 +74,7 @@
 // base classes - why?
 #define OBJSTUFF(name) \
     public: \
-        virtual const char* type(void) const override { return #name; }; \
+        virtual const char* type() const override { return #name; }; \
         virtual const std::string description() const override { \
             std::stringstream ss; \
             ss << "refcounted(" << type() << ")"; \
@@ -77,7 +82,7 @@
         } \
  \
     private: \
-        virtual void ____has_boilerplate(void) override { }; \
+        virtual void ____has_boilerplate() override { }; \
         name(const name&) = delete; \
         name(const name&&) = delete; \
         name& operator=(const name&) = delete; \
@@ -100,7 +105,7 @@ std::exception_ptr make_error(const char*);
 template <class T>
 class classname_t {
     public:
-        static std::string get(void) {
+        static std::string get() {
             std::string gcc_pretty = __PRETTY_FUNCTION__;
 
             // FIXME this is not good enough
@@ -120,8 +125,7 @@ class classname_t {
 };
 
 template <class T>
-std::string classname(const T* _this = NULL) {
-    (void)_this;
+std::string classname(UNUSED const T* _this = NULL) {
     return classname_t<T>::get();
 }
 
@@ -135,7 +139,7 @@ class object_interface {
 class abstract : public object_interface {
     public:
         virtual ~abstract() = default;
-        virtual const char* type() const = 0;
+        virtual const char* type() const override = 0;
         virtual const std::string description() const override = 0;
 };
 
@@ -156,7 +160,7 @@ class object : public object_interface {
     }
 
     private:
-        virtual void ____has_boilerplate(void) = 0;
+        virtual void ____has_boilerplate() = 0;
         // disable copy constructor
         object(const object&) = delete;
         // disable move constructor

@@ -121,6 +121,8 @@ private:
     std::mutex output_mutex;
 
 public:
+    logdest() = default;
+    virtual ~logdest() = default;
     virtual void event(const logevent&);
     std::string format_time(const struct timeval&);
     virtual std::string format_event(const logevent&);
@@ -130,10 +132,15 @@ public:
 
 class logstdio : public logdest {
 public:
+    logstdio() = default;
+    virtual ~logstdio() = default;
     virtual void output__child(const logevent&, const std::string);
 };
 
 class logconsole : public logstdio {
+public:
+    logconsole() = default;
+    virtual ~logconsole() = default;
     virtual std::string format_event(const logevent&) override;
 };
 
@@ -143,6 +150,7 @@ private:
 
 public:
     logfile(const char *);
+    virtual ~logfile() = default;
     virtual void output__child(const logevent&, const std::string);
 };
 
@@ -156,18 +164,18 @@ private:
     std::list<logevent> event_buffer;
 
     void deliver_event(const logevent&);
-    std::unique_lock<std::shared_timed_mutex> get_lockex(void);
-    std::shared_lock<std::shared_timed_mutex> get_locksh(void);
+    std::unique_lock<std::shared_timed_mutex> get_lockex();
+    std::shared_lock<std::shared_timed_mutex> get_locksh();
 public:
-    logging(void);
+    logging();
     // TODO needs exclusive lock
-    void start(void);
+    void start();
     // TODO shared and exclusive requirements
     void input_event(const logevent&);
     // TODO exclusive requirements
     void add_destination(std::shared_ptr<logdest>);
     // TODO atomic operation
-    loglevel current_level(void);
+    loglevel current_level();
     // TODO atomic operation
     loglevel current_level(loglevel);
     const char * level_name(loglevel);
@@ -175,8 +183,8 @@ public:
 
 };
 
-void logging_cleanup(void);
-loglevel logging_get_level(void);
+void logging_cleanup();
+loglevel logging_get_level();
 loglevel logging_set_level(loglevel);
 const char * logging_level_name(loglevel);
 bool logging_should_log(loglevel);
@@ -245,7 +253,7 @@ template<typename T, typename... Args>
     system_exit(exitvalue::fatal);
 }
 
-void logging_start(void);
+void logging_start();
 
 }
 
