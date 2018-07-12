@@ -134,7 +134,7 @@ class logstdio : public logdest {
 public:
     logstdio() = default;
     virtual ~logstdio() = default;
-    virtual void output__child(const logevent&, const std::string);
+    virtual void output__child(const logevent&, const std::string) override;
 };
 
 class logconsole : public logstdio {
@@ -151,7 +151,7 @@ private:
 public:
     logfile(const char *);
     virtual ~logfile() = default;
-    virtual void output__child(const logevent&, const std::string);
+    virtual void output__child(const logevent&, const std::string)  override;
 };
 
 class logging {
