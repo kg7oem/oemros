@@ -23,7 +23,6 @@
 
 #include "logging.h"
 #include "module.h"
-#include "module.test.h"
 
 OBJECT(test_module_info, public oemros::module_info) {
     OBJSTUFF(test_module_info);
@@ -31,9 +30,9 @@ OBJECT(test_module_info, public oemros::module_info) {
     public:
         test_module_info(const std::string& name)
         : oemros::module_info(name) { }
-        virtual void do_bootstrap() override { }
-        virtual void do_cleanup() override { }
-        virtual oemros::module_s do_create_module() override;
+        virtual void do_bootstrap() const override { }
+        virtual void do_cleanup() const override { }
+        virtual oemros::module_s do_create_module() const override;
 };
 
 OBJECT(test_module, public oemros::module) {
@@ -47,12 +46,13 @@ OBJECT(test_module, public oemros::module) {
         test_module();
 };
 
-extern "C" oemros::module_info* module__test_load() {
+extern "C" const oemros::module_info* module__test_load() {
+    static const test_module_info info("test_module");
     log_trace("returning the info for the test module");
-    return new test_module_info("test_module");
+    return dynamic_cast<const oemros::module_info*>(&info);
 }
 
-oemros::module_s test_module_info::do_create_module() {
+oemros::module_s test_module_info::do_create_module() const {
     return std::dynamic_pointer_cast<oemros::module>(test_module::create());
 }
 
