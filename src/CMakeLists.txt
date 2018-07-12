@@ -44,11 +44,7 @@ else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
-find_package(FLEX)
-flex_target(scanner turboini.flexpp ${CMAKE_CURRENT_BINARY_DIR}/turboini.cpp)
-
 add_executable(oemros
-    ${FLEX_scanner_OUTPUTS}
     logging.cpp
     main.cpp
     module.cpp
@@ -61,6 +57,3 @@ add_executable(oemros
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(oemros ${HAMLIB_LIBRARY})
 target_link_libraries(oemros ${UV_LIBRARY})
-
-set_source_files_properties(${FLEX_scanner_OUTPUTS} PROPERTIES COMPILE_FLAGS "-Wno-sign-compare -Wno-deprecated-register")
-
