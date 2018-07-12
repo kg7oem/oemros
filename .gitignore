@@ -1,3 +1,11 @@
+# stuff generated during development
 Debug/
 gmon.out
+
+# Macintosh filesystem metadata
 .DS_Store
+
+# eclipse project files
+.cproject
+.project
+.settings/
