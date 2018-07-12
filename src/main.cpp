@@ -7,14 +7,14 @@
 using namespace oemros;
 using namespace std;
 
-void run(void) {
+void run() {
     auto test_thread = module_spawn("test_module");
     log_trace("joining to test module thread");
     test_thread->join();
     delete test_thread;
 }
 
-void bootstrap(void) {
+void bootstrap() {
 //    logging_add_destination(make_shared<logstdio>());
     logging_start();
 

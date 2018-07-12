@@ -31,7 +31,7 @@ namespace oemros {
 static std::mutex module_mutex;
 static std::map<std::string, module_info_s> loaded_modules;
 
-static std::unique_lock<std::mutex> get_lock(void) {
+static std::unique_lock<std::mutex> get_lock() {
     log_trace("trying to acquire the module info mutex");
     return std::unique_lock<std::mutex>(module_mutex);
     log_trace("got the module info mutex");
@@ -64,7 +64,7 @@ static void load_module(modinfo_func_t info_function) {
 //
 //}
 
-void module_bootstrap(void) {
+void module_bootstrap() {
     load_module(module__test_load);
 }
 
@@ -94,23 +94,23 @@ std::thread* module_spawn(const std::string& name) {
     return module_thread;
 }
 
-module_components::module_components(void) { }
+module_components::module_components() { }
 
-void module_info::bootstrap(void) {
+void module_info::bootstrap() {
     do_bootstrap();
 }
 
-void module_info::cleanup(void) {
+void module_info::cleanup() {
     do_cleanup();
 }
 
-module_s module_info::create_module(void) {
+module_s module_info::create_module() {
     return do_create_module();
 }
 
-module::module(void) { }
+module::module() { }
 
-void module::start(void) {
+void module::start() {
     log_trace("notifying subclass that module is going to start");
     will_start();
 

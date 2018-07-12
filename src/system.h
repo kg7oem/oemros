@@ -54,7 +54,7 @@
 // accidently flip the default to public
 #define ABSSTUFF(name) \
     public: \
-        virtual const char* type(void) const override { return #name; }; \
+        virtual const char* type() const override { return #name; }; \
  \
     private: \
 
@@ -74,7 +74,7 @@
 // base classes - why?
 #define OBJSTUFF(name) \
     public: \
-        virtual const char* type(void) const override { return #name; }; \
+        virtual const char* type() const override { return #name; }; \
         virtual const std::string description() const override { \
             std::stringstream ss; \
             ss << "refcounted(" << type() << ")"; \
@@ -82,7 +82,7 @@
         } \
  \
     private: \
-        virtual void ____has_boilerplate(void) override { }; \
+        virtual void ____has_boilerplate() override { }; \
         name(const name&) = delete; \
         name(const name&&) = delete; \
         name& operator=(const name&) = delete; \
@@ -105,7 +105,7 @@ std::exception_ptr make_error(const char*);
 template <class T>
 class classname_t {
     public:
-        static std::string get(void) {
+        static std::string get() {
             std::string gcc_pretty = __PRETTY_FUNCTION__;
 
             // FIXME this is not good enough
@@ -125,8 +125,7 @@ class classname_t {
 };
 
 template <class T>
-std::string classname(const T* _this = NULL) {
-    (void)_this;
+std::string classname(UNUSED const T* _this = NULL) {
     return classname_t<T>::get();
 }
 
@@ -161,7 +160,7 @@ class object : public object_interface {
     }
 
     private:
-        virtual void ____has_boilerplate(void) = 0;
+        virtual void ____has_boilerplate() = 0;
         // disable copy constructor
         object(const object&) = delete;
         // disable move constructor

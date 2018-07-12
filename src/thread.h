@@ -36,7 +36,7 @@ using lock_t = std::unique_lock<mutex_t>;
 MIXIN(lockable) {
     protected:
         mutex_t lock_mutex;
-        lock_t lock(void);
+        lock_t lock();
 };
 
 using threadpool_cb = std::function<void (void)>;
@@ -56,12 +56,12 @@ class threadpool : public lockable {
     public:
         const size_t size = 0;
         threadpool(size_t);
-        void shutdown(void);
+        void shutdown();
         void schedule(threadpool_cb);
 };
 
-void thread_bootstrap(void);
-void thread_cleanup(void);
+void thread_bootstrap();
+void thread_cleanup();
 void threadpool_schedule(threadpool_cb);
 
 template <class T>
@@ -76,7 +76,7 @@ class promise : public lockable {
         const std::function<T (void)> cb;
 
     public:
-        promise(void) = default;
+        promise() = default;
         promise(std::function<T (void)> cb_arg) : cb(cb_arg)
         {
             threadpool_schedule([&]{
@@ -91,7 +91,7 @@ class promise : public lockable {
 //            log_debug("automatically getting future value");
 //            return get;
 //        }
-        void cancel(void) {
+        void cancel() {
             if (! pending) {
                 log_fatal("attempt to cancel  a promise that is not pending");
             }
@@ -108,8 +108,8 @@ class promise : public lockable {
             pending = false;
             promobj.set_value(value);
         }
-        T get(void) { return promobj.get_future().get(); }
-        void merge(void) { promobj.get_future().wait(); }
+        T get() { return promobj.get_future().get(); }
+        void merge() { promobj.get_future().wait(); }
 };
 
 template <typename T, typename... Args>

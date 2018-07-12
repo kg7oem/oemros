@@ -29,7 +29,7 @@ using namespace hl;
 
 namespace oemros {
 
-void radio_bootstrap(void) {
+void radio_bootstrap() {
 //    rig_set_debug_callback([](enum rig_debug_level_e debug_level, UNUSED rig_ptr_t user_data, UNUSED const char *fmt, UNUSED va_list arg) -> int {
 //        return true;
 //    }, NULL);
@@ -40,7 +40,7 @@ radiomode::radiomode(const modulation_t& modulation_arg, const data_mode_t& data
 
 }
 
-modulation_t radiomode::modulation(void) {
+modulation_t radiomode::modulation() {
     return modulation_mem;
 }
 
@@ -50,7 +50,7 @@ modulation_t radiomode::modulation(modulation_t new_modulation) {
     return old_modulation;
 }
 
-data_mode_t radiomode::data(void) {
+data_mode_t radiomode::data() {
     return data_mode_mem;
 }
 
@@ -324,7 +324,7 @@ std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency(vfo_t vfo) {
     return hl_get_freq(vfo);
 }
 
-std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency(void) {
+std::shared_ptr<oemros::promise<freq_t>> hamlib::frequency() {
     return hl_get_freq(vfo_t::CURR);
 }
 
@@ -336,7 +336,7 @@ std::shared_ptr<oemros::promise<bool>> hamlib::frequency(vfo_t vfo, freq_t freq)
     return hl_set_freq(vfo, freq);
 }
 
-std::shared_ptr<oemros::promise<bool>> hamlib::ptt(void) {
+std::shared_ptr<oemros::promise<bool>> hamlib::ptt() {
     return hl_get_ptt(vfo_t::CURR);
 }
 
@@ -352,7 +352,7 @@ std::shared_ptr<oemros::promise<bool>> hamlib::ptt(vfo_t vfo, bool ptt_active) {
     return hl_set_ptt(vfo, ptt_active);
 }
 
-std::shared_ptr<oemros::promise<radiomode_s>> hamlib::mode(void) {
+std::shared_ptr<oemros::promise<radiomode_s>> hamlib::mode() {
     return hl_get_mode(vfo_t::CURR);
 }
 

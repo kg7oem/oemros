@@ -42,7 +42,7 @@ enum class rlitemstate {
     closed,
 };
 
-typedef void(*runloopcb_t)(void);
+typedef void(*runloopcb_t)();
 typedef std::function<void (void)> runloopcb_f;
 
 class rlitem;
@@ -56,11 +56,11 @@ OBJECT(runloop) {
         bool inside_runloop = false;
         libuv::uv_loop_t uv_loop;
         uint64_t prev_item_id = 0;
-        libuv::uv_loop_t* get_uv_loop(void);
+        libuv::uv_loop_t* get_uv_loop();
         std::set<std::shared_ptr<rlitem>> active_items;
         void add_item(std::shared_ptr<rlitem>);
         void remove_item(std::shared_ptr<rlitem>);
-        std::list<libuv::uv_handle_t*> get_handles(void);
+        std::list<libuv::uv_handle_t*> get_handles();
 
     public:
         runloop();
@@ -70,8 +70,8 @@ OBJECT(runloop) {
             log_trace("creating a new item from inside the runloop");
             return T::create(shared_from_this(), args...);
         }
-        void enter(void);
-        void shutdown(void);
+        void enter();
+        void shutdown();
 };
 
 // runloop items (rlitem) are things that are managed
@@ -88,19 +88,19 @@ ABSTRACT(rlitem) {
 
     protected:
         const uint64_t item_id = 0;
-        runloop_s get_loop(void);
-        libuv::uv_loop_t* get_uv_loop(void);
-        virtual libuv::uv_handle_t* get_uv_handle(void) = 0;
-        virtual void will_start(void) { };
-        virtual void uv_start(void) = 0;
-        virtual void did_start(void) { };
-        virtual void will_stop(void) { };
-        virtual void uv_stop(void) = 0;
-        virtual void did_stop(void) { };
-        virtual void will_close(void) { };
-        virtual void uv_close(void) = 0;
-        virtual void did_close(void) { };
-//        virtual uv_handle_t* uv_handle(void) = 0;
+        runloop_s get_loop();
+        libuv::uv_loop_t* get_uv_loop();
+        virtual libuv::uv_handle_t* get_uv_handle() = 0;
+        virtual void will_start() { };
+        virtual void uv_start() = 0;
+        virtual void did_start() { };
+        virtual void will_stop() { };
+        virtual void uv_stop() = 0;
+        virtual void did_stop() { };
+        virtual void will_close() { };
+        virtual void uv_close() = 0;
+        virtual void did_close() { };
+//        virtual uv_handle_t* uv_handle() = 0;
 
     public:
         // FIXME if this is made protected then it can't be
@@ -108,12 +108,12 @@ ABSTRACT(rlitem) {
         rlitem() = default;
         rlitem(runloop_s);
         ~rlitem();
-        rlitem_s get_shared(void);
-        virtual rlitem_s get_shared__child(void) = 0;
-        void start(void);
-        void stop(void);
-        void close(void);
-        void close_resume(void);
+        rlitem_s get_shared();
+        virtual rlitem_s get_shared__child() = 0;
+        void start();
+        void stop();
+        void close();
+        void close_resume();
 };
 
 OBJECT(rlonce, public rlitem) {
@@ -127,12 +127,12 @@ OBJECT(rlonce, public rlitem) {
 
     public:
         rlonce(runloop_s, runloopcb_f);
-        virtual rlitem_s get_shared__child(void) override;
-        virtual libuv::uv_handle_t* get_uv_handle(void) override;
-        virtual void uv_start(void) override;
-        virtual void uv_stop(void) override;
-        virtual void uv_close(void) override;
-        void execute(void);
+        virtual rlitem_s get_shared__child() override;
+        virtual libuv::uv_handle_t* get_uv_handle() override;
+        virtual void uv_start() override;
+        virtual void uv_stop() override;
+        virtual void uv_close() override;
+        void execute();
 };
 
 OBJECT(rltimer, public rlitem) {
@@ -143,19 +143,19 @@ OBJECT(rltimer, public rlitem) {
 
     protected:
         const runloopcb_f cb = NULL;
-        bool check_intervals(void) const;
+        bool check_intervals() const;
 
     public:
         const uint64_t initial = 0;
         const uint64_t repeat = 0;
         rltimer(runloop_s, uint64_t, runloopcb_f);
         rltimer(runloop_s, uint64_t, uint64_t, runloopcb_f);
-        virtual rlitem_s get_shared__child(void) override;
-        virtual libuv::uv_handle_t* get_uv_handle(void) override;
-        virtual void uv_start(void) override;
-        virtual void uv_stop(void) override;
-        virtual void uv_close(void) override;
-        void execute(void);
+        virtual rlitem_s get_shared__child() override;
+        virtual libuv::uv_handle_t* get_uv_handle() override;
+        virtual void uv_start() override;
+        virtual void uv_stop() override;
+        virtual void uv_close() override;
+        void execute();
 };
 
 }

@@ -35,24 +35,24 @@ namespace oemros {
 #define LOGGING_ENGINE_CREATE new logging()
 #endif
 
-static logging * get_engine(void) {
+static logging * get_engine() {
     // C++ gurantees thread safe static initialization
     static oemros::logging *log_singleton = LOGGING_ENGINE_CREATE;
     assert(log_singleton != NULL);
     return log_singleton;
 }
 
-void logging_start(void) {
+void logging_start() {
     get_engine()->start();
 }
 
-void logging_cleanup(void) {
+void logging_cleanup() {
     auto logging = get_engine();
     assert(logging != NULL);
     delete logging;
 }
 
-loglevel logging_get_level(void) {
+loglevel logging_get_level() {
     return get_engine()->current_level();
 }
 
@@ -84,7 +84,7 @@ logevent::logevent(logsource source, loglevel level, const struct timeval timest
 : source(source), level(level), timestamp(timestamp), tid(tid), function(function), path(path), line(line), message(message)
 { };
 
-logging::logging(void) {
+logging::logging() {
     const char* env_value = getenv("OEMROS_TRACE");
     loglevel_t level = loglevel_t::info;
 
@@ -95,16 +95,16 @@ logging::logging(void) {
     log_threshold = level;
 }
 
-std::unique_lock<std::shared_timed_mutex> logging::get_lockex(void) {
+std::unique_lock<std::shared_timed_mutex> logging::get_lockex() {
     return std::unique_lock<std::shared_timed_mutex>(log_mutex);
 }
 
-std::shared_lock<std::shared_timed_mutex> logging::get_locksh(void) {
+std::shared_lock<std::shared_timed_mutex> logging::get_locksh() {
     return std::shared_lock<std::shared_timed_mutex>(log_mutex);
 }
 
 // THREAD this entire method needs exclusive access
-void logging::start(void) {
+void logging::start() {
     auto lock = get_lockex();
     size_t delivered = 0;
 
@@ -128,7 +128,7 @@ void logging::start(void) {
 }
 
 // THREAD this method relies on atomic variables
-loglevel logging::current_level(void) {
+loglevel logging::current_level() {
     return log_threshold;
 }
 

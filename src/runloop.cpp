@@ -57,11 +57,11 @@ runloop::~runloop() {
     }
 }
 
-uv_loop_t* runloop::get_uv_loop(void) {
+uv_loop_t* runloop::get_uv_loop() {
     return &uv_loop;
 }
 
-void runloop::enter(void) {
+void runloop::enter() {
     log_debug("giving uv_run() control of the thread");
     inside_runloop = true;
     int result = uv_run(&uv_loop, UV_RUN_DEFAULT);
@@ -71,7 +71,7 @@ void runloop::enter(void) {
     assert(result == 0);
 }
 
-void runloop::shutdown(void) {
+void runloop::shutdown() {
     log_debug("shutting down the runloop");
 
     for(auto&& i : active_items) {
@@ -90,7 +90,7 @@ void runloop::shutdown(void) {
     }
 }
 
-std::list<uv_handle_t*> runloop::get_handles(void) {
+std::list<uv_handle_t*> runloop::get_handles() {
     log_trace("generating a list of handles in the libuv runloop");
     std::list<uv_handle_t*> list;
 
@@ -128,20 +128,20 @@ rlitem::~rlitem() {
     }
 }
 
-runloop_s rlitem::get_loop(void) {
+runloop_s rlitem::get_loop() {
     assert(loop.expired() == false);
     return loop.lock();
 }
 
-rlitem_s rlitem::get_shared(void) {
+rlitem_s rlitem::get_shared() {
     return get_shared__child();
 }
 
-uv_loop_t* rlitem::get_uv_loop(void) {
+uv_loop_t* rlitem::get_uv_loop() {
     return get_loop()->get_uv_loop();
 }
 
-void rlitem::start(void) {
+void rlitem::start() {
     log_trace("starting runloop item #", item_id);
 
     will_start();
@@ -151,7 +151,7 @@ void rlitem::start(void) {
     did_start();
 }
 
-void rlitem::stop(void) {
+void rlitem::stop() {
     log_trace("stopping runloop item #", item_id);
 
     will_stop();
@@ -164,7 +164,7 @@ void rlitem::stop(void) {
     }
 }
 
-void rlitem::close(void) {
+void rlitem::close() {
     assert(state == rlitemstate::stopped);
 
     will_close();
@@ -177,7 +177,7 @@ void rlitem::close(void) {
     // that invokes close_resume()
 }
 
-void rlitem::close_resume(void) {
+void rlitem::close_resume() {
     log_trace("continuing on with the close workflow");
     // hold a local copy so the object is guranteed to be alive
     // after it is removed from the active list
@@ -194,15 +194,15 @@ rlonce::rlonce(runloop_s loop_arg, runloopcb_f cb_arg)
     }
 }
 
-rlitem_s rlonce::get_shared__child(void) {
+rlitem_s rlonce::get_shared__child() {
     return shared_from_this();
 }
 
-uv_handle_t* rlonce::get_uv_handle(void) {
+uv_handle_t* rlonce::get_uv_handle() {
     return (uv_handle_t*)&uv_idle;
 }
 
-void rlonce::uv_start(void) {
+void rlonce::uv_start() {
     log_trace("adding myself to the uv runloop");
     get_uv_handle()->data = this;
     assert(uv_idle_init(get_uv_loop(), &uv_idle) == 0);
@@ -218,12 +218,12 @@ void rlonce::uv_start(void) {
     });
 }
 
-void rlonce::uv_stop(void) {
+void rlonce::uv_stop() {
     log_trace("stopping libuv handle for item #", item_id);
     uv_idle_stop(&uv_idle);
 }
 
-void rlonce::uv_close(void) {
+void rlonce::uv_close() {
     log_trace("closing libuv handle for item #", item_id);
 
     libuv::uv_close(get_uv_handle(), [](uv_handle_t* handle) -> void {
@@ -233,7 +233,7 @@ void rlonce::uv_close(void) {
     });
 }
 
-void rlonce::execute(void) {
+void rlonce::execute() {
     log_trace("inside the execute handler for #", item_id);
     cb();
 }
@@ -252,7 +252,7 @@ rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, uint64_t repeat_arg, 
     }
 }
 
-bool rltimer::check_intervals(void) const {
+bool rltimer::check_intervals() const {
     if (initial == 0 && repeat == 0) {
         return false;
     }
@@ -260,20 +260,20 @@ bool rltimer::check_intervals(void) const {
     return true;
 }
 
-rlitem_s rltimer::get_shared__child(void) {
+rlitem_s rltimer::get_shared__child() {
     return shared_from_this();
 }
 
-uv_handle_t* rltimer::get_uv_handle(void) {
+uv_handle_t* rltimer::get_uv_handle() {
     return (uv_handle_t*)&uv_timer;
 }
 
-void rltimer::execute(void) {
+void rltimer::execute() {
     log_trace("inside the execute handler for #", item_id);
     cb();
 }
 
-void rltimer::uv_start(void) {
+void rltimer::uv_start() {
     uint64_t uv_initial, uv_repeat = 0;
 
     if (initial == 0) {
@@ -302,12 +302,12 @@ void rltimer::uv_start(void) {
     }, uv_initial, uv_repeat);
 }
 
-void rltimer::uv_stop(void) {
+void rltimer::uv_stop() {
     log_trace("stopping libuv timer");
     uv_timer_stop(&uv_timer);
 }
 
-void rltimer::uv_close(void) {
+void rltimer::uv_close() {
     log_trace("closing libuv timer");
 
     libuv::uv_close(get_uv_handle(), [](uv_handle_t* handle) -> void {

@@ -40,14 +40,14 @@ OBJECT(test_module, public oemros::module) {
     OBJSTUFF(test_module);
 
     protected:
-        virtual void will_start(void) override;
-        virtual void did_start(void) override;
+        virtual void will_start() override;
+        virtual void did_start() override;
 
     public:
         test_module();
 };
 
-extern "C" oemros::module_info_s module__test_load(void) {
+extern "C" oemros::module_info_s module__test_load() {
     log_trace("returning the info for the test module");
     return test_module_info::create("test_module");
 }
@@ -56,11 +56,11 @@ extern "C" oemros::module_info_s module__test_load(void) {
 //    test_module_info(const std::string& name)
 //	: oemros::module_info(name) { }
 //
-//    void bootstrap(void) const override {
+//    void bootstrap() const override {
 //	log_trace("bootstrapping the test module");
 //    }
 //
-//    oemros::module_s create(void) const override {
+//    oemros::module_s create() const override {
 //	log_trace("creating an instance of a test module");
 //	return std::dynamic_pointer_cast<oemros::module>(test::create());
 //    }
@@ -71,13 +71,13 @@ oemros::module_s test_module_info::do_create_module() {
     return std::dynamic_pointer_cast<oemros::module>(test_module::create());
 }
 
-test_module::test_module(void) { }
+test_module::test_module() { }
 
-void test_module::will_start(void) {
+void test_module::will_start() {
     log_trace("will_start was called");
 }
 
-void test_module::did_start(void) {
+void test_module::did_start() {
     log_trace("did_start was called");
     oemros->runloop->create_item<oemros::rlonce>([]{
         log_info("This is the test module");

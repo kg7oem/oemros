@@ -59,11 +59,11 @@ OBJECT(radiomode) {
         data_mode_t data_mode_mem = false;
 
     public:
-        radiomode(void) = default;
+        radiomode() = default;
         radiomode(const modulation_t&, const data_mode_t&);
-        modulation_t modulation(void);
+        modulation_t modulation();
         modulation_t modulation(modulation_t);
-        data_mode_t data(void);
+        data_mode_t data();
         data_mode_t data(data_mode_t);
 };
 
@@ -76,15 +76,15 @@ class radio {
     public:
         radio() = default;
         virtual ~radio() = default;
-        virtual std::shared_ptr<oemros::promise<freq_t>> frequency(void) = 0;
+        virtual std::shared_ptr<oemros::promise<freq_t>> frequency() = 0;
         virtual std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> frequency(freq_t) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t) = 0;
-        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(void) = 0;
+        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt() = 0;
         virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(vfo_t) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(ptt_t) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, ptt_t) = 0;
-        virtual std::shared_ptr<oemros::promise<radiomode_s>> mode(void) = 0;
+        virtual std::shared_ptr<oemros::promise<radiomode_s>> mode() = 0;
         virtual std::shared_ptr<oemros::promise<bool>> mode(radiomode_s) = 0;
         virtual std::shared_ptr<oemros::promise<bool>> mode(modulation_t, data_mode_t) = 0;
 };
@@ -106,20 +106,20 @@ OBJECT(hamlib, public radio) {
 
     public:
         hamlib(hl::rig_model_t);
-        virtual std::shared_ptr<oemros::promise<freq_t>> frequency(void) override;
+        virtual std::shared_ptr<oemros::promise<freq_t>> frequency() override;
         virtual std::shared_ptr<oemros::promise<freq_t>> frequency(vfo_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> frequency(freq_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> frequency(vfo_t, freq_t) override;
-        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(void) override;
+        virtual std::shared_ptr<oemros::promise<ptt_t>> ptt() override;
         virtual std::shared_ptr<oemros::promise<ptt_t>> ptt(vfo_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(ptt_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> ptt(vfo_t, ptt_t) override;
-        virtual std::shared_ptr<oemros::promise<radiomode_s>> mode(void) override;
+        virtual std::shared_ptr<oemros::promise<radiomode_s>> mode() override;
         virtual std::shared_ptr<oemros::promise<bool>> mode(modulation_t, data_mode_t) override;
         virtual std::shared_ptr<oemros::promise<bool>> mode(radiomode_s) override;
 };
 
-void radio_bootstrap(void);
+void radio_bootstrap();
 
 }
 
