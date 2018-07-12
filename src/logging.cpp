@@ -80,8 +80,8 @@ const char * logging_source_name(logsource source) {
     return get_engine()->source_name(source);
 }
 
-logevent::logevent(logsource source, loglevel level, const struct timeval timestamp, std::thread::id tid, const char *function, const char *path, const int line, string message)
-: source(source), level(level), timestamp(timestamp), tid(tid), function(function), path(path), line(line), message(message)
+logevent::logevent(logsource in_source, loglevel in_level, const struct timeval in_timestamp, std::thread::id in_tid, const char* in_function, const char* in_path, const int in_line, string in_message)
+: source(in_source), level(in_level), timestamp(in_timestamp), tid(in_tid), function(in_function), path(in_path), line(in_line), message(in_message)
 { };
 
 logging::logging() {

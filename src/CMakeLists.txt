@@ -8,10 +8,15 @@ option(BUILD_DOC "Build documentation" ON)
 # C++17 [[ maybe_unused ]]
 # C++14 std::shared_timed_mutex
 set(CMAKE_CXX_STANDARD 17)
-add_definitions(-Werror -Wall -Wextra)
+add_definitions(-Wfatal-errors -Werror -Wall -Wextra)
+add_definitions(-Wuninitialized -Winit-self -Wtautological-compare)
+add_definitions(-Wfloat-equal -Wpointer-arith -Wcast-qual -Wcast-align)
+add_definitions(-Wundef -Wshadow)
+# security related warnings - maybe overkill?
+add_definitions(-Wformat-nonliteral -Wformat-security)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    add_definitions(-Wunused -Wsuggest-override)
+    add_definitions(-Wunused -Wsuggest-override -Wmisleading-indentation)
 endif()
 
 find_library(HAMLIB_LIBRARY NAMES hamlib)

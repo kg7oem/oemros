@@ -28,8 +28,8 @@ OBJECT(test_module_info, public oemros::module_info) {
     OBJSTUFF(test_module_info);
 
     public:
-        test_module_info(const std::string& name)
-        : oemros::module_info(name) { }
+        test_module_info(const std::string& in_name)
+        : oemros::module_info(in_name) { }
         virtual void do_bootstrap() const override { }
         virtual void do_cleanup() const override { }
         virtual oemros::module_s do_create_module() const override;

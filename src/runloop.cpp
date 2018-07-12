@@ -95,8 +95,8 @@ std::list<uv_handle_t*> runloop::get_handles() {
     std::list<uv_handle_t*> list;
 
     uv_walk(&uv_loop, [](uv_handle_t* handle, void* arg) -> void {
-        auto list = static_cast<std::list<uv_handle_t*>*>(arg);
-        list->push_front(handle);
+        auto list_arg = static_cast<std::list<uv_handle_t*>*>(arg);
+        list_arg->push_front(handle);
     }, &list);
 
     log_trace("found ", list.size(), " handles in the libuv runloop");
@@ -208,10 +208,10 @@ void rlonce::uv_start() {
     assert(uv_idle_init(get_uv_loop(), &uv_idle) == 0);
 
     log_trace("starting the libuv handle");
-    uv_idle_start(&uv_idle, [](uv_idle_t* uv_idle){
+    uv_idle_start(&uv_idle, [](uv_idle_t* uv_idle_arg){
         log_trace("inside the lambda function");
 
-        rlonce* item = static_cast<rlonce*>(uv_idle->data);
+        rlonce* item = static_cast<rlonce*>(uv_idle_arg->data);
         log_trace("invoking execute() on object");
         item->execute();
         item->stop();
@@ -290,9 +290,9 @@ void rltimer::uv_start() {
     log_trace("starting the libuv timer; initial=", initial, " repeat=", repeat);
     log_trace("uv timer values; initial = ", uv_initial, " repeat = ", uv_repeat);
 
-    uv_timer_start(&uv_timer, [](uv_timer_t* uv_timer) {
+    uv_timer_start(&uv_timer, [](uv_timer_t* uv_timer_arg) {
         log_trace("inside the lambda");
-        auto us = static_cast<rltimer*>(uv_timer->data);
+        auto us = static_cast<rltimer*>(uv_timer_arg->data);
         log_trace("going to execute timer callback for #", us->item_id);
         us->execute();
 
