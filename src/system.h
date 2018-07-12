@@ -54,7 +54,6 @@
 // accidently flip the default to public
 #define ABSSTUFF(name) \
     public: \
-        virtual ~name() = default; \
         virtual const char* type() const override { return #name; }; \
  \
     private: \

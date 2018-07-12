@@ -77,24 +77,11 @@ ABSTRACT(module_info) {
         module_s create_module();
 };
 
-//struct module_info {
-//    const std::string name;
-//
-//    module_info(std::string in_name) : name(in_name) { }
-//    virtual void bootstrap() const = 0;
-//    virtual module_s create() const = 0;
-//
-//    private:
-//	module_info& operator=(const module_info&) = delete;
-//	module_info(const module_info&) = delete;
-//	module_info(const module_info&&) = delete;
-//};
-
 void module_bootstrap();
 module_s module_create(const std::string&);
 std::thread* module_spawn(const std::string&);
 
-using modinfo_func_t = module_info_s (*)();
+using modinfo_func_t = module_info* (*)();
 
 // per module functions to get module data if the module
 // is linked in
@@ -102,7 +89,7 @@ extern "C" {
     // FIXME this is broken in clang
     // error: 'module__test_load' has C-linkage specified, but returns
     // incomplete type 'module_info_s' (aka 'shared_ptr<oemros::module_info>') which could be incompatible with C
-    module_info_s module__test_load();
+    module_info* module__test_load();
 }
 
 }

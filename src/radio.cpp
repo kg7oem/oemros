@@ -78,9 +78,11 @@ hamlib::hamlib(rig_model_t model_arg)
     log_trace("finished initializing hamlib");
 }
 
-std::shared_ptr<oemros::promise<freq_t>> hamlib::hl_get_freq(vfo_t vfo) {
+std::shared_ptr<oemros::promise<freq_t>> hamlib::hl_get_freq(UNUSED vfo_t vfo) {
     log_trace("Going to read the frequency from hamlib");
-    auto promise = make_promise<freq_t>([this, vfo] {
+    // FIXME this ignores the vfo passed as an argument
+    // but this whole file is getting replaced anyway
+    auto promise = make_promise<freq_t>([this] {
             freq_t cur_freq;
             int result = rig_get_freq(hl_rig, RIG_VFO_CURR, &cur_freq);
             if (result != RIG_OK) {

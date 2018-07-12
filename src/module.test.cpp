@@ -33,7 +33,7 @@ OBJECT(test_module_info, public oemros::module_info) {
         : oemros::module_info(name) { }
         virtual void do_bootstrap() override { }
         virtual void do_cleanup() override { }
-        virtual oemros::module_s do_create_module();
+        virtual oemros::module_s do_create_module() override;
 };
 
 OBJECT(test_module, public oemros::module) {
@@ -47,25 +47,10 @@ OBJECT(test_module, public oemros::module) {
         test_module();
 };
 
-extern "C" oemros::module_info_s module__test_load() {
+extern "C" oemros::module_info* module__test_load() {
     log_trace("returning the info for the test module");
-    return test_module_info::create("test_module");
+    return new test_module_info("test_module");
 }
-
-//struct test_module_info : public oemros::module_info {
-//    test_module_info(const std::string& name)
-//	: oemros::module_info(name) { }
-//
-//    void bootstrap() const override {
-//	log_trace("bootstrapping the test module");
-//    }
-//
-//    oemros::module_s create() const override {
-//	log_trace("creating an instance of a test module");
-//	return std::dynamic_pointer_cast<oemros::module>(test::create());
-//    }
-//
-//};
 
 oemros::module_s test_module_info::do_create_module() {
     return std::dynamic_pointer_cast<oemros::module>(test_module::create());

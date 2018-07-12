@@ -29,7 +29,7 @@
 namespace oemros {
 
 static std::mutex module_mutex;
-static std::map<std::string, module_info_s> loaded_modules;
+static std::map<std::string, module_info*> loaded_modules;
 
 static std::unique_lock<std::mutex> get_lock() {
     log_trace("trying to acquire the module info mutex");
@@ -59,10 +59,6 @@ static void load_module(modinfo_func_t info_function) {
     log_trace("adding module info to the loaded module list");
     loaded_modules[info->name] = info;
 }
-
-//static void unload_module(const char* name) {
-//
-//}
 
 void module_bootstrap() {
     load_module(module__test_load);
