@@ -32,6 +32,8 @@ namespace oemros {
 
 using mutex_t = std::mutex;
 using lock_t = std::unique_lock<mutex_t>;
+using shared_mutex_t = std::shared_mutex;
+using shared_lock_t = std::shared_lock<shared_mutex_t>;
 
 MIXIN(lockable) {
     protected:

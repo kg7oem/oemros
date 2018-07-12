@@ -4,10 +4,11 @@ project(oemros)
 
 option(BUILD_DOC "Build documentation" ON)
 
+# C++17 std::shared_mutex
 # C++17 [[ maybe_unused ]]
 # C++14 std::shared_timed_mutex
 set(CMAKE_CXX_STANDARD 17)
-add_definitions(-Werror -Wall -Wextra)
+add_definitions(-Werror -Wall -Wextra -Wunused)
 
 find_library(HAMLIB_LIBRARY NAMES hamlib)
 find_library(UV_LIBRARY NAMES uv)
