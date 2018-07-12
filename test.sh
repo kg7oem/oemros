@@ -5,6 +5,8 @@ set -x
 
 BUILD=./build.sh
 
+export VERBOSE=1
+
 "$BUILD"
 CXX=g++ "$BUILD"
 CXX=clang++ "$BUILD"
