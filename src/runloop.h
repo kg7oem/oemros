@@ -107,7 +107,6 @@ ABSTRACT(rlitem) {
         // run by the allocator - how does that get fixed?
         rlitem() = default;
         rlitem(runloop_s);
-        ~rlitem();
         rlitem_s get_shared();
         virtual rlitem_s get_shared__child() = 0;
         void start();

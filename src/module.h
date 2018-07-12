@@ -52,7 +52,6 @@ ABSTRACT(module) {
     public:
         module_components_s oemros = module_components::create();
         void start();
-        virtual ~module() = default;
 };
 
 ABSTRACT(module_info) {
@@ -72,7 +71,6 @@ ABSTRACT(module_info) {
         const std::string name;
 
         module_info(std::string in_name) : name(in_name) { }
-        virtual ~module_info() = default;
 
         void bootstrap();
         void cleanup();

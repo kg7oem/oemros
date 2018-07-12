@@ -54,6 +54,7 @@
 // accidently flip the default to public
 #define ABSSTUFF(name) \
     public: \
+        virtual ~name() = default; \
         virtual const char* type() const override { return #name; }; \
  \
     private: \
@@ -139,7 +140,7 @@ class object_interface {
 class abstract : public object_interface {
     public:
         virtual ~abstract() = default;
-        virtual const char* type() const = 0;
+        virtual const char* type() const override = 0;
         virtual const std::string description() const override = 0;
 };
 

@@ -121,6 +121,8 @@ private:
     std::mutex output_mutex;
 
 public:
+    logdest() = default;
+    virtual ~logdest() = default;
     virtual void event(const logevent&);
     std::string format_time(const struct timeval&);
     virtual std::string format_event(const logevent&);
@@ -130,10 +132,15 @@ public:
 
 class logstdio : public logdest {
 public:
+    logstdio() = default;
+    virtual ~logstdio() = default;
     virtual void output__child(const logevent&, const std::string);
 };
 
 class logconsole : public logstdio {
+public:
+    logconsole() = default;
+    virtual ~logconsole() = default;
     virtual std::string format_event(const logevent&) override;
 };
 
@@ -143,6 +150,7 @@ private:
 
 public:
     logfile(const char *);
+    virtual ~logfile() = default;
     virtual void output__child(const logevent&, const std::string);
 };
 
