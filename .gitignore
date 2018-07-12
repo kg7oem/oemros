@@ -9,3 +9,6 @@ gmon.out
 .cproject
 .project
 .settings/
+
+# vim files
+*.swp
