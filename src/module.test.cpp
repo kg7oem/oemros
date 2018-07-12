@@ -79,7 +79,7 @@ void test_module::will_start(void) {
 
 void test_module::did_start(void) {
     log_trace("did_start was called");
-    this->oemros->runloop->create_item<oemros::rlonce>([]{
+    oemros->runloop->create_item<oemros::rlonce>([]{
         log_info("This is the test module");
     })->start();
 }

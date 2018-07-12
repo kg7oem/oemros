@@ -82,34 +82,34 @@ class promise : public lockable {
             threadpool_schedule([&]{
                 T result = cb();
                 log_trace("setting the result in the promise");
-                this->set(result);
+                set(result);
             });
         }
         // FIXME this doesn't work - because of the shared_ptr that
         // always wraps it?
 //        operator T() const {
 //            log_debug("automatically getting future value");
-//            return this->get;
+//            return get;
 //        }
         void cancel(void) {
-            if (! this->pending) {
+            if (! pending) {
                 log_fatal("attempt to cancel  a promise that is not pending");
             }
-            this->pending = false;
-            this->cancelled = true;
+            pending = false;
+            cancelled = true;
             auto exception = make_error("this promise has been cancelled");
-            this->promobj.set_exception(exception);
+            promobj.set_exception(exception);
         }
         void set(T value) {
-            auto lock = this->lock();
-            if (! this->pending) {
+            auto lock = promise::lock();
+            if (! pending) {
                 log_fatal("attempt to set the value for a promise that is not pending");
             }
-            this->pending = false;
-            this->promobj.set_value(value);
+            pending = false;
+            promobj.set_value(value);
         }
-        T get(void) { return this->promobj.get_future().get(); }
-        void merge(void) { this->promobj.get_future().wait(); }
+        T get(void) { return promobj.get_future().get(); }
+        void merge(void) { promobj.get_future().wait(); }
 };
 
 template <typename T, typename... Args>

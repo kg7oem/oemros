@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.8.2)
 
 project(oemros)
 
 option(BUILD_DOC "Build documentation" ON)
 
-set(CMAKE_CXX_STANDARD 14)
+# C++17 [[ maybe_unused ]]
+# C++14 std::shared_timed_mutex
+set(CMAKE_CXX_STANDARD 17)
 add_definitions(-Werror -Wall -Wextra)
 
 find_library(HAMLIB_LIBRARY NAMES hamlib)

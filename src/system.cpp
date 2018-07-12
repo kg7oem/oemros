@@ -69,8 +69,7 @@ const char* errnostr(int error_number) {
     return message;
 }
 
-std::ostream& operator<<(std::ostream& os, const errstream_t& error) {
-    (void)error;
+std::ostream& operator<<(std::ostream& os, UNUSED const errstream_t& error) {
     os << errnostr(errno);
     return os;
 }

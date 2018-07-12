@@ -68,7 +68,7 @@ OBJECT(runloop) {
         template<typename T, typename... Args>
         std::shared_ptr<T> create_item(Args&&...args) {
             log_trace("creating a new item from inside the runloop");
-            return T::create(this->shared_from_this(), args...);
+            return T::create(shared_from_this(), args...);
         }
         void enter(void);
         void shutdown(void);

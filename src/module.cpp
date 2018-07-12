@@ -112,15 +112,15 @@ module::module(void) { }
 
 void module::start(void) {
     log_trace("notifying subclass that module is going to start");
-    this->will_start();
+    will_start();
 
     // FIXME check to see if the module decided to stop before continuing
     log_trace("scheduling a runloop job to deliver the did_start() notification");
-    this->oemros->runloop->create_item<rlonce>([this] {
+    oemros->runloop->create_item<rlonce>([this] {
         log_trace("got control inside start notifier runloop job");
 
         log_trace("invoking the did_start() method");
-        this->did_start();
+        did_start();
         log_trace("done invoking the did_start method");
     })->start();
 }
