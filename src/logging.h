@@ -36,6 +36,11 @@
 #include "conf.h"
 #include "system.h"
 
+// CLEANUP - change this namespace to something
+// dedicated to the logging system so it can be
+// split off easier; ideas
+//
+// * logjam
 namespace oemros {
 
 // The log level to use during construction of the logging engine.
@@ -57,6 +62,8 @@ namespace oemros {
 #define LOGGING_INIT_BUFFER_EVENTS true
 #endif
 
+// the maxmimum length for a string generated from
+// a timestamp
 #ifndef LOGGING_TIMESTR_BUFLEN
 #define LOGGING_TIMESTR_BUFLEN 128
 #endif
