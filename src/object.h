@@ -118,8 +118,7 @@ class object : public object_interface {
     public:
         object() = default;
         template<typename... Args>
-        // CLEANUP rename create() to make()
-        static std::shared_ptr<T> create(Args&&...args) {
+        static std::shared_ptr<T> make(Args&&...args) {
             return std::make_shared<T>(args...);
         }
 };

@@ -33,7 +33,7 @@ OBJECT(module_components) {
     protected:
 
     public:
-        runloop_s runloop = runloop::create();
+        runloop_s runloop = runloop::make();
         module_components() = default;
 };
 
@@ -50,7 +50,7 @@ ABSTRACT(module) {
         virtual void did_start() = 0;
 
     public:
-        module_components_s oemros = module_components::create();
+        module_components_s oemros = module_components::make();
         void start();
 };
 
@@ -74,7 +74,7 @@ ABSTRACT(module_info) {
 
         void bootstrap() const;
         void cleanup() const;
-        module_s create_module() const;
+        module_s make_module() const;
 };
 
 void module_bootstrap();

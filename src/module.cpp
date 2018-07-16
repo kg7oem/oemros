@@ -73,7 +73,7 @@ module_s module_create(const std::string& module_name) {
     }
     auto info = found->second;
     log_trace("calling the registered create function for module ", module_name);
-    module_s new_module = info->create_module();
+    module_s new_module = info->make_module();
     log_trace("got control back from create function for module", module_name);
 
     return new_module;
@@ -98,7 +98,7 @@ void module_info::cleanup() const {
     do_cleanup();
 }
 
-module_s module_info::create_module() const {
+module_s module_info::make_module() const {
     return do_create_module();
 }
 
@@ -108,7 +108,7 @@ void module::start() {
 
     // FIXME check to see if the module decided to stop before continuing
     log_trace("scheduling a runloop job to deliver the did_start() notification");
-    oemros->runloop->create_item<rlonce>([this] {
+    oemros->runloop->make_item<rlonce>([this] {
         log_trace("got control inside start notifier runloop job");
 
         log_trace("invoking the did_start() method");

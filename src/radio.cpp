@@ -218,7 +218,7 @@ oemros::promise_s<radiomode_s> hamlib::hl_get_mode(vfo_t vfo) {
             modulation = modulation_t::fm;
             break;
         }
-        return radiomode::create(modulation, datamode);
+        return radiomode::make(modulation, datamode);
     });
 
     return promise;
@@ -363,6 +363,6 @@ oemros::promise_s<bool> hamlib::mode(radiomode_s mode) {
 }
 
 oemros::promise_s<bool> hamlib::mode(modulation_t mod_arg, data_mode_t data_arg) {
-    return hl_set_mode(vfo_t::CURR, radiomode::create(mod_arg, data_arg));
+    return hl_set_mode(vfo_t::CURR, radiomode::make(mod_arg, data_arg));
 }
 }

@@ -54,7 +54,7 @@ extern "C" const oemros::module_info* module__test_load() {
 }
 
 oemros::module_s test_module_info::do_create_module() const {
-    return std::dynamic_pointer_cast<oemros::module>(test_module::create());
+    return std::dynamic_pointer_cast<oemros::module>(test_module::make());
 }
 
 void test_module::will_start() {
@@ -63,9 +63,9 @@ void test_module::will_start() {
 
 void test_module::did_start() {
     log_trace("did_start was called");
-    oemros->runloop->create_item<oemros::rlonce>([]{
+    oemros->runloop->make_item<oemros::rlonce>([]{
         log_info("This is the test module");
-        auto rig = oemros::hamlib::create(1);
+        auto rig = oemros::hamlib::make(1);
         log_info("Freq: ", rig->frequency()->get());
     })->start();
 }
