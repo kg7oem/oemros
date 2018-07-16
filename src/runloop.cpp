@@ -117,7 +117,7 @@ rlitem::rlitem(runloop_s loop_arg)
 : loop(loop_arg), item_id(++loop_arg->prev_item_id) {
     assert(loop.expired() == false);
 
-    log_trace("constructed a new runloop item #", item_id);
+    log_trace("constructed a new runloop item #", item_id, " with type of ", type());
 }
 
 rlitem::~rlitem() {
