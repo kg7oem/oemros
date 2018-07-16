@@ -26,6 +26,7 @@ endif()
 
 find_library(HAMLIB_LIBRARY NAMES hamlib)
 find_library(UV_LIBRARY NAMES uv)
+find_library(TOML_LIBRARY NAMES toml)
 
 find_package(Threads)
 find_package(Doxygen)
@@ -62,3 +63,4 @@ add_executable(oemros
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(oemros ${HAMLIB_LIBRARY})
 target_link_libraries(oemros ${UV_LIBRARY})
+target_link_libraries(oemros ${TOML_LIBRARY})
