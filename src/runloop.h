@@ -30,6 +30,7 @@ namespace libuv {
 #include <uv.h>
 }
 
+#include "object.h"
 #include "system.h"
 
 namespace oemros {
@@ -106,8 +107,8 @@ ABSTRACT(rlitem) {
         // FIXME if this is made protected then it can't be
         // run by the allocator - how does that get fixed?
         rlitem() = default;
+        virtual ~rlitem();
         rlitem(runloop_s);
-        ~rlitem();
         rlitem_s get_shared();
         virtual rlitem_s get_shared__child() = 0;
         void start();

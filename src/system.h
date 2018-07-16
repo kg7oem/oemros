@@ -40,53 +40,6 @@
 #define UNUSED [[ maybe_unused ]]
 #endif
 
-#define MIXIN(name, ...) class name ,##__VA_ARGS__
-
-#define ABSTRACT(name, ...) \
-    class name; \
-    typedef std::shared_ptr<name> name##_s; \
-    typedef std::weak_ptr<name> name##_w; \
-    class name : public abstract ,##__VA_ARGS__
-
-// private members come last so it is the default when the macro ends
-//
-// FIXME this needs to have tests to make sure this macro doesn't ever
-// accidently flip the default to public
-#define ABSSTUFF(name) \
-    public: \
-        virtual const char* type() const override { return #name; }; \
- \
-    private: \
-
-#define OBJECT(name, ...) \
-    class name; \
-    typedef std::shared_ptr<name> name##_s; \
-    typedef std::weak_ptr<name> name##_w; \
-    class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
-
-// private members come last so it is the default when the macro ends
-//
-// FIXME this needs to have tests to make sure this macro doesn't ever
-// accidently flip the default to public
-//
-// // FIXME if the description() method is in the object class then it won't
-// work for satisfying the pure virtual description() method from the
-// base classes - why?
-#define OBJSTUFF(name) \
-    public: \
-        virtual const char* type() const override { return #name; }; \
-        virtual const std::string description() const override { \
-            std::stringstream ss; \
-            ss << "refcounted(" << type() << ")"; \
-            return ss.str(); \
-        } \
- \
-    private: \
-        virtual void ____has_boilerplate() override { }; \
-        name(const name&) = delete; \
-        name(const name&&) = delete; \
-        name& operator=(const name&) = delete; \
-
 namespace oemros {
 
 enum class exitvalue {
@@ -128,54 +81,6 @@ template <class T>
 std::string classname(UNUSED const T* _this = NULL) {
     return classname_t<T>::get();
 }
-
-class object_interface {
-    public:
-        virtual ~object_interface() = default;
-        virtual const char* type() const = 0;
-        virtual const std::string description() const = 0;
-};
-
-class abstract : public object_interface {
-    public:
-        virtual ~abstract() = default;
-        virtual const char* type() const override = 0;
-        virtual const std::string description() const override = 0;
-};
-
-// FIXME if the template is removed this breaks - why?
-template<class T>
-class object : public object_interface {
-    // FIXME does this need to be templated to work?
-    friend std::ostream& operator<<(std::ostream& os, const T& obj) {
-        os << obj.description();
-        return os;
-    }
-
-    // FIXME does this need to be templated to work?
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<T>& obj) {
-        os << "shared_ptr(use=" << obj.use_count();
-        os << " " << *obj.get() << ")";
-        return os;
-    }
-
-    private:
-        virtual void ____has_boilerplate() = 0;
-        // disable copy constructor
-        object(const object&) = delete;
-        // disable move constructor
-        object(const object&&) = delete;
-        // disable assignment operator
-        object& operator=(const object&) = delete;
-
-    public:
-        object() = default;
-        template<typename... Args>
-        // FIXME rename create() to make()
-        static std::shared_ptr<T> create(Args&&...args) {
-            return std::make_shared<T>(args...);
-        }
-};
 
 const char* errnostr(int);
 

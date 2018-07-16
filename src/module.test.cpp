@@ -23,6 +23,7 @@
 
 #include "logging.h"
 #include "module.h"
+#include "radio.h"
 
 OBJECT(test_module_info, public oemros::module_info) {
     OBJSTUFF(test_module_info);
@@ -64,5 +65,7 @@ void test_module::did_start() {
     log_trace("did_start was called");
     oemros->runloop->create_item<oemros::rlonce>([]{
         log_info("This is the test module");
+        auto rig = oemros::hamlib::create(1);
+        log_info("Freq: ", rig->frequency()->get());
     })->start();
 }
