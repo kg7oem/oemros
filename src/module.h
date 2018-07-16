@@ -34,7 +34,7 @@ OBJECT(module_components) {
 
     public:
         runloop_s runloop = runloop::create();
-        module_components();
+        module_components() = default;
 };
 
 ABSTRACT(module) {
@@ -45,7 +45,7 @@ ABSTRACT(module) {
     protected:
         // only the module system is allowed to construct
         // and initialize module objects
-        module();
+        module() = default;
         virtual void will_start() = 0;
         virtual void did_start() = 0;
 

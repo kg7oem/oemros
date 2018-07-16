@@ -90,8 +90,6 @@ std::thread* module_spawn(const std::string& name) {
     return module_thread;
 }
 
-module_components::module_components() { }
-
 void module_info::bootstrap() const {
     do_bootstrap();
 }
@@ -103,8 +101,6 @@ void module_info::cleanup() const {
 module_s module_info::create_module() const {
     return do_create_module();
 }
-
-module::module() { }
 
 void module::start() {
     log_trace("notifying subclass that module is going to start");
