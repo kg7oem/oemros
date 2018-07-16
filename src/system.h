@@ -82,13 +82,10 @@ std::string classname(UNUSED const T* _this = NULL) {
     return classname_t<T>::get();
 }
 
+// the value for errno must be passed in so that it isn't possibly invalidated
+// by some other system call that happens before errnostr() is invoked when
+// it is in an argument list and it must be pass by value so it is copied
 const char* errnostr(int);
-
-class errstream_t {
-    friend std::ostream& operator<<(std::ostream& os, const errstream_t&);
-};
-
-extern errstream_t errstream;
 
 [[ noreturn ]] void system_exit(exitvalue);
 [[ noreturn ]] void system_panic(const char *);

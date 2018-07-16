@@ -32,8 +32,6 @@
 
 namespace oemros {
 
-errstream_t errstream;
-
 generic_error::generic_error(const char* message_arg)
 : std::runtime_error(message_arg) { }
 
@@ -67,11 +65,6 @@ const char* errnostr(int error_number) {
 #endif
 
     return message;
-}
-
-std::ostream& operator<<(std::ostream& os, UNUSED const errstream_t& error) {
-    os << errnostr(errno);
-    return os;
 }
 
 }

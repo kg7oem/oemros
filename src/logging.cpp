@@ -319,7 +319,7 @@ logfile::logfile(const char *path) {
     outfile.open(path, ofstream::app);
 
     if (outfile.fail()) {
-        log_fatal("could not open ", path, " for write: ", errstream);
+        log_fatal("could not open ", path, " for write: ", errnostr(errno));
     }
 }
 
