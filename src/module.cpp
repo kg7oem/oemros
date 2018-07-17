@@ -81,8 +81,8 @@ module_s module_create(const string& module_name) {
     return new_module;
 }
 
-std::thread* module_spawn(const string& name) {
-    auto module_thread = new std::thread([name]{
+thread* module_spawn(const string& name) {
+    auto module_thread = new thread([name]{
         log_trace("new module thread has just started");
         auto module_instance = module_create(name);
         module_instance->start();

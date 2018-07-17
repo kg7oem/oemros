@@ -32,6 +32,7 @@
 
 namespace oemros {
 
+using thread = std::thread;
 using mutex = std::mutex;
 using lock = std::unique_lock<mutex>;
 // clang version 3.8.0-2ubuntu4 is not working with
@@ -125,7 +126,7 @@ class threadpool : public lockable {
     private:
         bool should_run = true;
         std::condition_variable pool_cond;
-        std::list<std::thread*> thread_list;
+        std::list<thread*> thread_list;
         // CLEANUP this should be called the job_queue instead of work_queue
         std::list<threadpool_cb> work_queue;
         threadpool(const threadpool&) = delete;

@@ -72,7 +72,7 @@ threadpool::threadpool(size_t size_arg)
 
     for(size_t i = 0; i < size; i++) {
         log_trace("creating new thread; i = ", i);
-        thread_list.push_back(new std::thread(threadpool_be_worker, this));
+        thread_list.push_back(new thread(threadpool_be_worker, this));
     }
 }
 

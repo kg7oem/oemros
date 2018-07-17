@@ -24,6 +24,7 @@
 
 #include "runloop.h"
 #include "system.h"
+#include "thread.h"
 
 namespace oemros {
 
@@ -79,7 +80,7 @@ ABSTRACT(module_info) {
 
 void module_bootstrap();
 module_s module_create(const string&);
-std::thread* module_spawn(const string&);
+thread* module_spawn(const string&);
 
 using modinfo_func_t = const module_info* (*)();
 
