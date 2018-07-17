@@ -79,7 +79,6 @@ ABSTRACT(module_info) {
 };
 
 void module_bootstrap();
-module_s module_create(const string&);
 thread* module_spawn(const string&);
 
 using modinfo_func = const module_info* (*)();

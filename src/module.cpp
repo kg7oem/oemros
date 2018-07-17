@@ -62,7 +62,7 @@ void module_bootstrap() {
     load_module(module__test_load);
 }
 
-module_s module_create(const string& module_name) {
+static module_s module_create(const string& module_name) {
     log_trace("request to create an instance of a module with name: ", module_name);
 
     auto found = loaded_modules.find(module_name);
