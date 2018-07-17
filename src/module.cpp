@@ -29,7 +29,7 @@
 namespace oemros {
 
 static std::mutex module_mutex;
-static std::map<std::string, const module_info*> loaded_modules;
+static std::map<string, const module_info*> loaded_modules;
 
 static std::unique_lock<std::mutex> get_lock() {
     log_trace("trying to acquire the module info mutex");
@@ -64,7 +64,7 @@ void module_bootstrap() {
     load_module(module__test_load);
 }
 
-module_s module_create(const std::string& module_name) {
+module_s module_create(const string& module_name) {
     log_trace("request to create an instance of a module with name: ", module_name);
 
     auto found = loaded_modules.find(module_name);
@@ -79,7 +79,7 @@ module_s module_create(const std::string& module_name) {
     return new_module;
 }
 
-std::thread* module_spawn(const std::string& name) {
+std::thread* module_spawn(const string& name) {
     auto module_thread = new std::thread([name]{
         log_trace("new module thread has just started");
         auto module_instance = module_create(name);

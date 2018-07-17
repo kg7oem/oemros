@@ -68,9 +68,9 @@ ABSTRACT(module_info) {
         virtual module_s do_create_module() const = 0;
 
     public:
-        const std::string name;
+        const string name;
 
-        module_info(std::string in_name) : name(in_name) { }
+        module_info(string in_name) : name(in_name) { }
 
         void bootstrap() const;
         void cleanup() const;
@@ -78,8 +78,8 @@ ABSTRACT(module_info) {
 };
 
 void module_bootstrap();
-module_s module_create(const std::string&);
-std::thread* module_spawn(const std::string&);
+module_s module_create(const string&);
+std::thread* module_spawn(const string&);
 
 using modinfo_func_t = const module_info* (*)();
 

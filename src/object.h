@@ -22,6 +22,8 @@
 #ifndef SRC_OBJECT_H_
 #define SRC_OBJECT_H_
 
+#include "system.h"
+
 #define MIXIN(name, ...) class name ,##__VA_ARGS__
 
 #define ABSTRACT(name, ...) \
@@ -63,7 +65,7 @@
 #define OBJSTUFF(name) \
     public: \
         virtual const char* type() const override { return #name; }; \
-        virtual const std::string description() const override { \
+        virtual const string description() const override { \
             std::stringstream ss; \
             ss << "refcounted(" << type() << ")"; \
             return ss.str(); \
@@ -81,14 +83,14 @@ class object_interface {
     public:
         virtual ~object_interface() = default;
         virtual const char* type() const = 0;
-        virtual const std::string description() const = 0;
+        virtual const string description() const = 0;
 };
 
 class abstract : public object_interface {
     public:
         virtual ~abstract() = default;
         virtual const char* type() const override = 0;
-        virtual const std::string description() const override = 0;
+        virtual const string description() const override = 0;
 };
 
 template<class T>

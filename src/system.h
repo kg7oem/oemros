@@ -42,6 +42,8 @@
 
 namespace oemros {
 
+using string = std::string;
+
 enum class exitvalue {
     ok = 0,
     fatal = 1,
@@ -58,17 +60,17 @@ std::exception_ptr make_error(const char*);
 template <class T>
 class classname_t {
     public:
-        static std::string get() {
-            std::string gcc_pretty = __PRETTY_FUNCTION__;
+        static string get() {
+            string gcc_pretty = __PRETTY_FUNCTION__;
 
             // FIXME this is not good enough
             size_t bracket_pos = gcc_pretty.find_first_of('[');
-            if (bracket_pos == std::string::npos) {
+            if (bracket_pos == string::npos) {
                 return gcc_pretty;
             }
 
             size_t semicolon_pos = gcc_pretty.find_first_of(';', bracket_pos);
-            if (bracket_pos == std::string::npos) {
+            if (bracket_pos == string::npos) {
                 return gcc_pretty;
             }
 
@@ -78,7 +80,7 @@ class classname_t {
 };
 
 template <class T>
-std::string classname(UNUSED const T* _this = NULL) {
+string classname(UNUSED const T* _this = NULL) {
     return classname_t<T>::get();
 }
 
