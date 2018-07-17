@@ -29,7 +29,7 @@
 #define ABSTRACT(name, ...) \
     class name; \
     typedef oemros::strong_ptr<name> name##_s; \
-    typedef weak_ptr<name> name##_w; \
+    typedef oemros::weak_ptr<name> name##_w; \
     class name : public abstract ,##__VA_ARGS__
 
 // private members come last so it is the default when the macro ends
@@ -67,7 +67,7 @@
         oemros::strong_ptr<name> strong_ref() { return this->shared_from_this(); } \
         oemros::weak_ptr<name> weak_ref() { return this->strong_ref(); } \
         virtual const char* type() const override { return #name; }; \
-        virtual const string description() const override { \
+        virtual const oemros::string description() const override { \
             std::stringstream ss; \
             ss << "refcounted(" << type() << ")"; \
             return ss.str(); \
