@@ -48,7 +48,7 @@
     typedef oemros::weak_ptr<name> name##_w; \
     class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
 
-#define TOBJECT(name, template_spec, ...) \
+#define TOBJECT(template_spec, name, ...) \
     template <typename T> \
     class name; \
     template <typename T> \

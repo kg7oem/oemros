@@ -57,15 +57,10 @@ MIXIN(lockable) {
         lock get_lock();
 };
 
-//template <class T>
-//class promise : public lockable {
-TOBJECT(promise, <class T>, public lockable) {
+TOBJECT(<class T>, promise, public lockable) {
     OBJSTUFF(promise);
 
     private:
-//        promise(const promise&) = delete;
-//        promise(const promise&&) = delete;
-//        promise& operator=(const promise&) = delete;
         bool pending = true;
         bool cancelled = false;
         std::promise<T> promobj;
@@ -84,6 +79,7 @@ TOBJECT(promise, <class T>, public lockable) {
                 set(result);
             });
         }
+        virtual ~promise() = default;
         // FIXME this doesn't work - because of the shared_ptr that
         // always wraps it?
 //        operator T() const {
@@ -119,6 +115,7 @@ promise_s<T> make_promise(Args&&...args) {
     return promise<T>::make(args...);
 }
 
+// CLEANUP this should probably be made into an OBJECT
 class threadpool : public lockable {
     friend void threadpool_be_worker(threadpool*);
 

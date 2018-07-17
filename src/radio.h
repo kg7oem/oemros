@@ -22,6 +22,11 @@
 #ifndef SRC_RADIO_H_
 #define SRC_RADIO_H_
 
+
+// CLEANUP - this file is a lost cause - don't worry about cleaning it up
+
+
+
 namespace hl {
 #include <hamlib/rig.h>
 }
