@@ -19,10 +19,6 @@
  *
  */
 
-#include <map>
-#include <string>
-#include <thread>
-
 #include "logging.h"
 #include "module.h"
 #include "thread.h"
@@ -30,7 +26,7 @@
 namespace oemros {
 
 static mutex module_mutex;
-static std::map<string, const module_info*> loaded_modules;
+static map<string, const module_info*> loaded_modules;
 
 static lock get_lock() {
     log_trace("trying to acquire the module info mutex");
