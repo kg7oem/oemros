@@ -126,6 +126,20 @@ lock make_lock(mutex& mutex_in) {
     return new_lock;
 }
 
+shared_lock make_shared_lock(shared_mutex& mutex_in) {
+    log_trace("creating shared lock object and acquiring mutex");
+    auto new_lock = shared_lock(mutex_in);
+    log_trace("got the mutex");
+    return new_lock;
+}
+
+exclusive_lock make_exclusive_lock(shared_mutex& mutex_in) {
+    log_trace("creating exclusive lock object and acquiring mutex");
+    auto new_lock = exclusive_lock(mutex_in);
+    log_trace("got the mutex");
+    return new_lock;
+}
+
 static threadpool& threadpool_get(void) {
     // TODO it would be nice if the thread pool size was dynamic
     static threadpool* pool_singleton = new threadpool(CONF_THREADPOOL_SIZE);

@@ -36,12 +36,15 @@ using mutex = std::mutex;
 using lock = std::unique_lock<mutex>;
 // clang version 3.8.0-2ubuntu4 is not working with
 // std::shared_mutex when in C++17 mode?
-using shared_mutex_t = std::shared_timed_mutex;
-using shared_lock_t = std::shared_lock<shared_mutex_t>;
+using shared_mutex = std::shared_timed_mutex;
+using exclusive_lock = std::unique_lock<shared_mutex>;
+using shared_lock = std::shared_lock<shared_mutex>;
 
 using threadpool_cb = std::function<void (void)>;
 
 lock make_lock(mutex&);
+shared_lock make_shared_lock(shared_mutex&);
+exclusive_lock make_exclusive_lock(shared_mutex&);
 
 void threadpool_schedule(threadpool_cb);
 void thread_bootstrap();

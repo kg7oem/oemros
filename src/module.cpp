@@ -32,10 +32,11 @@ namespace oemros {
 static mutex module_mutex;
 static std::map<string, const module_info*> loaded_modules;
 
-static std::unique_lock<mutex> get_lock() {
+static lock get_lock() {
     log_trace("trying to acquire the module info mutex");
-    return std::unique_lock<mutex>(module_mutex);
+    auto new_lock = make_lock(module_mutex);
     log_trace("got the module info mutex");
+    return new_lock;
 }
 
 static void load_module(modinfo_func_t info_function) {
