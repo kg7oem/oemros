@@ -29,11 +29,11 @@ namespace oemros {
 
 void threadpool_be_worker(threadpool* pool) {
     log_trace("this is a brand new threadpool worker");
-    auto lock = pool->lock();
+    auto exclusive = pool->get_lock();
 
     while(1) {
         log_trace("thread is about to wait on the condition variable; size = ", pool->work_queue.size());
-        pool->pool_cond.wait(lock, [pool] {
+        pool->pool_cond.wait(exclusive, [pool] {
             log_trace("condition variable check: should_run: ", pool->should_run, "; size: ", pool->work_queue.size());
             if (! pool->should_run) {
                 return true;
@@ -55,10 +55,10 @@ void threadpool_be_worker(threadpool* pool) {
     }
 
     log_trace("thread is out of workqueue dequeue loop");
-    lock.unlock();
+    exclusive.unlock();
 }
 
-lock_t lockable::lock(void) {
+lock lockable::get_lock(void) {
     log_trace("creating a new lock and acquiring the mutex");
     auto new_lock = make_lock(lock_mutex);
     log_trace("got the lock");
@@ -81,7 +81,7 @@ void threadpool::shutdown(void) {
 
     {
         log_trace("locking and setting should_run to false");
-        auto lock = threadpool::lock();
+        auto exclusive = threadpool::get_lock();
         should_run = false;
         log_trace("done with locked phase");
     }
@@ -107,7 +107,7 @@ void threadpool::schedule(threadpool_cb cb) {
     log_trace("got a schedule request");
 
     {
-        auto lock = threadpool::lock();
+        auto exclusive = threadpool::get_lock();
 
         if (! should_run) {
             log_fatal("attempt to schedule a job on a threadqueue that is not running");
@@ -119,9 +119,9 @@ void threadpool::schedule(threadpool_cb cb) {
     pool_cond.notify_one();
 }
 
-lock_t make_lock(mutex& mutex_in) {
+lock make_lock(mutex& mutex_in) {
     log_trace("creating lock object and acquiring mutex");
-    auto new_lock = lock_t(mutex_in);
+    auto new_lock = lock(mutex_in);
     log_trace("acquired the mutex");
     return new_lock;
 }

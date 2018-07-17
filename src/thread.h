@@ -33,7 +33,7 @@
 namespace oemros {
 
 using mutex = std::mutex;
-using lock_t = std::unique_lock<mutex>;
+using lock = std::unique_lock<mutex>;
 // clang version 3.8.0-2ubuntu4 is not working with
 // std::shared_mutex when in C++17 mode?
 using shared_mutex_t = std::shared_timed_mutex;
@@ -41,7 +41,7 @@ using shared_lock_t = std::shared_lock<shared_mutex_t>;
 
 using threadpool_cb = std::function<void (void)>;
 
-lock_t make_lock(mutex&);
+lock make_lock(mutex&);
 
 void threadpool_schedule(threadpool_cb);
 void thread_bootstrap();
@@ -50,7 +50,7 @@ void thread_cleanup();
 MIXIN(lockable) {
     protected:
         mutex lock_mutex;
-        lock_t lock();
+        lock get_lock();
 };
 
 //template <class T>
@@ -96,7 +96,7 @@ TOBJECT(promise, <class T>, public lockable) {
             promobj.set_exception(exception);
         }
         void set(T value) {
-            auto lock = promise::lock();
+            auto exclusive = get_lock();
             if (! pending) {
                 log_fatal("attempt to set the value for a promise that is not pending");
             }

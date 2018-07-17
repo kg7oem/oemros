@@ -47,7 +47,7 @@ static void load_module(modinfo_func_t info_function) {
 
     log_trace("request to initialize module: ", info->name);
 
-    auto lock = get_lock();
+    auto exclusive = get_lock();
 
     if (loaded_modules.find(info->name) != loaded_modules.end()) {
         log_fatal("attempt to load module with duplicate name: ", info->name);
