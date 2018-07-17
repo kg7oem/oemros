@@ -64,7 +64,7 @@ void test_module::will_start() {
 
 void test_module::did_start() {
     log_trace("did_start was called");
-    oemros->runloop->make_item<oemros::rlonce>([]{
+    oemros->runloop->make_item<oemros::rljob>([]{
         log_info("This is the test module");
         auto rig = oemros::hamlib::make(1);
         log_info("Freq: ", rig->frequency()->get());

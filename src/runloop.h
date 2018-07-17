@@ -134,9 +134,8 @@ ABSTRACT(rlitem) {
         void close_resume();
 };
 
-// CLEANUP rename this to rljob
-OBJECT(rlonce, public rlitem) {
-    OBJSTUFF(rlonce);
+OBJECT(rljob, public rlitem) {
+    OBJSTUFF(rljob);
 
     private:
         libuv::uv_idle_t uv_idle;
@@ -145,7 +144,7 @@ OBJECT(rlonce, public rlitem) {
         const runloop_cb cb = NULL;
 
     public:
-        rlonce(runloop_s, runloop_cb);
+        rljob(runloop_s, runloop_cb);
         virtual rlitem_s get_shared__child() override;
         virtual libuv::uv_handle_t* get_uv_handle() override;
         virtual void uv_start() override;

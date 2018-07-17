@@ -106,7 +106,7 @@ void module::start() {
 
     // FIXME check to see if the module decided to stop before continuing
     log_trace("scheduling a runloop job to deliver the did_start() notification");
-    oemros->runloop->make_item<rlonce>([this] {
+    oemros->runloop->make_item<rljob>([this] {
         log_trace("got control inside start notifier runloop job");
 
         log_trace("invoking the did_start() method");

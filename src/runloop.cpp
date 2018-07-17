@@ -185,22 +185,22 @@ void rlitem::close_resume() {
     us->did_close();
 }
 
-rlonce::rlonce(runloop_s loop_arg, runloop_cb cb_arg)
+rljob::rljob(runloop_s loop_arg, runloop_cb cb_arg)
 : rlitem(loop_arg), cb(cb_arg) {
     if (cb == NULL) {
         log_fatal("callback pointer was NULL");
     }
 }
 
-rlitem_s rlonce::get_shared__child() {
+rlitem_s rljob::get_shared__child() {
     return strong_ref();
 }
 
-uv_handle_t* rlonce::get_uv_handle() {
+uv_handle_t* rljob::get_uv_handle() {
     return (uv_handle_t*)&uv_idle;
 }
 
-void rlonce::uv_start() {
+void rljob::uv_start() {
     log_trace("adding myself to the uv runloop");
     get_uv_handle()->data = this;
     uv_idle_init(get_uv_loop(), &uv_idle);
@@ -209,29 +209,29 @@ void rlonce::uv_start() {
     uv_idle_start(&uv_idle, [](uv_idle_t* uv_idle_arg){
         log_trace("inside the lambda function");
 
-        rlonce* item = static_cast<rlonce*>(uv_idle_arg->data);
+        rljob* item = static_cast<rljob*>(uv_idle_arg->data);
         log_trace("invoking execute() on object");
         item->execute();
         item->stop();
     });
 }
 
-void rlonce::uv_stop() {
+void rljob::uv_stop() {
     log_trace("stopping libuv handle for item #", item_id);
     uv_idle_stop(&uv_idle);
 }
 
-void rlonce::uv_close() {
+void rljob::uv_close() {
     log_trace("closing libuv handle for item #", item_id);
 
     libuv::uv_close(get_uv_handle(), [](uv_handle_t* handle) -> void {
         log_trace("inside the lambda");
-        rlonce* item = static_cast<rlonce*>(handle->data);
+        rljob* item = static_cast<rljob*>(handle->data);
         item->close_resume();
     });
 }
 
-void rlonce::execute() {
+void rljob::execute() {
     log_trace("inside the execute handler for #", item_id);
     cb();
 }
