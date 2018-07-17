@@ -40,6 +40,7 @@ using lock = std::unique_lock<mutex>;
 using shared_mutex = std::shared_timed_mutex;
 using exclusive_lock = std::unique_lock<shared_mutex>;
 using shared_lock = std::shared_lock<shared_mutex>;
+using condition_variable = std::condition_variable;
 
 using threadpool_cb = std::function<void (void)>;
 
@@ -125,7 +126,7 @@ class threadpool : public lockable {
 
     private:
         bool should_run = true;
-        std::condition_variable pool_cond;
+        condition_variable pool_cond;
         list<thread*> thread_list;
         // CLEANUP this should be called the job_queue instead of work_queue
         list<threadpool_cb> work_queue;
