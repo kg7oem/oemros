@@ -5,16 +5,17 @@
 #include "system.h"
 
 using namespace oemros;
-using namespace std;
 
-void sigint_handler(UNUSED int signum) {
-    log_info("Got SIGINT: ", signum);
+void sigint_handler(UNUSED signame signum) {
+    assert(signum == signame::INT);
+    log_info("Got SIGINT");
     system_exit(exitvalue::ok);
 }
 
 void run() {
     auto main_loop = runloop::make();
-    auto int_handler = main_loop->make_started<rlsignal>(SIGINT, sigint_handler);
+
+    main_loop->make_started<rlsignal>(signame::INT, sigint_handler);
 
     log_info("going into main runloop");
     main_loop->enter();

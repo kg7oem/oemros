@@ -314,7 +314,7 @@ void rltimer::uv_close() {
     });
 }
 
-rlsignal::rlsignal(runloop_s runloop_in, int signum_in, rlsignal_cb cb_in)
+rlsignal::rlsignal(runloop_s runloop_in, signame signum_in, rlsignal_cb cb_in)
 : rlitem(runloop_in), cb(cb_in), signum(signum_in) {
 
 }
@@ -324,12 +324,13 @@ void rlsignal::uv_start() {
     log_trace("initializing uv signal");
     uv_signal_init(get_uv_loop(), &uv_signal);
     log_trace("starting uv signal");
-    uv_signal_start(&uv_signal, [](uv_signal_t* handle, int signal_in) -> void {
+    uv_signal_start(&uv_signal, [](uv_signal_t* handle, int signum_in) -> void {
         log_trace("inside the lambda");
+        auto signal_in = static_cast<signame>(signum_in);
         auto us = static_cast<rlsignal*>(handle->data);
         assert(signal_in == us->signum);
         us->execute(signal_in);
-    }, signum);
+    }, (int)signum);
 }
 
 void rlsignal::uv_stop() {
@@ -354,7 +355,7 @@ uv_handle_t* rlsignal::get_uv_handle() {
     return (uv_handle_t*)&uv_signal;
 }
 
-void rlsignal::execute(int signum_in) {
+void rlsignal::execute(signame signum_in) {
     log_trace("inside the executed handler for rlsignal");
     assert(signum_in == signum);
     cb(signum_in);

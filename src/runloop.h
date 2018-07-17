@@ -42,9 +42,18 @@ enum class rlitemstate {
     closed,
 };
 
+// these are the signals that are available via libuv
+// on windows and unix
+enum class signame {
+    INT = SIGINT,
+    // on windows SIGHUP means stop running in 10 seconds or
+    // the process will be terminated
+    HUP = SIGHUP,
+};
+
 typedef void(*runloopcb_t)();
 typedef std::function<void (void)> runloop_cb;
-typedef std::function<void (int)> rlsignal_cb;
+typedef std::function<void (signame)> rlsignal_cb;
 
 class rlitem;
 
@@ -178,14 +187,14 @@ OBJECT(rlsignal, public rlitem) {
         const rlsignal_cb cb = NULL;
 
     public:
-        const int signum;
-        rlsignal(runloop_s, int, rlsignal_cb);
+        const signame signum;
+        rlsignal(runloop_s, signame, rlsignal_cb);
         virtual rlitem_s get_shared__child() override;
         virtual libuv::uv_handle_t* get_uv_handle() override;
         virtual void uv_start() override;
         virtual void uv_stop() override;
         virtual void uv_close() override;
-        void execute(int);
+        void execute(signame);
 };
 
 }
