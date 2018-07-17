@@ -63,6 +63,20 @@ lock lockable::get_lock(void) {
     return new_lock;
 }
 
+exclusive_lock shareable::get_exclusive_lock() {
+    log_trace("creating a new exclusive lock and acquiring the mutex");
+    auto new_lock = make_exclusive_lock(lock_mutex);
+    log_trace("got the lock");
+    return new_lock;
+}
+
+shared_lock shareable::get_shared_lock() {
+    log_trace("creating a new shared lock and acquiring the mutex");
+    auto new_lock = make_shared_lock(lock_mutex);
+    log_trace("got the lock");
+    return new_lock;
+}
+
 threadpool::threadpool(size_t size_arg)
 : size(size_arg) {
     log_trace("constructing a threadpool; size = ", size);

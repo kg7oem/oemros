@@ -57,6 +57,13 @@ MIXIN(lockable) {
         lock get_lock();
 };
 
+MIXIN(shareable) {
+    protected:
+        shared_mutex lock_mutex;
+        shared_lock get_shared_lock();
+        exclusive_lock get_exclusive_lock();
+};
+
 TOBJECT(<class T>, promise, public lockable) {
     OBJSTUFF(promise);
 
