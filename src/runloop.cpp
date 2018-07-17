@@ -90,17 +90,17 @@ void runloop::shutdown() {
     }
 }
 
-std::list<uv_handle_t*> runloop::get_handles() {
+list<uv_handle_t*> runloop::get_handles() {
     log_trace("generating a list of handles in the libuv runloop");
-    std::list<uv_handle_t*> list;
+    list<uv_handle_t*> uv_handles;
 
     uv_walk(&uv_loop, [](uv_handle_t* handle, void* arg) -> void {
-        auto list_arg = static_cast<std::list<uv_handle_t*>*>(arg);
+        auto list_arg = static_cast<list<uv_handle_t*>*>(arg);
         list_arg->push_front(handle);
-    }, &list);
+    }, &uv_handles);
 
-    log_trace("found ", list.size(), " handles in the libuv runloop");
-    return list;
+    log_trace("found ", uv_handles.size(), " handles in the libuv runloop");
+    return uv_handles;
 }
 
 void runloop::add_item(rlitem_s item) {

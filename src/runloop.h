@@ -61,7 +61,7 @@ OBJECT(runloop) {
         std::set<strong_ptr<rlitem>> active_items;
         void add_item(strong_ptr<rlitem>);
         void remove_item(strong_ptr<rlitem>);
-        std::list<libuv::uv_handle_t*> get_handles();
+        list<libuv::uv_handle_t*> get_handles();
 
     public:
         runloop();

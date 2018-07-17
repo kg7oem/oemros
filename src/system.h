@@ -26,6 +26,8 @@
 #include <exception>
 #include <future>
 #include <iostream>
+#include <list>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <ostream>
@@ -43,6 +45,8 @@
 namespace oemros {
 
 using string = std::string;
+template <typename T> using list = std::list<T>;
+template <typename Tkey, typename Tval> using map = std::map<Tkey, Tval>;
 
 template <typename T> using strong_ptr = std::shared_ptr<T>;
 template <typename T> using weak_ptr = std::weak_ptr<T>;

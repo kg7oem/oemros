@@ -126,9 +126,9 @@ class threadpool : public lockable {
     private:
         bool should_run = true;
         std::condition_variable pool_cond;
-        std::list<thread*> thread_list;
+        list<thread*> thread_list;
         // CLEANUP this should be called the job_queue instead of work_queue
-        std::list<threadpool_cb> work_queue;
+        list<threadpool_cb> work_queue;
         threadpool(const threadpool&) = delete;
         threadpool(const threadpool&&) = delete;
         threadpool& operator=(const threadpool&) = delete;
