@@ -58,7 +58,7 @@ OBJECT(runloop) {
         libuv::uv_loop_t uv_loop;
         uint64_t prev_item_id = 0;
         libuv::uv_loop_t* get_uv_loop();
-        std::set<strong_ptr<rlitem>> active_items;
+        set<strong_ptr<rlitem>> active_items;
         void add_item(strong_ptr<rlitem>);
         void remove_item(strong_ptr<rlitem>);
         list<libuv::uv_handle_t*> get_handles();

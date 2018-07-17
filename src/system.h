@@ -31,6 +31,7 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <set>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -45,6 +46,7 @@
 namespace oemros {
 
 using string = std::string;
+template <typename T> using set = std::set<T>;
 template <typename T> using list = std::list<T>;
 template <typename Tkey, typename Tval> using map = std::map<Tkey, Tval>;
 
