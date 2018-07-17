@@ -19,8 +19,6 @@
  *
  */
 
-#include <cassert>
-
 #include "logging.h"
 #include "radio.h"
 #include "system.h"

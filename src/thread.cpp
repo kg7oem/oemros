@@ -19,10 +19,8 @@
  *
  */
 
-#include <cassert>
-#include <cstdlib>
-
 #include "logging.h"
+#include "system.h"
 #include "thread.h"
 
 namespace oemros {

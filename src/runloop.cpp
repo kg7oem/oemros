@@ -19,11 +19,9 @@
  *
  */
 
-#include <typeinfo>
-
-#include <cassert>
 #include "logging.h"
 #include "runloop.h"
+#include "system.h"
 
 using namespace libuv;
 

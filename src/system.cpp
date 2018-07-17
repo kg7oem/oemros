@@ -19,12 +19,10 @@
  *
  */
 
-#include <cassert>
 #include <cstdlib>
 #include <cerrno>
 #include <sstream>
-#include <string>
-#include <string.h>
+#include <cstring>
 
 #include "conf.h"
 #include "logging.h"

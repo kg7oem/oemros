@@ -19,8 +19,6 @@
  *
  */
 
-#include <memory>
-
 #include "logging.h"
 #include "module.h"
 #include "radio.h"
