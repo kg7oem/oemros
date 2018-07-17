@@ -57,7 +57,7 @@ extern "C" const oemros::module_info* module__test_load() {
 }
 
 oemros::module_s test_module_info::do_create_module() const {
-    return std::dynamic_pointer_cast<oemros::module>(test_module::make());
+    return test_module::make();
 }
 
 void test_module::will_start() {
