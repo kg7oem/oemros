@@ -25,15 +25,16 @@
 
 #include "logging.h"
 #include "module.h"
+#include "thread.h"
 
 namespace oemros {
 
-static std::mutex module_mutex;
+static mutex module_mutex;
 static std::map<string, const module_info*> loaded_modules;
 
-static std::unique_lock<std::mutex> get_lock() {
+static std::unique_lock<mutex> get_lock() {
     log_trace("trying to acquire the module info mutex");
-    return std::unique_lock<std::mutex>(module_mutex);
+    return std::unique_lock<mutex>(module_mutex);
     log_trace("got the module info mutex");
 }
 

@@ -32,8 +32,8 @@
 
 namespace oemros {
 
-using mutex_t = std::mutex;
-using lock_t = std::unique_lock<mutex_t>;
+using mutex = std::mutex;
+using lock_t = std::unique_lock<mutex>;
 // clang version 3.8.0-2ubuntu4 is not working with
 // std::shared_mutex when in C++17 mode?
 using shared_mutex_t = std::shared_timed_mutex;
@@ -41,7 +41,7 @@ using shared_lock_t = std::shared_lock<shared_mutex_t>;
 
 using threadpool_cb = std::function<void (void)>;
 
-lock_t make_lock(mutex_t&);
+lock_t make_lock(mutex&);
 
 void threadpool_schedule(threadpool_cb);
 void thread_bootstrap();
@@ -49,7 +49,7 @@ void thread_cleanup();
 
 MIXIN(lockable) {
     protected:
-        mutex_t lock_mutex;
+        mutex lock_mutex;
         lock_t lock();
 };
 

@@ -27,7 +27,6 @@
 
 namespace oemros {
 
-//static void threadpool_be_worker(bool* should_run, std::mutex* pool_mutex, std::condition_variable* pool_cond, std::list<threadpool_cb>* work_queue) {
 void threadpool_be_worker(threadpool* pool) {
     log_trace("this is a brand new threadpool worker");
     auto lock = pool->lock();
@@ -120,9 +119,9 @@ void threadpool::schedule(threadpool_cb cb) {
     pool_cond.notify_one();
 }
 
-lock_t make_lock(mutex_t& mutex) {
+lock_t make_lock(mutex& mutex_in) {
     log_trace("creating lock object and acquiring mutex");
-    auto new_lock = lock_t(mutex);
+    auto new_lock = lock_t(mutex_in);
     log_trace("acquired the mutex");
     return new_lock;
 }
