@@ -22,19 +22,15 @@
 #ifndef SRC_SYSTEM_H_
 #define SRC_SYSTEM_H_
 
-#include <condition_variable>
 #include <exception>
-#include <future>
 #include <iostream>
 #include <list>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <ostream>
 #include <set>
 #include <sstream>
 #include <string>
-#include <thread>
 
 // g++ 6.3.0 as it comes in debian/stretch does not support maybe_unused
 #ifdef __GNUC__

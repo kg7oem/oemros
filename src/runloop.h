@@ -23,8 +23,6 @@
 #define SRC_RUNLOOP_H_
 
 #include <functional>
-#include <set>
-#include <list>
 
 namespace libuv {
 #include <uv.h>

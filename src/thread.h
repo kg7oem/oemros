@@ -23,12 +23,11 @@
 #define SRC_THREAD_H_
 
 #include <condition_variable>
-#include <exception>
 #include <future>
-#include <memory>
 #include <thread>
 
 #include "object.h"
+#include "system.h"
 
 namespace oemros {
 

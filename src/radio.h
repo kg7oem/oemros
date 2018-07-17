@@ -22,9 +22,6 @@
 #ifndef SRC_RADIO_H_
 #define SRC_RADIO_H_
 
-#include <future>
-#include <iostream>
-
 namespace hl {
 #include <hamlib/rig.h>
 }
