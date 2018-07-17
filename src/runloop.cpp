@@ -203,7 +203,7 @@ uv_handle_t* rlonce::get_uv_handle() {
 void rlonce::uv_start() {
     log_trace("adding myself to the uv runloop");
     get_uv_handle()->data = this;
-    assert(uv_idle_init(get_uv_loop(), &uv_idle) == 0);
+    uv_idle_init(get_uv_loop(), &uv_idle);
 
     log_trace("starting the libuv handle");
     uv_idle_start(&uv_idle, [](uv_idle_t* uv_idle_arg){
@@ -283,7 +283,7 @@ void rltimer::uv_start() {
 
     log_trace("adding myself to the uv runloop");
     get_uv_handle()->data = this;
-    assert(uv_timer_init(get_uv_loop(), &uv_timer) == 0);
+    uv_timer_init(get_uv_loop(), &uv_timer);
 
     log_trace("starting the libuv timer; initial=", initial, " repeat=", repeat);
     log_trace("uv timer values; initial = ", uv_initial, " repeat = ", uv_repeat);
@@ -312,6 +312,51 @@ void rltimer::uv_close() {
         log_trace("inside the lambda");
         static_cast<rltimer*>(handle->data)->close_resume();
     });
+}
+
+rlsignal::rlsignal(runloop_s runloop_in, int signum_in, runloop_cb cb_in)
+: rlitem(runloop_in), cb(cb_in), signum(signum_in) {
+
+}
+
+void rlsignal::uv_start() {
+    get_uv_handle()->data = this;
+    log_trace("initializing uv signal");
+    uv_signal_init(get_uv_loop(), &uv_signal);
+    log_trace("starting uv signal");
+    uv_signal_start(&uv_signal, [](uv_signal_t* handle, int signal_in) -> void {
+        log_trace("inside the lambda");
+        auto us = static_cast<rlsignal*>(handle->data);
+        assert(signal_in == us->signum);
+        us->execute();
+    }, signum);
+}
+
+void rlsignal::uv_stop() {
+    log_trace("stopping libuv signal");
+    uv_signal_stop(&uv_signal);
+}
+
+void rlsignal::uv_close() {
+    log_trace("closing libuv signal");
+
+    libuv::uv_close(get_uv_handle(), [](uv_handle_t* handle) -> void {
+        log_trace("inside the lambda");
+        static_cast<rlsignal*>(handle->data)->close_resume();
+    });
+}
+
+rlitem_s rlsignal::get_shared__child() {
+    return strong_ref();
+}
+
+uv_handle_t* rlsignal::get_uv_handle() {
+    return (uv_handle_t*)&uv_signal;
+}
+
+void rlsignal::execute() {
+    log_trace("inside the executed handler for rlsignal");
+    cb();
 }
 
 }

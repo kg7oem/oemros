@@ -22,6 +22,7 @@
 #ifndef SRC_RUNLOOP_H_
 #define SRC_RUNLOOP_H_
 
+#include <csignal>
 #include <functional>
 
 namespace libuv {
@@ -68,6 +69,14 @@ OBJECT(runloop) {
         strong_ptr<T> make_item(Args&&...args) {
             log_trace("creating a new item from inside the runloop");
             return T::make(strong_ref(), args...);
+        }
+        template<typename T, typename... Args>
+        strong_ptr<T> make_started(Args&&...args) {
+            auto new_item = make_item<T>(args...);
+            log_trace("starting the new item");
+            new_item->start();
+            log_trace("done starting the new item");
+            return new_item;
         }
         void enter();
         void shutdown();
@@ -150,6 +159,26 @@ OBJECT(rltimer, public rlitem) {
         const uint64_t repeat = 0;
         rltimer(runloop_s, uint64_t, runloop_cb);
         rltimer(runloop_s, uint64_t, uint64_t, runloop_cb);
+        virtual rlitem_s get_shared__child() override;
+        virtual libuv::uv_handle_t* get_uv_handle() override;
+        virtual void uv_start() override;
+        virtual void uv_stop() override;
+        virtual void uv_close() override;
+        void execute();
+};
+
+OBJECT(rlsignal, public rlitem) {
+    OBJSTUFF(rlsignal);
+
+    private:
+        libuv::uv_signal_t uv_signal;
+
+    protected:
+        const runloop_cb cb = NULL;
+
+    public:
+        const int signum;
+        rlsignal(runloop_s, int, runloop_cb);
         virtual rlitem_s get_shared__child() override;
         virtual libuv::uv_handle_t* get_uv_handle() override;
         virtual void uv_start() override;

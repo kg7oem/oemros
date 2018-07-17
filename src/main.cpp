@@ -7,11 +7,18 @@
 using namespace oemros;
 using namespace std;
 
+void sigint_handler(void) {
+    log_info("Got SIGINT");
+    system_exit(exitvalue::ok);
+}
+
 void run() {
-    auto test_thread = module_spawn("test_module");
-    log_trace("joining to test module thread");
-    test_thread->join();
-    delete test_thread;
+    auto main_loop = runloop::make();
+    auto int_handler = main_loop->make_started<rlsignal>(SIGINT, sigint_handler);
+
+    log_info("going into main runloop");
+    main_loop->enter();
+    log_info("out of main runloop");
 }
 
 void bootstrap() {
