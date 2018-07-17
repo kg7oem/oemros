@@ -69,7 +69,7 @@ OBJECT(runloop) {
         template<typename T, typename... Args>
         strong_ptr<T> make_item(Args&&...args) {
             log_trace("creating a new item from inside the runloop");
-            return T::make(shared_from_this(), args...);
+            return T::make(strong_ref(), args...);
         }
         void enter();
         void shutdown();

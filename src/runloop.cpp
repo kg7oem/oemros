@@ -195,7 +195,7 @@ rlonce::rlonce(runloop_s loop_arg, runloopcb_f cb_arg)
 }
 
 rlitem_s rlonce::get_shared__child() {
-    return shared_from_this();
+    return strong_ref();
 }
 
 uv_handle_t* rlonce::get_uv_handle() {
@@ -261,7 +261,7 @@ bool rltimer::check_intervals() const {
 }
 
 rlitem_s rltimer::get_shared__child() {
-    return shared_from_this();
+    return strong_ref();
 }
 
 uv_handle_t* rltimer::get_uv_handle() {

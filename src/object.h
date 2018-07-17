@@ -64,6 +64,7 @@
 // accidently flip the default to public
 #define OBJSTUFF(name) \
     public: \
+        oemros::strong_ptr<name> strong_ref() { return this->shared_from_this(); } \
         virtual const char* type() const override { return #name; }; \
         virtual const string description() const override { \
             std::stringstream ss; \
