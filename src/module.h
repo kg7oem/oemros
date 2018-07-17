@@ -87,9 +87,6 @@ using modinfo_func = const module_info* (*)();
 // per module functions to get module data if the module
 // is linked in
 extern "C" {
-    // FIXME this is broken in clang
-    // error: 'module__test_load' has C-linkage specified, but returns
-    // incomplete type 'module_info_s' (aka 'shared_ptr<oemros::module_info>') which could be incompatible with C
     const module_info* module__test_load();
 }
 
