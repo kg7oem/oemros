@@ -35,7 +35,7 @@ static lock get_lock() {
     return new_lock;
 }
 
-static void load_module(modinfo_func_t info_function) {
+static void load_module(modinfo_func info_function) {
     auto info = info_function();
 
     if (info->name.empty()) {

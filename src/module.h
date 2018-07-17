@@ -82,7 +82,7 @@ void module_bootstrap();
 module_s module_create(const string&);
 thread* module_spawn(const string&);
 
-using modinfo_func_t = const module_info* (*)();
+using modinfo_func = const module_info* (*)();
 
 // per module functions to get module data if the module
 // is linked in
