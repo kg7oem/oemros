@@ -115,10 +115,9 @@ TOBJECT(promise, <class T>, public lockable) {
         void merge() { promobj.get_future().wait(); }
 };
 
-// FIXME get rid of this and use promise::make() instead
 template <typename T, typename... Args>
-strong_ptr<oemros::promise<T>> make_promise(Args&&...args) {
-    return std::make_shared<oemros::promise<T>>(args...);
+promise_s<T> make_promise(Args&&...args) {
+    return promise<T>::make(args...);
 }
 
 class threadpool : public lockable {
