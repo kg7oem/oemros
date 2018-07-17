@@ -185,7 +185,7 @@ void rlitem::close_resume() {
     us->did_close();
 }
 
-rlonce::rlonce(runloop_s loop_arg, runloopcb_f cb_arg)
+rlonce::rlonce(runloop_s loop_arg, runloop_cb cb_arg)
 : rlitem(loop_arg), cb(cb_arg) {
     if (cb == NULL) {
         log_fatal("callback pointer was NULL");
@@ -236,14 +236,14 @@ void rlonce::execute() {
     cb();
 }
 
-rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, runloopcb_f cb_arg)
+rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, runloop_cb cb_arg)
 : rlitem(loop_arg), cb(cb_arg), initial(initial_arg) {
     if (! check_intervals()) {
         log_fatal("invalid intervals given to the timer");
     }
 }
 
-rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, uint64_t repeat_arg, runloopcb_f cb_arg)
+rltimer::rltimer(runloop_s loop_arg, uint64_t initial_arg, uint64_t repeat_arg, runloop_cb cb_arg)
 : rlitem(loop_arg), cb(cb_arg), initial(initial_arg), repeat(repeat_arg) {
     if (! check_intervals()) {
         log_fatal("invalid intervals given to the timer");

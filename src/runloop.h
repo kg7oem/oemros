@@ -42,7 +42,7 @@ enum class rlitemstate {
 };
 
 typedef void(*runloopcb_t)();
-typedef std::function<void (void)> runloopcb_f;
+typedef std::function<void (void)> runloop_cb;
 
 class rlitem;
 
@@ -115,6 +115,7 @@ ABSTRACT(rlitem) {
         void close_resume();
 };
 
+// CLEANUP rename this to rljob
 OBJECT(rlonce, public rlitem) {
     OBJSTUFF(rlonce);
 
@@ -122,10 +123,10 @@ OBJECT(rlonce, public rlitem) {
         libuv::uv_idle_t uv_idle;
 
     protected:
-        const runloopcb_f cb = NULL;
+        const runloop_cb cb = NULL;
 
     public:
-        rlonce(runloop_s, runloopcb_f);
+        rlonce(runloop_s, runloop_cb);
         virtual rlitem_s get_shared__child() override;
         virtual libuv::uv_handle_t* get_uv_handle() override;
         virtual void uv_start() override;
@@ -141,14 +142,14 @@ OBJECT(rltimer, public rlitem) {
         libuv::uv_timer_t uv_timer;
 
     protected:
-        const runloopcb_f cb = NULL;
+        const runloop_cb cb = NULL;
         bool check_intervals() const;
 
     public:
         const uint64_t initial = 0;
         const uint64_t repeat = 0;
-        rltimer(runloop_s, uint64_t, runloopcb_f);
-        rltimer(runloop_s, uint64_t, uint64_t, runloopcb_f);
+        rltimer(runloop_s, uint64_t, runloop_cb);
+        rltimer(runloop_s, uint64_t, uint64_t, runloop_cb);
         virtual rlitem_s get_shared__child() override;
         virtual libuv::uv_handle_t* get_uv_handle() override;
         virtual void uv_start() override;
