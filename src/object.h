@@ -28,8 +28,8 @@
 
 #define ABSTRACT(name, ...) \
     class name; \
-    typedef std::shared_ptr<name> name##_s; \
-    typedef std::weak_ptr<name> name##_w; \
+    typedef oemros::strong_ptr<name> name##_s; \
+    typedef weak_ptr<name> name##_w; \
     class name : public abstract ,##__VA_ARGS__
 
 // private members come last so it is the default when the macro ends
@@ -44,17 +44,17 @@
 
 #define OBJECT(name, ...) \
     class name; \
-    typedef std::shared_ptr<name> name##_s; \
-    typedef std::weak_ptr<name> name##_w; \
+    typedef oemros::strong_ptr<name> name##_s; \
+    typedef oemros::weak_ptr<name> name##_w; \
     class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
 
 #define TOBJECT(name, template_spec, ...) \
     template <typename T> \
     class name; \
     template <typename T> \
-    using name##_s = std::shared_ptr<name<T>>; \
+    using name##_s = oemros::strong_ptr<name<T>>; \
     template <typename T> \
-    using name##_w = std::weak_ptr<name<T>>; \
+    using name##_w = oemros::weak_ptr<name<T>>; \
     template template_spec \
     class name final : public oemros::object<name<T>>, public std::enable_shared_from_this<name<T>> ,##__VA_ARGS__ \
 
@@ -102,7 +102,7 @@ class object : public object_interface {
     }
 
     // FIXME does this need to be templated to work?
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<T>& obj) {
+    friend std::ostream& operator<<(std::ostream& os, const oemros::strong_ptr<T>& obj) {
         os << "shared_ptr(use=" << obj.use_count();
         os << " " << *obj.get() << ")";
         return os;
@@ -120,7 +120,7 @@ class object : public object_interface {
     public:
         object() = default;
         template<typename... Args>
-        static std::shared_ptr<T> make(Args&&...args) {
+        static oemros::strong_ptr<T> make(Args&&...args) {
             return std::make_shared<T>(args...);
         }
 };

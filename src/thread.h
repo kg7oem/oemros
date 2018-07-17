@@ -110,8 +110,9 @@ TOBJECT(promise, <class T>, public lockable) {
         void merge() { promobj.get_future().wait(); }
 };
 
+// FIXME get rid of this and use promise::make() instead
 template <typename T, typename... Args>
-std::shared_ptr<oemros::promise<T>> make_promise(Args&&...args) {
+strong_ptr<oemros::promise<T>> make_promise(Args&&...args) {
     return std::make_shared<oemros::promise<T>>(args...);
 }
 
@@ -135,7 +136,7 @@ class threadpool : public lockable {
         void schedule(threadpool_cb);
         template <typename T>
         // CLEANUP this should return a thread_promise
-        std::shared_ptr<oemros::promise<T>> promise(std::function<T (void)> cb_in) {
+        strong_ptr<oemros::promise<T>> promise(std::function<T (void)> cb_in) {
             return make_promise<T>(cb_in);
         }
 };

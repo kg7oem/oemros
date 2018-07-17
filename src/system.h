@@ -44,6 +44,9 @@ namespace oemros {
 
 using string = std::string;
 
+template <typename T> using strong_ptr = std::shared_ptr<T>;
+template <typename T> using weak_ptr = std::weak_ptr<T>;
+
 enum class exitvalue {
     ok = 0,
     fatal = 1,

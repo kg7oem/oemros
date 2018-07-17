@@ -58,16 +58,16 @@ OBJECT(runloop) {
         libuv::uv_loop_t uv_loop;
         uint64_t prev_item_id = 0;
         libuv::uv_loop_t* get_uv_loop();
-        std::set<std::shared_ptr<rlitem>> active_items;
-        void add_item(std::shared_ptr<rlitem>);
-        void remove_item(std::shared_ptr<rlitem>);
+        std::set<strong_ptr<rlitem>> active_items;
+        void add_item(strong_ptr<rlitem>);
+        void remove_item(strong_ptr<rlitem>);
         std::list<libuv::uv_handle_t*> get_handles();
 
     public:
         runloop();
         ~runloop();
         template<typename T, typename... Args>
-        std::shared_ptr<T> make_item(Args&&...args) {
+        strong_ptr<T> make_item(Args&&...args) {
             log_trace("creating a new item from inside the runloop");
             return T::make(shared_from_this(), args...);
         }
