@@ -65,6 +65,7 @@
 #define OBJSTUFF(name) \
     public: \
         oemros::strong_ptr<name> strong_ref() { return this->shared_from_this(); } \
+        oemros::weak_ptr<name> weak_ref() { return this->strong_ref(); } \
         virtual const char* type() const override { return #name; }; \
         virtual const string description() const override { \
             std::stringstream ss; \
