@@ -7,8 +7,8 @@
 using namespace oemros;
 using namespace std;
 
-void sigint_handler(void) {
-    log_info("Got SIGINT");
+void sigint_handler(UNUSED int signum) {
+    log_info("Got SIGINT: ", signum);
     system_exit(exitvalue::ok);
 }
 

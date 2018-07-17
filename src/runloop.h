@@ -44,6 +44,7 @@ enum class rlitemstate {
 
 typedef void(*runloopcb_t)();
 typedef std::function<void (void)> runloop_cb;
+typedef std::function<void (int)> rlsignal_cb;
 
 class rlitem;
 
@@ -174,17 +175,17 @@ OBJECT(rlsignal, public rlitem) {
         libuv::uv_signal_t uv_signal;
 
     protected:
-        const runloop_cb cb = NULL;
+        const rlsignal_cb cb = NULL;
 
     public:
         const int signum;
-        rlsignal(runloop_s, int, runloop_cb);
+        rlsignal(runloop_s, int, rlsignal_cb);
         virtual rlitem_s get_shared__child() override;
         virtual libuv::uv_handle_t* get_uv_handle() override;
         virtual void uv_start() override;
         virtual void uv_stop() override;
         virtual void uv_close() override;
-        void execute();
+        void execute(int);
 };
 
 }
