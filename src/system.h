@@ -98,6 +98,29 @@ const char* errnostr(int);
 [[ noreturn ]] void system_exit(exitvalue);
 [[ noreturn ]] void system_panic(const char *);
 
+#define EVENT_SOURCE(name, ...) event_source<std::function<void (__VA_ARGS__)>> name
+
+template <class T>
+class event_source {
+    private:
+        list<T> subscriptions;
+        event_source(const event_source&) = delete;
+        event_source(const event_source&&) = delete;
+        event_source& operator=(const event_source&) = delete;
+
+    public:
+        event_source() = default;
+        void subscribe(T cb) { subscriptions.push_back(cb); }
+//        void unsubscribe(T cb);
+        template <typename... Args>
+        void deliver(Args... args) {
+            for (auto&& cb : subscriptions) {
+                // FIXME should this use std::forward?
+                cb(args...);
+            }
+        }
+};
+
 }
 
 #endif /* SRC_SYSTEM_H_ */

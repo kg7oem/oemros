@@ -51,6 +51,7 @@ ABSTRACT(module) {
         virtual void did_start() = 0;
 
     public:
+//        EVENT_SOURCE(something, bool, int);
         module_components_s oemros = module_components::make();
         void start();
 };
