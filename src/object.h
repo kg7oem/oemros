@@ -40,7 +40,7 @@
     public: \
         virtual const char* type() const override { return #name; }; \
  \
-    private: \
+    private:
 
 #define OBJECT(name, ...) \
     class name; \
@@ -56,7 +56,7 @@
     template <typename T> \
     using name##_w = oemros::weak_ptr<name<T>>; \
     template template_spec \
-    class name final : public oemros::object<name<T>>, public std::enable_shared_from_this<name<T>> ,##__VA_ARGS__ \
+    class name final : public oemros::object<name<T>>, public std::enable_shared_from_this<name<T>> ,##__VA_ARGS__
 
 // private members come last so it is the default when the macro ends
 //
@@ -77,7 +77,7 @@
         virtual void ____has_boilerplate() override { }; \
         name(const name&) = delete; \
         name(const name&&) = delete; \
-        name& operator=(const name&) = delete; \
+        name& operator=(const name&) = delete;
 
 namespace oemros {
 
