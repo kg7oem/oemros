@@ -13,6 +13,7 @@ void sigint_handler(UNUSED signame signum) {
 }
 
 void run() {
+    auto new_task = task_spawn("some task", "test_module");
     auto main_loop = runloop::make();
 
     main_loop->make_started<rlsignal>(signame::INT, sigint_handler);

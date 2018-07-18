@@ -78,8 +78,22 @@ ABSTRACT(module_info) {
         module_s make_module() const;
 };
 
+OBJECT(task) {
+    OBJSTUFF(task);
+
+    private:
+        const module_s module;
+        // FIXME this needs to be handled in the destructor
+        thread* mod_thread = NULL;
+
+    public:
+        const int task_num;
+        const string title;
+        task(const string title_in, module_s module_in, thread* mod_thread_in);
+};
+
 void module_bootstrap();
-thread* module_spawn(const string&);
+task_s task_spawn(const string& title, const char* module_name);
 
 using modinfo_func = const module_info* (*)();
 

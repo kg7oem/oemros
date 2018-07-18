@@ -27,6 +27,9 @@ namespace oemros {
 
 static mutex module_mutex;
 static map<string, const module_info*> loaded_modules;
+static list<module_w> active_modules;
+
+static int last_task_num = 0;
 
 static lock get_lock() {
     log_trace("trying to acquire the module info mutex");
@@ -65,11 +68,14 @@ void module_bootstrap() {
 static module_s module_create(const string& module_name) {
     log_trace("request to create an instance of a module with name: ", module_name);
 
+    auto exclusive = get_lock();
     auto found = loaded_modules.find(module_name);
     if (found == loaded_modules.end()) {
         log_fatal("could not find a module with name of ", module_name);
     }
     auto info = found->second;
+    exclusive.unlock();
+
     log_trace("calling the registered create function for module ", module_name);
     module_s new_module = info->make_module();
     log_trace("got control back from create function for module", module_name);
@@ -77,16 +83,6 @@ static module_s module_create(const string& module_name) {
     return new_module;
 }
 
-thread* module_spawn(const string& name) {
-    auto module_thread = new thread([name]{
-        log_trace("new module thread has just started");
-        auto module_instance = module_create(name);
-        module_instance->start();
-        module_instance->oemros->runloop->enter();
-    });
-
-    return module_thread;
-}
 
 void module_info::bootstrap() const {
     do_bootstrap();
@@ -113,6 +109,44 @@ void module::start() {
         did_start();
         log_trace("done invoking the did_start method");
     })->start();
+}
+
+task::task(const string title_in, module_s module_in, thread* mod_thread_in)
+: module(module_in), mod_thread(mod_thread_in), task_num(++last_task_num), title(title_in) {
+    log_trace("constructed task #", task_num, ": ", title);
+}
+
+// create a new task and create a new instance of a module
+// inside that task but return after the module has already
+// begun the start process
+task_s task_spawn(const string& title, const char* module_name) {
+    log_trace("Spawning task: ", title);
+    condition_variable condvar;
+    mutex exclusive_mutex;
+    lock exclusive(exclusive_mutex);
+    module_s new_module;
+
+    auto task_thread = new thread([&module_name, &new_module, &condvar] {
+        log_trace("new task thread has just started");
+
+        auto fresh_module = module_create(module_name);
+        fresh_module->start();
+
+        new_module = fresh_module;
+        log_trace("notifying calling thread that new_module variable is ready");
+        // new_module is no longer valid after this
+        condvar.notify_all();
+
+        log_trace("starting the module runloop");
+        fresh_module->oemros->runloop->enter();
+    });
+
+    log_trace("waiting for the module to be constructed in the task thread");
+    condvar.wait(exclusive, [&] { return !!new_module; });
+    assert(new_module);
+    log_trace("module is now ready");
+
+    return task::make(title, new_module, task_thread);
 }
 
 }
