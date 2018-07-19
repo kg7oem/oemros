@@ -358,7 +358,10 @@ uv_handle_t* rlsignal::get_uv_handle() {
 void rlsignal::execute(signame signum_in) {
     log_trace("inside the executed handler for rlsignal");
     assert(signum_in == signum);
+
+    events.will_execute.deliver();
     cb(signum_in);
+    events.did_execute.deliver();
 }
 
 }

@@ -22,7 +22,10 @@
 #ifndef SRC_SYSTEM_H_
 #define SRC_SYSTEM_H_
 
+#include <atomic>
 #include <cassert>
+#include <cfloat>
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <list>
@@ -32,6 +35,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 // g++ 6.3.0 as it comes in debian/stretch does not support maybe_unused
 #ifdef __GNUC__
@@ -45,6 +49,7 @@ namespace oemros {
 using string = std::string;
 template <typename T> using set = std::set<T>;
 template <typename T> using list = std::list<T>;
+template <typename T> using vector = std::vector<T>;
 template <typename Tkey, typename Tval> using map = std::map<Tkey, Tval>;
 
 template <typename T> using strong_ptr = std::shared_ptr<T>;
@@ -97,29 +102,6 @@ const char* errnostr(int);
 
 [[ noreturn ]] void system_exit(exitvalue);
 [[ noreturn ]] void system_panic(const char *);
-
-#define EVENT_SOURCE(name, ...) event_source<std::function<void (__VA_ARGS__)>> name
-
-template <class T>
-class event_source {
-    private:
-        list<T> subscriptions;
-        event_source(const event_source&) = delete;
-        event_source(const event_source&&) = delete;
-        event_source& operator=(const event_source&) = delete;
-
-    public:
-        event_source() = default;
-        void subscribe(T cb) { subscriptions.push_back(cb); }
-//        void unsubscribe(T cb);
-        template <typename... Args>
-        void deliver(Args... args) {
-            for (auto&& cb : subscriptions) {
-                // FIXME should this use std::forward?
-                cb(args...);
-            }
-        }
-};
 
 }
 

@@ -29,6 +29,7 @@ namespace libuv {
 #include <uv.h>
 }
 
+#include "event.h"
 #include "object.h"
 #include "system.h"
 
@@ -132,6 +133,13 @@ ABSTRACT(rlitem) {
         void stop();
         void close();
         void close_resume();
+
+        struct event_group {
+            event_source<> will_start;
+            event_source<> did_start;
+            event_source<> will_stop;
+            event_source<> did_stop;
+        } events;
 };
 
 OBJECT(rljob, public rlitem) {
@@ -151,6 +159,11 @@ OBJECT(rljob, public rlitem) {
         virtual void uv_stop() override;
         virtual void uv_close() override;
         void execute();
+
+        struct event_group : public rlitem::event_group {
+            event_source<> will_execute;
+            event_source<> did_execute;
+        } events;
 };
 
 OBJECT(rltimer, public rlitem) {
@@ -194,6 +207,11 @@ OBJECT(rlsignal, public rlitem) {
         virtual void uv_stop() override;
         virtual void uv_close() override;
         void execute(signame);
+
+        struct event_group : public rlitem::event_group {
+            event_source<> will_execute;
+            event_source<> did_execute;
+        } events;
 };
 
 }

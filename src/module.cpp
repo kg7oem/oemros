@@ -96,7 +96,46 @@ module_s module_info::make_module() const {
     return do_create_module();
 }
 
+module::states module::get_state(void) {
+    return state;
+}
+
+module::states module::set_state(module::states new_state) {
+    switch (new_state) {
+    case module::states::created:
+        log_fatal("attempt to set module state to 'created'");
+        break;
+    case module::states::starting:
+        if (state != module::states::created) {
+            log_fatal("attempt to move to starting state when current state is not 'created'");
+        }
+        break;
+    case module::states::started:
+        if (state != module::states::starting) {
+            log_fatal("attempt to move to started state when current state is not 'starting'");
+        }
+        break;
+    case module::states::stopping:
+        if (state != module::states::starting || state != module::states::started) {
+            log_fatal("attempt to move to stopping state when current state is not starting or started");
+        }
+        break;
+    case module::states::stopped:
+        if (state != module::states::stopping) {
+            log_fatal("attempt to move to stopped state when current state is not stopping");
+        }
+    }
+
+    module::states old_state = state;
+    state = new_state;
+    events.state_changed.deliver(this, state);
+
+    return old_state;
+}
+
 void module::start() {
+    set_state(module::states::starting);
+
     log_trace("notifying subclass that module is going to start");
     will_start();
 
@@ -105,6 +144,7 @@ void module::start() {
     oemros->runloop->make_item<rljob>([this] {
         log_trace("got control inside start notifier runloop job");
 
+        set_state(module::states::started);
         log_trace("invoking the did_start() method");
         did_start();
         log_trace("done invoking the did_start method");
@@ -121,31 +161,22 @@ task::task(const string title_in, module_s module_in, thread* mod_thread_in)
 // begun the start process
 task_s task_spawn(const string& title, const char* module_name) {
     log_trace("Spawning task: ", title);
-    condition_variable condvar;
-    mutex exclusive_mutex;
-    lock exclusive(exclusive_mutex);
-    module_s new_module;
+    auto module_promise = promise<module_s>::make();
 
-    auto task_thread = new thread([&module_name, &new_module, &condvar] {
+    auto task_thread = new thread([&module_name, module_promise] {
         log_trace("new task thread has just started");
 
         auto fresh_module = module_create(module_name);
         fresh_module->start();
-
-        new_module = fresh_module;
-        log_trace("notifying calling thread that new_module variable is ready");
-        // new_module is no longer valid after this
-        condvar.notify_all();
-
+        module_promise->set(fresh_module);
         log_trace("starting the module runloop");
         fresh_module->oemros->runloop->enter();
     });
 
     log_trace("waiting for the module to be constructed in the task thread");
-    condvar.wait(exclusive, [&] { return !!new_module; });
-    assert(new_module);
-    log_trace("module is now ready");
+    auto new_module = module_promise->get();
 
+    log_trace("module is now ready");
     return task::make(title, new_module, task_thread);
 }
 

@@ -22,6 +22,7 @@
 #ifndef SRC_MODULE_H_
 #define SRC_MODULE_H_
 
+#include "event.h"
 #include "runloop.h"
 #include "system.h"
 #include "thread.h"
@@ -43,6 +44,24 @@ ABSTRACT(module) {
 
     friend module_s module_create(const char*);
 
+    public:
+        enum class states {
+            created = 0,
+            starting,
+            started,
+            stopping,
+            stopped
+        };
+
+        struct event_group {
+            event_source<module*, states> state_changed;
+        };
+
+    private:
+        states state = states::created;
+        states get_state();
+        states set_state(states new_state);
+
     protected:
         // only the module system is allowed to construct
         // and initialize module objects
@@ -51,8 +70,8 @@ ABSTRACT(module) {
         virtual void did_start() = 0;
 
     public:
-//        EVENT_SOURCE(something, bool, int);
         module_components_s oemros = module_components::make();
+        event_group events;
         void start();
 };
 
@@ -71,9 +90,7 @@ ABSTRACT(module_info) {
 
     public:
         const string name;
-
         module_info(string in_name) : name(in_name) { }
-
         void bootstrap() const;
         void cleanup() const;
         module_s make_module() const;

@@ -44,3 +44,10 @@ Module lifecycle
   4. The newly constructed thread will enter into the module's runloop
   5. The newly constructed module will have the did_start() method invoked
      inside the context of the runloop.
+
+ Module states
+
+   * created -> starting
+   * starting -> stopping || started
+   * started -> stopping
+   * stopping -> stopped

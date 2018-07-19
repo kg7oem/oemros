@@ -67,6 +67,8 @@ MIXIN(shareable) {
 TOBJECT(<class T>, promise, public lockable) {
     OBJSTUFF(promise);
 
+    using event_sink = std::function<void (T)>;
+
     private:
         bool pending = true;
         bool cancelled = false;
@@ -115,6 +117,11 @@ TOBJECT(<class T>, promise, public lockable) {
         // alternate object that had no get() method and did have a merge
         // method() then the promise could extend it with the get() method
         void merge() { promobj.get_future().wait(); }
+        event_sink sink() {
+            log_info("hmmmm");
+            auto strong = this->strong_ref();
+            return [strong](T arg) { strong->set(arg); };
+        }
 };
 
 template <typename T, typename... Args>

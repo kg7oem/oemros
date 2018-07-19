@@ -49,7 +49,9 @@ else (DOXYGEN_FOUND)
   message("Doxygen need to be installed to generate the doxygen documentation")
 endif (DOXYGEN_FOUND)
 
-add_executable(oemros
+add_executable(
+    oemros
+
     logging.cpp
     main.cpp
     module.cpp
@@ -57,7 +59,9 @@ add_executable(oemros
     radio.cpp
     runloop.cpp
     system.cpp
-    thread.cpp)
+    thread.cpp
+    event.cpp
+)
 
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(oemros ${HAMLIB_LIBRARY})
