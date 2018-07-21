@@ -1,7 +1,7 @@
 /*
- * main.cxx
+ * system.h
  *
- *  Created on: Jul 21, 2018
+ *  Created on: Jul 22, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,24 +19,15 @@
  *
  */
 
-#include <memory>
+#pragma once
 
-#include "logging.h"
+#include <exception>
+#include <stdexcept>
 
-using std::make_shared;
+namespace oemros {
 
-int main() {
-    auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<logjam::logconsole>(logjam::loglevel::info);
+struct fatal_error : std::runtime_error {
+    fatal_error(const std::string& what_in) : runtime_error(what_in) { }
+};
 
-    logging->add_destination(test_dest);
-    test_dest->set_min_level(logjam::loglevel::debug);
-
-    logging->start();
-
-    log_error("hmm: ", 10);
-    log_fatal("ouch");
-
-    return 0;
 }
-

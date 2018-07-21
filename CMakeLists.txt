@@ -31,7 +31,7 @@ find_package(Threads)
 find_package(Doxygen)
 
 if (DOXYGEN_FOUND)
-    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/src/Doxyfile.in)
     set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 
     # request to configure the file
@@ -52,10 +52,9 @@ endif (DOXYGEN_FOUND)
 add_executable(
     oemros
     
-    logjam.cxx
-    main.cxx
+    src/logjam.cxx
+    src/logging.cxx
+    src/main.cxx
 )
 
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oemros ${HAMLIB_LIBRARY})
-target_link_libraries(oemros ${UV_LIBRARY})

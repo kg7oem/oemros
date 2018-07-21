@@ -12,3 +12,4 @@ gmon.out
 
 # vim files
 *.swp
+/build/

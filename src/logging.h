@@ -19,249 +19,29 @@
  *
  */
 
-#ifndef SRC_LOGGING_H_
-#define SRC_LOGGING_H_
+#pragma once
 
-#include <atomic>
-#include <fstream>
-#include <list>
-#include <iostream>
-#include <memory>
-#include <mutex>
-#include <shared_mutex>
-#include <sstream>
-#include <sys/time.h>
-#include <thread>
+#define LOGJAM_LOGSOURCE_MACRO
 
-#include "conf.h"
+#include "logjam.h"
 #include "system.h"
 
-// CLEANUP - change this namespace to something
-// dedicated to the logging system so it can be
-// split off easier; ideas
-//
-// * logjam
+#define log_fatal(...)   logjam::send_logevent_fatal(oemros::log_sources.oemros, logjam::loglevel::fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...)   logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::error, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_info(...)    logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::info, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_verbose(...) logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::verbose, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_debug(...)   logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::debug, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_trace(...)   logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::trace, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+#define log_unknown(...) logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::unknown, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
+
 namespace oemros {
 
-// The log level to use during construction of the logging engine.
-// This value will be used before the logging engine can be formally
-// configured and started after main() gets control. A value of unknown
-// causes the logging engine to not do anything when it receives a log
-// event.
-#ifndef LOGGING_INIT_LOG_THRESHOLD
-#define LOGGING_INIT_LOG_THRESHOLD loglevel::unknown
-#endif
-
-// The logging engine will be constructed the first time any log event
-// is generated which might be before it is configured and started through
-// the program logic. When a log event comes in to the engine if buffering
-// is enabled the event will go into a list. When the engine is started later
-// any buffered events will be delivered to any log destinations that are
-// present.
-#ifndef LOGGING_INIT_BUFFER_EVENTS
-#define LOGGING_INIT_BUFFER_EVENTS true
-#endif
-
-// the maxmimum length for a string generated from
-// a timestamp
-#ifndef LOGGING_TIMESTR_BUFLEN
-#define LOGGING_TIMESTR_BUFLEN 128
-#endif
-
-#ifndef LOGGING_SOURCE_T
-#define LOGGING_SOURCE_T logsource_t
-enum class logsource_t {
-    unknown = 0,
-    oemros = 1,
-    hamlib = 2,
-};
-#endif // LOGGING_SOURCE_T
-
-#ifndef LOGGING_LEVEL_T
-#define LOGGING_LEVEL_T loglevel_t
-enum class loglevel_t {
-    fatal = 100,  // execution will stop
-    error = 8,
-    warn = 7,     // output to stderr
-    notice = 6,   // show to user even if quiet is on
-    info = 5,     // show to user by default
-    verbose = 4,  // opt-in here and down - must turn on the log level
-    debug = 3,    // show values being used in logic
-    lots = 2,     // lots of stuff
-    trace = 1,    // log input and output of subsystems
-    unknown = 0,
-};
-#endif // LOGGING_LEVEL_T
-
-typedef LOGGING_SOURCE_T logsource;
-typedef LOGGING_LEVEL_T loglevel;
-
-#ifdef LOGGING_MACROS
-#define log_fatal(...) oemros::log__level_tf(oemros::logsource::oemros, oemros::loglevel::fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::error, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::warn, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_notice(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::notice, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::info, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_verbose(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::verbose, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::debug, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_lots(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::lots, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#define log_trace(...) oemros::log__level_t(oemros::logsource::oemros, oemros::loglevel::trace, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
-#endif
-
-// log events are not mutable - this property is used to gurantee thread safety
-class logevent {
-public:
-    const logsource source = logsource::unknown;
-    const loglevel level = loglevel::unknown;
-    const struct timeval timestamp = { };
-    const std::thread::id tid;
-    const char *function = NULL;
-    const char *path = NULL;
-    const int line = -1;
-    const std::string message;
-
-    logevent(logsource, loglevel, const struct timeval when, std::thread::id, const char *, const char *, const int, const std::string);
+// TODO this is weird too - is there a way to clean this up?
+struct _log_sources {
+    LOGJAM_LOGSOURCE(oemros);
+    LOGJAM_LOGSOURCE(hamlib);
 };
 
-class logdest {
-private:
-    std::mutex output_mutex;
-
-public:
-    logdest() = default;
-    virtual ~logdest() = default;
-    virtual void event(const logevent&);
-    std::string format_time(const struct timeval&);
-    virtual std::string format_event(const logevent&);
-    void output(const logevent&, const std::string);
-    virtual void output__child(const logevent&, const std::string) = 0;
-};
-
-class logstdio : public logdest {
-public:
-    logstdio() = default;
-    virtual ~logstdio() = default;
-    virtual void output__child(const logevent&, const std::string) override;
-};
-
-class logconsole : public logstdio {
-public:
-    logconsole() = default;
-    virtual ~logconsole() = default;
-    virtual std::string format_event(const logevent&) override;
-};
-
-class logfile : public logdest {
-private:
-    std::ofstream outfile;
-
-public:
-    logfile(const char *);
-    virtual ~logfile() = default;
-    virtual void output__child(const logevent&, const std::string)  override;
-};
-
-class logging {
-private:
-    std::shared_timed_mutex log_mutex;
-    std::atomic<loglevel> log_threshold = ATOMIC_VAR_INIT(LOGGING_INIT_LOG_THRESHOLD);
-    bool buffer_events = LOGGING_INIT_BUFFER_EVENTS;
-    bool deliver_events = false;
-    std::list<std::shared_ptr<logdest>> destinations;
-    std::list<logevent> event_buffer;
-
-    void deliver_event(const logevent&);
-    std::unique_lock<std::shared_timed_mutex> get_lockex();
-    std::shared_lock<std::shared_timed_mutex> get_locksh();
-public:
-    logging();
-    // TODO needs exclusive lock
-    void start();
-    // TODO shared and exclusive requirements
-    void input_event(const logevent&);
-    // TODO exclusive requirements
-    void add_destination(std::shared_ptr<logdest>);
-    // TODO atomic operation
-    loglevel current_level();
-    // TODO atomic operation
-    loglevel current_level(loglevel);
-    const char * level_name(loglevel);
-    const char * source_name(logsource);
-
-};
-
-void logging_cleanup();
-loglevel logging_get_level();
-loglevel logging_set_level(loglevel);
-const char * logging_level_name(loglevel);
-bool logging_should_log(loglevel);
-void logging_add_destination(std::shared_ptr<logdest>);
-void logging_input_event(const logevent&);
-
-template <typename T>
-void log__accumulate_value(std::stringstream& sstream, T t) {
-    sstream << t;
-}
-
-template<typename T, typename... Args>
-void log__accumulate_value(std::stringstream& sstream, T t, Args... args) {
-    log__accumulate_value(sstream, t);
-    log__accumulate_value(sstream, args...);
-}
-
-template <typename T>
-void log__level_t(logsource source, loglevel level, const char *function, const char *path, int line, T t) {
-    if (logging_should_log(level)) {
-        struct timeval when;
-        int result = gettimeofday(&when, NULL);
-        if (result != 0) {
-            // FIXME this is eating the error reason, no errno usage
-            system_panic("gettimeofday() failed");
-        }
-
-        std::stringstream sstream;
-        log__accumulate_value(sstream, t);
-
-        auto tid = std::this_thread::get_id();
-        logevent event(source, level, when, tid, function, path, line, sstream.str());
-        logging_input_event(event);
-    }
-}
-
-template<typename T, typename... Args>
-void log__level_t(logsource source, loglevel level, const char *function, const char *path, int line, T t, Args... args) {
-    if (logging_should_log(level)) {
-        struct timeval when;
-        int result = gettimeofday(&when, NULL);
-        if (result != 0) {
-            // FIXME this is eating the error reason, no errno usage
-            system_panic("gettimeofday() failed");
-        }
-
-        std::stringstream sstream;
-        log__accumulate_value(sstream, t);
-        log__accumulate_value(sstream, args...);
-
-        auto tid = std::this_thread::get_id();
-        logevent event(source, level, when, tid, function, path, line, sstream.str());
-        logging_input_event(event);
-    }
-}
-
-template <typename T>
-[[ noreturn ]] void log__level_tf(logsource source, loglevel level, const char *function, const char *path, int line, T t) {
-    log__level_t(source, level, function, path, line, t);
-    system_exit(exitvalue::fatal);
-}
-
-template<typename T, typename... Args>
-[[ noreturn ]] void log__level_tf(logsource source, loglevel level, const char *function, const char *path, int line, T t, Args... args) {
-    log__level_t(source, level, function, path, line, t, args...);
-    system_exit(exitvalue::fatal);
-}
-
-void logging_start();
+extern const _log_sources log_sources;
 
 }
-
-#endif /* SRC_LOGGING_H_ */

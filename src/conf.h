@@ -22,6 +22,4 @@
 #ifndef SRC_CONF_H_
 #define SRC_CONF_H_
 
-#define LOGGING_MACROS
-
 #endif /* SRC_CONF_H_ */
