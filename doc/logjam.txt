@@ -1,0 +1,39 @@
+
+ _              _                 
+| | ___   __ _ (_) __ _ _ __ ___  
+| |/ _ \ / _` || |/ _` | '_ ` _ \ 
+| | (_) | (_| || | (_| | | | | | |
+|_|\___/ \__, |/ |\__,_|_| |_| |_|
+         |___/__/                 
+
+The logging system in oemros is a bit odd because of the following
+considerations:
+
+  1. Everything in oemros should be able to use the logging system safely
+     and with out having to worry about issues like the logging system
+     going reentrant where processing a logging event causes another
+     event to be generated. With the logging system not using any
+     part of the system that is in turn using it this probability
+     is greatly reduced.
+
+  2. Hopefully the logging solution will be good enough that it is useful
+     for other projects and if that is true then it will be a lot easier
+     to redistribute.
+
+
+FEATURES
+
+  * Optional uffering of log events that happen before the logging system is
+    initialized by the program. Buffered events are delivered when the
+    program initializes the logging system so the events will be delivered
+    in a normal way.
+
+  * Configure basic log destinations via the environment and control logging
+    behavior before normal initialization happens so logging is useful even
+    if crashes happen before application initialization happens.
+
+  * Thread safe and operates with a high degree of parallelism.
+
+  * Cooperates with other logging systems by allowing injection of arbitrary
+    events from other sources and using log destinations that send events
+    into other logging libraries if they support event injection.

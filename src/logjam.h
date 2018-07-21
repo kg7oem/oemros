@@ -1,7 +1,7 @@
 /*
- * conf.h
+ * logjam.h
  *
- *  Created on: Jun 30, 2018
+ *  Created on: Jul 21, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,8 @@
  *
  */
 
-#ifndef SRC_CONF_H_
-#define SRC_CONF_H_
+#pragma once
 
-#define LOGGING_MACROS
 
-#endif /* SRC_CONF_H_ */
+
+

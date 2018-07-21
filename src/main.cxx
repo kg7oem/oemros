@@ -1,7 +1,7 @@
 /*
- * conf.h
+ * main.cxx
  *
- *  Created on: Jun 30, 2018
+ *  Created on: Jul 21, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,13 @@
  *
  */
 
-#ifndef SRC_CONF_H_
-#define SRC_CONF_H_
+#include <iostream>
 
-#define LOGGING_MACROS
+using std::cout;
+using std::endl;
 
-#endif /* SRC_CONF_H_ */
+int main() {
+    cout << "I just ran" << endl;
+    return 0;
+}
+
