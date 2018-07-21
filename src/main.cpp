@@ -1,70 +1,66 @@
-#include "event.h"
 #include "logging.h"
-#include "module.h"
-#include "runloop.h"
-#include "radio.h"
-#include "system.h"
+#include "object.h"
 
 using namespace oemros;
 
-void sigint_handler(UNUSED signame signum) {
-    assert(signum == signame::INT);
-    log_info("Got SIGINT");
-    system_exit(exitvalue::ok);
-}
+using std::make_shared;
+using std::dynamic_pointer_cast;
+using std::cout;
+using std::endl;
 
-void some_func(int blah, UNUSED bool foo) {
-    log_info("Something else: ", blah);
-}
+class branch : public object {
+    public:
+        strong_ptr<branch> strong_ref() { return OBJECT_AUTO_CAST(branch, object::shared_from_this()); }
+        weak_ptr<branch> weak_ref() { return strong_ref(); }
+        void totally() { cout << "totally" << endl; }
+};
+
+class leaf : public branch {
+    public:
+        template<typename... Args>
+        static strong_ptr<leaf> make_shared(Args&&...args) {
+            return std::make_shared<leaf>(args...);
+        }
+        strong_ptr<leaf> strong_ref() { return OBJECT_AUTO_CAST(leaf, object::strong_ref()); }
+        weak_ptr<leaf> weak_ref() { return strong_ref(); }
+        void blah() { cout << "blah" << endl; }
+};
+
+class leaf_leaf : public leaf {
+    public:
+        template<typename... Args>
+        static strong_ptr<leaf_leaf> make_shared(Args&&...args) {
+            return std::make_shared<leaf_leaf>(args...);
+        }
+        strong_ptr<leaf_leaf> strong_ref() { return OBJECT_AUTO_CAST(leaf_leaf, object::strong_ref()); }
+        weak_ptr<leaf_leaf> weak_ref() { return strong_ref(); }
+        void ohyeah() { cout << "ohyeah" << endl; }
+};
 
 void run() {
+    auto thing = leaf::make_shared();
+    auto downcast = dynamic_pointer_cast<object>(thing);
+    auto upcast = dynamic_pointer_cast<leaf>(downcast);
+    auto branch_cast = dynamic_pointer_cast<branch>(upcast);
+    branch* branch_p = branch_cast.get();
+    strong_ptr<branch> should_work = branch_p->strong_ref();
 
-    auto foo_strong = promise<int>::make();
-    log_info("count: ", foo_strong.use_count());
-    promise<int>* foo_p = foo_strong.get();
-    promise_s<int> something = foo_p->strong_ref();
-    // Do want this
-//    promise_s<int> something_else = foo_p;
-    log_info("count: ", foo_strong.use_count());
+    auto ok = leaf_leaf::make_shared();
 
-    auto sink = foo_strong->sink();
-    sink(5);
-    log_info("Got from promise: ", foo_strong->get());
+    ok->ohyeah();
 
-    event_source<int, const char*> another_source;
+    upcast->blah();
+    should_work->totally();
 
-    another_source.subscribe([](int value, const char* foo) {
-        log_info("got value: ", value);
-        log_info("got foo: ", foo);
-    });
-
-    another_source.subscribe(some_func);
-
-    another_source.deliver(1, "hello");
-
-    auto new_task = task_spawn("some task", "test_module");
-    auto main_loop = runloop::make();
-
-    auto signal_handler = main_loop->make_started<rlsignal>(signame::INT, sigint_handler);
-
-    signal_handler->events.will_execute.subscribe([] () { log_info("wow!!!!!!!"); });
-
-    log_info("going into main runloop");
-    main_loop->enter();
-    log_info("out of main runloop");
-}
-
-void bootstrap() {
-    logging_start();
-
-    thread_bootstrap();
-    radio_bootstrap();
-
-    module_bootstrap();
+    cout << thing.use_count() << endl;
+    cout << downcast.use_count() << endl;
+    cout << upcast.use_count() << endl;
+    cout << branch_cast.use_count() << endl;
+    cout << should_work.use_count() << endl;
+    cout << endl;
 }
 
 int main(UNUSED int argc, UNUSED char ** argv) {
-    bootstrap();
     run();
     return 0;
 }

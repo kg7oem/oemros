@@ -24,6 +24,43 @@
 
 #include "system.h"
 
+// FIXME how can this be turned into something like
+//     using object_auto_cast = std::dynamic_pointer_cast;
+// so the usage of a macro can be avoided?
+#ifdef NDEBUG
+#define OBJECT_AUTO_CAST(name, value) std::static_pointer_cast<name>(value)
+#else
+#define OBJECT_AUTO_CAST(name, value) std::dynamic_pointer_cast<name>(value)
+#endif
+
+namespace oemros {
+
+class object;
+using object_s = strong_ptr<object>;
+using object_w = weak_ptr<object>;
+
+class object : public std::enable_shared_from_this<object> {
+    private:
+        object(const object&) = delete;
+        object(const object&&) = delete;
+        object& operator=(const object&) = delete;
+
+    public:
+        object() = default;
+        virtual ~object() = default;
+        object_s strong_ref() { return object::shared_from_this(); }
+        object_w weak_ref() { return object::shared_from_this(); }
+};
+
+}
+
+
+
+
+
+
+
+/*
 #define MIXIN(name, ...) class name ,##__VA_ARGS__
 
 #define ABSTRACT(name, ...) \
@@ -38,6 +75,8 @@
 // accidently flip the default to public
 #define ABSSTUFF(name) \
     public: \
+        oemros::strong_ptr<name> strong_ref() { return this->shared_from_this(); } \
+        oemros::weak_ptr<name> weak_ref() { return this->shared_from_this(); } \
         virtual const char* type() const override { return #name; }; \
  \
     private:
@@ -46,17 +85,14 @@
     class name; \
     typedef oemros::strong_ptr<name> name##_s; \
     typedef oemros::weak_ptr<name> name##_w; \
-    class name final : public oemros::object<name>, public std::enable_shared_from_this<name> ,##__VA_ARGS__
+    class name final : public oemros::object<name> ,##__VA_ARGS__
 
 #define TOBJECT(template_spec, name, ...) \
-    template <typename T> \
-    class name; \
-    template <typename T> \
-    using name##_s = oemros::strong_ptr<name<T>>; \
-    template <typename T> \
-    using name##_w = oemros::weak_ptr<name<T>>; \
+    template <typename T> class name; \
+    template <typename T> using name##_s = oemros::strong_ptr<name<T>>; \
+    template <typename T> using name##_w = oemros::weak_ptr<name<T>>; \
     template template_spec \
-    class name final : public oemros::object<name<T>>, public std::enable_shared_from_this<name<T>> ,##__VA_ARGS__
+    class name final : public oemros::object<name<T>> ,##__VA_ARGS__
 
 // private members come last so it is the default when the macro ends
 //
@@ -64,8 +100,8 @@
 // accidently flip the default to public
 #define OBJSTUFF(name) \
     public: \
-        oemros::strong_ptr<name> strong_ref() { return this->shared_from_this(); } \
-        oemros::weak_ptr<name> weak_ref() { return this->strong_ref(); } \
+        oemros::strong_ptr<name> strong_ref() { return abstract::shared_from_this(); } \
+        oemros::weak_ptr<name> weak_ref() { return this->abstract::shared_from_this(); } \
         virtual const char* type() const override { return #name; }; \
         virtual const oemros::string description() const override { \
             std::stringstream ss; \
@@ -81,6 +117,11 @@
 
 namespace oemros {
 
+
+class root_object : public std::enabled_shared_from_this<root_object> {
+
+};
+
 class object_interface {
     public:
         virtual ~object_interface() = default;
@@ -88,22 +129,22 @@ class object_interface {
         virtual const string description() const = 0;
 };
 
-class abstract : public object_interface {
+class abstract : public std::enable_shared_from_this<abstract> {
     public:
         virtual ~abstract() = default;
-        virtual const char* type() const override = 0;
-        virtual const string description() const override = 0;
+        virtual const char* type() const = 0;
+        virtual const string description() const = 0;
 };
 
 template<class T>
-class object : public object_interface {
-    // FIXME does this need to be templated to work?
+class object : public abstract {
+    // FIXME move to root of object hierarchy
     friend std::ostream& operator<<(std::ostream& os, const T& obj) {
         os << obj.description();
         return os;
     }
 
-    // FIXME does this need to be templated to work?
+    // FIXME move to root of object hierarchy
     friend std::ostream& operator<<(std::ostream& os, const oemros::strong_ptr<T>& obj) {
         os << "shared_ptr(use=" << obj.use_count();
         os << " " << *obj.get() << ")";
@@ -128,5 +169,7 @@ class object : public object_interface {
 };
 
 }
+
+*/
 
 #endif /* SRC_OBJECT_H_ */

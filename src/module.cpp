@@ -128,7 +128,7 @@ module::states module::set_state(module::states new_state) {
 
     module::states old_state = state;
     state = new_state;
-    events.state_changed.deliver(this, state);
+    events.state_changed.deliver(shared_from_this(), state);
 
     return old_state;
 }

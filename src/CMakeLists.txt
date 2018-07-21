@@ -52,15 +52,15 @@ endif (DOXYGEN_FOUND)
 add_executable(
     oemros
 
-    logging.cpp
     main.cpp
-    module.cpp
-    module.test.cpp
-    radio.cpp
-    runloop.cpp
-    system.cpp
-    thread.cpp
-    event.cpp
+#    logging.cpp
+#    module.cpp
+#    module.test.cpp
+#    radio.cpp
+#    runloop.cpp
+#    system.cpp
+#    thread.cpp
+#    event.cpp
 )
 
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
