@@ -32,6 +32,7 @@ namespace logjam {
 
 static std::atomic<loglevel> log_level_min = ATOMIC_VAR_INIT(loglevel::none);
 
+// THREAD this function is thread safe
 const char* level_name(const loglevel& level_in) {
     switch (level_in) {
         case loglevel::uninit: return "(uninitialized)";
@@ -55,15 +56,26 @@ void mutex::lock() {
     owned_by = std::this_thread::get_id();
 }
 
-// FIXME is this right?
+// THREAD this function needs to be proven to be thread safe
 void mutex::unlock() {
+    // FIXME is this always guranteed locked here? If so, how?
     assert(owned_by == std::this_thread::get_id());
     owned_by = std::thread::id();
     std::mutex::unlock();
 }
 
-bool mutex::caller_has_exclusive() {
+// THREAD this function needs to be proven thread safe
+bool mutex::caller_has_lock() {
+    // FIXME is this thread safe? where is the locking?
     return owned_by == std::this_thread::get_id();
+}
+
+bool lockable::caller_has_lock() {
+    return lock_mutex.caller_has_lock();
+}
+
+lockable::lock lockable::get_lock() {
+    return std::unique_lock<logjam::mutex>(lock_mutex);
 }
 
 // THREAD this is not yet thread safe
@@ -80,6 +92,7 @@ static loglevel set_min_level(const loglevel& level_in) {
     return old;
 }
 
+// THREAD this function is thread safe
 static bool logsource_compare(const char* rhs, const char* lhs) {
     // two pointers to the same string must match so check for that
     if (rhs == lhs) {
@@ -107,23 +120,22 @@ logevent::logevent(const logsource& source_in, const loglevel& level_in, const t
     assert(level >= loglevel::unknown);
 }
 
-// THREAD this function is inherently thread safe
+// THREAD this function is thread safe if the user implementation is safe
 logengine* logengine::get_engine() {
     auto user_engine = handlers::get_engine();
     assert(user_engine != nullptr);
     return user_engine;
 }
 
-std::unique_lock<logjam::mutex> logengine::get_lockex() {
-    return std::unique_lock<logjam::mutex>(mutex);
+void logengine::add_destination(const std::shared_ptr<logdest>& destination_in) {
+    auto lock = get_lock();
+    add_destination_mustlock(destination_in);
 }
 
 // attempts to add a destination more than once silently return
-// THREAD this function needs exclusive locking
-void logengine::add_destination(const std::shared_ptr<logdest>& destination_in) {
-    auto lock = get_lockex();
-
-    assert(mutex.caller_has_exclusive());
+// THREAD this function asserts required locking
+void logengine::add_destination_mustlock(const std::shared_ptr<logdest>& destination_in) {
+    assert(caller_has_lock());
 
     for (auto&& i : destinations) {
         if (i->id == destination_in->id) {
@@ -134,12 +146,17 @@ void logengine::add_destination(const std::shared_ptr<logdest>& destination_in) 
     destination_in->engine = this;
     destinations.push_back(destination_in);
 
-    update_min_level();
+    update_min_level_mustlock();
 }
 
-// THREAD this is not yet thread safe
 void logengine::update_min_level() {
-//    assert(mutex.caller_has_exclusive());
+    auto lock = get_lock();
+    update_min_level_mustlock();
+}
+
+// THREAD this function asserts required locking
+void logengine::update_min_level_mustlock() {
+    assert(caller_has_lock());
 
     int max_so_far = (int)loglevel::uninit;
 
@@ -165,19 +182,32 @@ bool logengine::should_log(const loglevel& level_in) {
     return level_in >= log_level_min;
 }
 
-// THREAD this is not yet thread safe
 void logengine::start() {
-
+    auto lock = get_lock();
+    start_mustlock();
 }
 
-// THREAD this function needs shared locking if the log
+// THREAD this function asserts required locking
+void logengine::start_mustlock() {
+    assert(caller_has_lock());
+}
+
+void logengine::deliver(const logevent& event_in) {
+    auto lock = get_lock();
+    deliver_mustlock(event_in);
+}
+
+// THREAD this function asserts required locking
+// THREAD this function can use shared locking if the log
 // event queue uses lockless insertion
 // https://en.cppreference.com/w/cpp/atomic/atomic_compare_exchange
-void logengine::deliver(const logevent& event_in) const {
+void logengine::deliver_mustlock(const logevent& event_in) {
+    assert(caller_has_lock());
+    assert(event_in.level != loglevel::uninit);
+    assert(event_in.level != loglevel::none);
+
     // this function must not return if a log event came in with
     // a level of fatal
-
-//    assert(event_in.level != loglevel::uninit);
 
     if (should_log(event_in.level)) {
         for(auto&& i : destinations) {
@@ -221,19 +251,47 @@ void logdest::output(const logevent& event_in) {
     handle_output(event_in);
 }
 
-std::string logconsole::format_event(const logevent& event_in) {
+// THREAD this function is thread safe
+std::string logconsole::format_event(const logevent& event_in) const {
     std::stringstream buf;
 
     buf << "@" << event_in.category << "." << level_name(event_in.level) << " ";
     buf << event_in.function << ": " << event_in.message;
 
-    return buf.str();
+    auto strbuf = buf.str();
+    auto last_char_pos = strbuf.size() - 1;
+    auto last_char = strbuf[last_char_pos];
+
+    // FIXME this should look for newlines inside the message and
+    // if the newline is not at the end of the message then put
+    // two spaces after every newline so the message is indented when
+    // the user views it - this makes it easier to read and prevents
+    // faking output from the log system to the end user with carefully
+    // crafted message lengths and line wrapping
+
+    // only add a new line if the message does not already have one
+    // FIXME this won't work right on Windows
+    // FIXME what about UTF-16 and UTF-32?
+    if (last_char != '\n') {
+        strbuf += "\n";
+    }
+
+    return strbuf;
 }
 
-// THREAD this function needs exclusive access to STDIO so
-// threads don't output on top of each other
+// THREAD this function asserts the required locking
+void logconsole::handle_output_mustlock(const std::string& message_in) {
+    // writing to stdio needs to be serialized so different threads don't overlap
+    assert(caller_has_lock());
+    std::cout <<  message_in;
+}
+
 void logconsole::handle_output(const logevent& event_in) {
-    std::cout << format_event(event_in) << std::endl;
+    // do the string work before the object becomes locked
+    auto message = format_event(event_in);
+
+    auto lock = get_lock();
+    handle_output_mustlock(message);
 }
 
 }

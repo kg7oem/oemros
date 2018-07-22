@@ -36,6 +36,18 @@
 
 namespace logjam {
 
+enum class loglevel {
+    uninit = -2,
+    none = -1,
+    unknown = 0,
+    trace = 10,
+    debug = 30,
+    verbose = 35,
+    info = 40,
+    error = 80,
+    fatal = 100,
+};
+
 struct logevent;
 class logengine;
 
@@ -52,26 +64,7 @@ class mutex : public std::mutex {
     public:
         void lock();
         void unlock();
-        bool caller_has_exclusive();
-};
-
-enum class loglevel {
-    uninit = -2,
-    none = -1,
-    unknown = 0,
-    trace = 10,
-    debug = 30,
-    verbose = 35,
-    info = 40,
-    error = 80,
-    fatal = 100,
-};
-
-struct logsource {
-    const char* c_str;
-    logsource(const char* c_str_in);
-    bool operator==(const char* rhs) const;
-    bool operator==(const logsource& rhs) const;
+        bool caller_has_lock();
 };
 
 struct baseobj {
@@ -81,6 +74,24 @@ struct baseobj {
 
     baseobj() = default;
     ~baseobj() = default;
+};
+
+class lockable {
+    using lock = std::unique_lock<logjam::mutex>;
+
+    private:
+        logjam::mutex lock_mutex;
+
+    protected:
+        lock get_lock();
+        bool caller_has_lock();
+};
+
+struct logsource {
+    const char* c_str;
+    logsource(const char* c_str_in);
+    bool operator==(const char* rhs) const;
+    bool operator==(const logsource& rhs) const;
 };
 
 // all the members of a logevent are const for thread safety
@@ -102,14 +113,16 @@ struct logevent : public baseobj {
 
 class logdest;
 
-class logengine : public baseobj {
+class logengine : public baseobj, lockable {
     friend logengine* handlers::get_engine();
 
     private:
-        logjam::mutex mutex;
         std::vector<std::shared_ptr<logdest>> destinations;
         logengine() = default;
-        std::unique_lock<logjam::mutex> get_lockex();
+        void update_min_level_mustlock(void);
+        void add_destination_mustlock(const std::shared_ptr<logdest>& destination_in);
+        void deliver_mustlock(const logevent& event);
+        void start_mustlock();
 
     public:
         // get the singleton instance
@@ -117,7 +130,7 @@ class logengine : public baseobj {
         void update_min_level(void);
         void add_destination(const std::shared_ptr<logdest>& destination_in);
         static bool should_log(const loglevel& level_in);
-        void deliver(const logevent& event) const;
+        void deliver(const logevent& event);
         void start();
 };
 
@@ -142,19 +155,16 @@ class logdest : public baseobj {
         void output(const logevent& event_in);
 };
 
-class logconsole : public logdest {
-    using lock = std::unique_lock<std::mutex>;
-
+class logconsole : public logdest, lockable {
     private:
-        std::mutex mutex;
-        lock get_lock();
         virtual void handle_output(const logevent& event_in) override;
+        void handle_output_mustlock(const std::string& message_in);
 
     public:
         logconsole(const loglevel& level_in = loglevel::debug)
             : logdest(level_in) { }
         virtual ~logconsole() = default;
-        virtual std::string format_event(const logevent& event);
+        virtual std::string format_event(const logevent& event) const;
 };
 
 const char* level_name(const loglevel& level_in);
