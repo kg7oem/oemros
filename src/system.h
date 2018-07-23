@@ -26,8 +26,20 @@
 
 namespace oemros {
 
+enum class exit_code {
+    ok = 0,
+    failed = 1,
+    doublefault = 2,
+};
+
+const char* enum_to_str(const exit_code& code_in);
+
 struct fatal_error : std::runtime_error {
     fatal_error(const std::string& what_in) : runtime_error(what_in) { }
+};
+
+struct enum_to_str_error : fatal_error {
+        enum_to_str_error(const char* enum_name_in);
 };
 
 }

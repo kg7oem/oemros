@@ -53,6 +53,7 @@ add_executable(
     oemros
     
     src/logjam.cxx
+    src/system.cxx
     src/logging.cxx
     src/main.cxx
 )

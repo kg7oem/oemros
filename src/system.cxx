@@ -1,7 +1,7 @@
 /*
- * main.cxx
+ * system.cxx
  *
- *  Created on: Jul 21, 2018
+ *  Created on: Jul 22, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,23 +19,31 @@
  *
  */
 
-#include <memory>
-
-#include "logging.h"
 #include "system.h"
 
-using std::make_shared;
+namespace oemros {
 
-int main() {
-    auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<oemros::log_console>(logjam::loglevel::debug);
+static std::string enum_to_str_error_what(const char* enum_name_in) {
+    std::string buf;
 
-    logging->add_destination(test_dest);
-    logging->start();
+    buf += "enum '";
+    buf += enum_name_in;
+    buf += "' string conversion failure";
 
-    log_debug("hmm: ", 10);
-    log_fatal("blah");
-
-    return 0;
+    return buf;
 }
 
+enum_to_str_error::enum_to_str_error(const char* enum_name_in)
+: fatal_error(enum_to_str_error_what(enum_name_in)) { }
+
+const char* enum_to_str(const exit_code& code_in) {
+    switch(code_in) {
+        case exit_code::ok: return "ok";
+        case exit_code::failed: return "failed";
+        case exit_code::doublefault: return "doublefault";
+    }
+
+    throw enum_to_str_error("exit_code");
+}
+
+}
