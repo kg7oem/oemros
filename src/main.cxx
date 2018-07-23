@@ -26,14 +26,13 @@
 using std::make_shared;
 
 int main() {
-    auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<logjam::logconsole>(logjam::loglevel::debug);
-
-    logging->add_destination(test_dest);
-    logging->start();
+//    auto logging = logjam::logengine::get_engine();
+//    auto test_dest = make_shared<logjam::logconsole>(logjam::loglevel::debug);
 
     log_debug("hmm: ", 10);
-    log_fatal("ouch");
+
+//    logging->add_destination(test_dest);
+//    logging->start();
 
     return 0;
 }

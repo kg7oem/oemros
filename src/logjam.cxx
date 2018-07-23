@@ -54,6 +54,30 @@ const char* level_name(const loglevel& level_in) {
     throw std::runtime_error("switch() failure");
 }
 
+loglevel level_from_name(const char* name_in) {
+    if (strcmp(name_in, "(uninitialized)") == 0) {
+        return loglevel::uninit;
+    } else if (strcmp(name_in, "(none)") == 0) {
+        return loglevel::none;
+    } else if (strcmp(name_in, "unknown") == 0) {
+        return loglevel::unknown;
+    } else if (strcmp(name_in, "trace") == 0) {
+        return loglevel::trace;
+    } else if (strcmp(name_in, "debug") == 0) {
+        return loglevel::debug;
+    } else if (strcmp(name_in, "verbose") == 0) {
+        return loglevel::verbose;
+    } else if (strcmp(name_in, "info") == 0) {
+        return loglevel::info;
+    } else if (strcmp(name_in, "error") == 0) {
+        return loglevel::error;
+    } else if (strcmp(name_in, "fatal") == 0) {
+        return loglevel::fatal;
+    }
+
+    throw std::runtime_error("no match for loglevel name");
+}
+
 void mutex::lock() {
     std::mutex::lock();
     // FIXME how do I check for no value?

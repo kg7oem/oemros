@@ -19,6 +19,9 @@
  *
  */
 
+#include <cstdlib>
+#include <iostream>
+
 #include "logging.h"
 
 const oemros::_log_sources oemros::log_sources;
@@ -42,5 +45,17 @@ logjam::logengine* logjam::handlers::get_engine() {
 }
 
 oemros::log_engine::log_engine() : logjam::logengine() {
-    min_log_level = logjam::loglevel::none;
+    auto log_level_env = std::getenv("OEMROS_PRELOG_LEVEL");
+    auto log_output_env = std::getenv("OEMROS_PRELOG_OUTPUT");
+
+    if (log_level_env == nullptr) {
+        min_log_level = logjam::loglevel::none;
+    } else {
+        min_log_level = logjam::level_from_name(log_level_env);
+    }
+
+    if (log_output_env != nullptr) {
+        auto console_output = std::make_shared<logjam::logconsole>(min_log_level);
+        add_destination(console_output);
+    }
 }

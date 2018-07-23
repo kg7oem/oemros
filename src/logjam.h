@@ -175,6 +175,7 @@ class logconsole : public logdest, lockable {
 };
 
 const char* level_name(const loglevel& level_in);
+loglevel level_from_name(const char* name_in);
 bool should_log(const loglevel& leve_in);
 
 template <typename T>
