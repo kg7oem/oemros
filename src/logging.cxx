@@ -37,6 +37,10 @@ void logjam::handlers::fatal(const logevent& event_in) {
 }
 
 logjam::logengine* logjam::handlers::get_engine() {
-    static logjam::logengine engine;
+    static oemros::log_engine engine;
     return &engine;
+}
+
+oemros::log_engine::log_engine() : logjam::logengine() {
+    min_log_level = logjam::loglevel::none;
 }

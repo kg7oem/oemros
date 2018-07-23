@@ -27,14 +27,12 @@ using std::make_shared;
 
 int main() {
     auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<logjam::logconsole>(logjam::loglevel::info);
+    auto test_dest = make_shared<logjam::logconsole>(logjam::loglevel::debug);
 
     logging->add_destination(test_dest);
-    test_dest->set_min_level(logjam::loglevel::debug);
-
     logging->start();
 
-    log_error("hmm: ", 10);
+    log_debug("hmm: ", 10);
     log_fatal("ouch");
 
     return 0;

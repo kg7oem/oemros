@@ -44,4 +44,9 @@ struct _log_sources {
 
 extern const _log_sources log_sources;
 
+class log_engine : public logjam::logengine {
+    public:
+        log_engine();
+};
+
 }

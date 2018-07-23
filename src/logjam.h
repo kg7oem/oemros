@@ -21,8 +21,10 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <ctime>
+#include <list>
 #include <memory>
 #include <shared_mutex>
 #include <sstream>
@@ -95,7 +97,7 @@ struct logsource {
 };
 
 // all the members of a logevent are const for thread safety
-struct logevent : public baseobj {
+struct logevent {
     using timestamp = std::chrono::time_point<std::chrono::system_clock>;
 
     const char* category = nullptr;
@@ -118,18 +120,23 @@ class logengine : public baseobj, lockable {
 
     private:
         std::vector<std::shared_ptr<logdest>> destinations;
-        logengine() = default;
+        std::list<logevent> event_buffer;
         void update_min_level_mustlock(void);
         void add_destination_mustlock(const std::shared_ptr<logdest>& destination_in);
         void deliver_mustlock(const logevent& event);
         void start_mustlock();
 
+    protected:
+        std::atomic<loglevel> min_log_level = ATOMIC_VAR_INIT(loglevel::none);
+        bool buffer_events = true;
+
     public:
+        logengine() = default;
         // get the singleton instance
         static logengine* get_engine();
         void update_min_level(void);
         void add_destination(const std::shared_ptr<logdest>& destination_in);
-        static bool should_log(const loglevel& level_in);
+        bool should_log(const loglevel& level_in);
         void deliver(const logevent& event);
         void start();
 };
@@ -168,6 +175,7 @@ class logconsole : public logdest, lockable {
 };
 
 const char* level_name(const loglevel& level_in);
+bool should_log(const loglevel& leve_in);
 
 template <typename T>
 void accumulate_log_arg(std::stringstream& sstream, T t) {
@@ -182,7 +190,7 @@ void accumulate_log_arg(std::stringstream& sstream, T t, Args... args) {
 
 template <typename T>
 void send_logevent(logsource source, loglevel level, const char *function, const char *path, int line, T t) {
-    if (logengine::should_log(level)) {
+    if (logjam::should_log(level)) {
         auto when = std::chrono::system_clock::now();
 
         std::stringstream sstream;
@@ -196,7 +204,7 @@ void send_logevent(logsource source, loglevel level, const char *function, const
 
 template<typename T, typename... Args>
 void send_logevent(logsource source, loglevel level, const char *function, const char *path, int line, T t, Args... args) {
-    if (logengine::should_log(level)) {
+    if (logjam::should_log(level)) {
         auto when = std::chrono::system_clock::now();
 
         std::stringstream sstream;

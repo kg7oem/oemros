@@ -19,7 +19,6 @@
  *
  */
 
-#include <atomic>
 #include <cassert>
 #include <cstring>
 #include <exception>
@@ -30,20 +29,26 @@
 
 namespace logjam {
 
-static std::atomic<loglevel> log_level_min = ATOMIC_VAR_INIT(loglevel::none);
+bool should_log(const loglevel& level_in) {
+    return logengine::get_engine()->should_log(level_in);
+}
+
+// this lives at file global scope because it didn't work in
+// the original desired scope: inside logengine
+//static std::atomic<loglevel> log_level_min = ATOMIC_VAR_INIT(loglevel::none);
 
 // THREAD this function is thread safe
 const char* level_name(const loglevel& level_in) {
     switch (level_in) {
-        case loglevel::uninit: return "(uninitialized)";
-        case loglevel::none: return "(none)";
+        case loglevel::uninit:  return "(uninitialized)";
+        case loglevel::none:    return "(none)";
         case loglevel::unknown: return "unknown";
-        case loglevel::trace: return "trace";
-        case loglevel::debug: return "debug";
+        case loglevel::trace:   return "trace";
+        case loglevel::debug:   return "debug";
         case loglevel::verbose: return "verbose";
-        case loglevel::info: return "info";
-        case loglevel::error: return "error";
-        case loglevel::fatal: return "fatal";
+        case loglevel::info:    return "info";
+        case loglevel::error:   return "error";
+        case loglevel::fatal:   return "fatal";
     }
 
     throw std::runtime_error("switch() failure");
@@ -76,20 +81,6 @@ bool lockable::caller_has_lock() {
 
 lockable::lock lockable::get_lock() {
     return std::unique_lock<logjam::mutex>(lock_mutex);
-}
-
-// THREAD this is not yet thread safe
-static loglevel get_min_level() {
-    // FIXME this should use memory ordering probably
-    return log_level_min.load();
-}
-
-// THREAD this is not yet thread safe
-static loglevel set_min_level(const loglevel& level_in) {
-    loglevel old = get_min_level();
-    // FIXME this needs a compare and swap
-    log_level_min = level_in;
-    return old;
 }
 
 // THREAD this function is thread safe
@@ -158,28 +149,29 @@ void logengine::update_min_level() {
 void logengine::update_min_level_mustlock() {
     assert(caller_has_lock());
 
-    int max_so_far = (int)loglevel::uninit;
+    int max_found = (int)loglevel::uninit;
 
     for (auto&& i : destinations) {
-        if ((int)i->min_level > max_so_far) {
-            max_so_far = (int)i->min_level;
+        if ((int)i->min_level > max_found) {
+            max_found = (int)i->min_level;
         }
     }
 
-    if (max_so_far == (int)loglevel::uninit) {
+    if (max_found == (int)loglevel::uninit) {
         return;
-    } else if (max_so_far != (int)get_min_level()) {
-        set_min_level(loglevel(max_so_far));
+    } else if (max_found != (int)min_log_level.load()) {
+        min_log_level = loglevel(max_found);
     }
 }
 
 // THREAD this function is inherently thread safe
 bool logengine::should_log(const loglevel& level_in) {
-    assert(log_level_min != loglevel::uninit);
+    assert(min_log_level != loglevel::uninit);
     // always pass in log events if they are fatal so
     // the engine can terminate the process
     if (level_in == loglevel::fatal) return true;
-    return level_in >= log_level_min;
+    if (min_log_level == loglevel::none) return false;
+    return level_in >= min_log_level;
 }
 
 void logengine::start() {
@@ -190,6 +182,17 @@ void logengine::start() {
 // THREAD this function asserts required locking
 void logengine::start_mustlock() {
     assert(caller_has_lock());
+
+    uint sent_events = 0;
+
+    // send any pending log events to any known log destinations
+    for(auto&& i : event_buffer) {
+        sent_events++;
+        deliver_mustlock(i);
+    }
+
+    assert(sent_events == event_buffer.size());
+    event_buffer.empty();
 }
 
 void logengine::deliver(const logevent& event_in) {
@@ -210,8 +213,15 @@ void logengine::deliver_mustlock(const logevent& event_in) {
     // a level of fatal
 
     if (should_log(event_in.level)) {
-        for(auto&& i : destinations) {
-            i->output(event_in);
+        if (buffer_events && destinations.size() == 0) {
+            // if there isn't any destinations available
+            // put the event in a list and give it to any
+            // attached destinations when the log engine is started
+            event_buffer.push_back(event_in);
+        } else {
+            for(auto&& i : destinations) {
+                i->output(event_in);
+            }
         }
     }
 
