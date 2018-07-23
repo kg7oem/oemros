@@ -27,7 +27,7 @@ using std::make_shared;
 
 int main() {
     auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<oemros::log_console>(logjam::loglevel::info);
+    auto test_dest = make_shared<oemros::log_console>(logjam::loglevel::debug);
 
     logging->add_destination(test_dest);
     logging->start();

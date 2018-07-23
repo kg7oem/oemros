@@ -151,12 +151,12 @@ logengine* logengine::get_engine() {
 
 void logengine::add_destination(const std::shared_ptr<logdest>& destination_in) {
     auto lock = get_lock();
-    add_destination_mustlock(destination_in);
+    add_destination__lockreq(destination_in);
 }
 
 // attempts to add a destination more than once silently return
 // THREAD this function asserts required locking
-void logengine::add_destination_mustlock(const std::shared_ptr<logdest>& destination_in) {
+void logengine::add_destination__lockreq(const std::shared_ptr<logdest>& destination_in) {
     assert(caller_has_lock());
 
     for (auto&& i : destinations) {
@@ -168,16 +168,16 @@ void logengine::add_destination_mustlock(const std::shared_ptr<logdest>& destina
     destination_in->engine = this;
     destinations.push_back(destination_in);
 
-    update_min_level_mustlock();
+    update_min_level__lockreq();
 }
 
 void logengine::update_min_level() {
     auto lock = get_lock();
-    update_min_level_mustlock();
+    update_min_level__lockreq();
 }
 
 // THREAD this function asserts required locking
-void logengine::update_min_level_mustlock() {
+void logengine::update_min_level__lockreq() {
     assert(caller_has_lock());
 
     int max_found = (int)loglevel::uninit;
@@ -208,11 +208,11 @@ bool logengine::should_log(const loglevel& level_in) {
 
 void logengine::start() {
     auto lock = get_lock();
-    start_mustlock();
+    start__lockreq();
 }
 
 // THREAD this function asserts required locking
-void logengine::start_mustlock() {
+void logengine::start__lockreq() {
     assert(caller_has_lock());
 
     uint sent_events = 0;
@@ -220,7 +220,7 @@ void logengine::start_mustlock() {
     // send any pending log events to any known log destinations
     for(auto&& i : event_buffer) {
         sent_events++;
-        deliver_to_all_mustlock(i);
+        deliver_to_all__lockreq(i);
     }
 
     assert(sent_events == event_buffer.size());
@@ -231,14 +231,14 @@ void logengine::start_mustlock() {
 
 void logengine::deliver(const logevent& event_in) {
     auto lock = get_lock();
-    deliver_mustlock(event_in);
+    deliver__lockreq(event_in);
 }
 
 // THREAD this function asserts required locking
 // THREAD this function can use shared locking if the log
 // event queue uses lockless insertion
 // https://en.cppreference.com/w/cpp/atomic/atomic_compare_exchange
-void logengine::deliver_mustlock(const logevent& event_in) {
+void logengine::deliver__lockreq(const logevent& event_in) {
     assert(caller_has_lock());
     assert(event_in.level >= loglevel::unknown);
 
@@ -248,7 +248,7 @@ void logengine::deliver_mustlock(const logevent& event_in) {
     // only deliver messages if started and then deliver them
     // even if that means 0 destinations receive them
     if (started) {
-        deliver_to_all_mustlock(event_in);
+        deliver_to_all__lockreq(event_in);
     } else if (buffer_events) {
         event_buffer.push_back(event_in);
     }
@@ -264,7 +264,7 @@ void logengine::deliver_mustlock(const logevent& event_in) {
     return;
 }
 
-void logengine::deliver_to_all_mustlock(const logevent& event_in) {
+void logengine::deliver_to_all__lockreq(const logevent& event_in) {
     assert(caller_has_lock());
 
     uint sent = 0;
@@ -329,7 +329,7 @@ std::string logconsole::format_event(const logevent& event_in) const {
 }
 
 // THREAD this function asserts the required locking
-void logconsole::handle_output_mustlock(const std::string& message_in) {
+void logconsole::handle_output__lockreq(const std::string& message_in) {
     // writing to stdio needs to be serialized so different threads don't overlap
     assert(caller_has_lock());
     std::cout <<  message_in;
@@ -340,7 +340,7 @@ void logconsole::handle_output(const logevent& event_in) {
     auto message = format_event(event_in);
 
     auto lock = get_lock();
-    handle_output_mustlock(message);
+    handle_output__lockreq(message);
 }
 
 }

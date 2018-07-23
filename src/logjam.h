@@ -121,11 +121,11 @@ class logengine : public baseobj, lockable {
     private:
         std::vector<std::shared_ptr<logdest>> destinations;
         std::list<logevent> event_buffer;
-        void update_min_level_mustlock(void);
-        void add_destination_mustlock(const std::shared_ptr<logdest>& destination_in);
-        void deliver_mustlock(const logevent& event_in);
-        void deliver_to_all_mustlock(const logevent& event_in);
-        void start_mustlock();
+        void update_min_level__lockreq(void);
+        void add_destination__lockreq(const std::shared_ptr<logdest>& destination_in);
+        void deliver__lockreq(const logevent& event_in);
+        void deliver_to_all__lockreq(const logevent& event_in);
+        void start__lockreq();
 
     protected:
         std::atomic<loglevel> min_log_level = ATOMIC_VAR_INIT(loglevel::none);
@@ -168,7 +168,7 @@ class logdest : public baseobj {
 class logconsole : public logdest, lockable {
     private:
         virtual void handle_output(const logevent& event_in) override;
-        void handle_output_mustlock(const std::string& message_in);
+        void handle_output__lockreq(const std::string& message_in);
 
     public:
         logconsole(const loglevel& level_in = loglevel::debug)
