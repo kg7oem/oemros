@@ -190,7 +190,7 @@ void logengine::update_min_level_mustlock() {
 
     if (max_found == (int)loglevel::uninit) {
         return;
-    } else if (max_found != (int)min_log_level.load()) {
+    } else if (max_found != (int)min_log_level.load(std::memory_order_relaxed)) {
         min_log_level = loglevel(max_found);
     }
 }
