@@ -329,7 +329,7 @@ std::string logconsole::format_event(const logevent& event_in) const {
 }
 
 // THREAD this function asserts the required locking
-void logconsole::handle_output__lockreq(const std::string& message_in) {
+void logconsole::write_stdio__lockreq(const std::string& message_in) {
     // writing to stdio needs to be serialized so different threads don't overlap
     assert(caller_has_lock());
     std::cout <<  message_in;
@@ -340,7 +340,7 @@ void logconsole::handle_output(const logevent& event_in) {
     auto message = format_event(event_in);
 
     auto lock = get_lock();
-    handle_output__lockreq(message);
+    write_stdio__lockreq(message);
 }
 
 }

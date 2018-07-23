@@ -168,7 +168,7 @@ class logdest : public baseobj {
 class logconsole : public logdest, lockable {
     private:
         virtual void handle_output(const logevent& event_in) override;
-        void handle_output__lockreq(const std::string& message_in);
+        void write_stdio__lockreq(const std::string& message_in);
 
     public:
         logconsole(const loglevel& level_in = loglevel::debug)
