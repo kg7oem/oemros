@@ -75,7 +75,9 @@ loglevel level_from_name(const char* name_in) {
         return loglevel::fatal;
     }
 
-    throw std::runtime_error("no match for loglevel name");
+    std::string buf("no match for loglevel name: ");
+    buf += name_in;
+    throw std::runtime_error(buf);
 }
 
 void mutex::lock() {
@@ -218,11 +220,13 @@ void logengine::start_mustlock() {
     // send any pending log events to any known log destinations
     for(auto&& i : event_buffer) {
         sent_events++;
-        deliver_mustlock(i);
+        deliver_to_all_mustlock(i);
     }
 
     assert(sent_events == event_buffer.size());
     event_buffer.empty();
+
+    started = true;
 }
 
 void logengine::deliver(const logevent& event_in) {
@@ -236,23 +240,17 @@ void logengine::deliver(const logevent& event_in) {
 // https://en.cppreference.com/w/cpp/atomic/atomic_compare_exchange
 void logengine::deliver_mustlock(const logevent& event_in) {
     assert(caller_has_lock());
-    assert(event_in.level != loglevel::uninit);
-    assert(event_in.level != loglevel::none);
+    assert(event_in.level >= loglevel::unknown);
 
     // this function must not return if a log event came in with
     // a level of fatal
 
-    if (should_log(event_in.level)) {
-        if (buffer_events && destinations.size() == 0) {
-            // if there isn't any destinations available
-            // put the event in a list and give it to any
-            // attached destinations when the log engine is started
-            event_buffer.push_back(event_in);
-        } else {
-            for(auto&& i : destinations) {
-                i->output(event_in);
-            }
-        }
+    // only deliver messages if started and then deliver them
+    // even if that means 0 destinations receive them
+    if (started) {
+        deliver_to_all_mustlock(event_in);
+    } else if (buffer_events) {
+        event_buffer.push_back(event_in);
     }
 
     if (event_in.level == loglevel::fatal) {
@@ -264,6 +262,17 @@ void logengine::deliver_mustlock(const logevent& event_in) {
 
     // it is now ok to return after here
     return;
+}
+
+void logengine::deliver_to_all_mustlock(const logevent& event_in) {
+    assert(caller_has_lock());
+
+    uint sent = 0;
+    for(auto&& i : destinations) {
+        i->output(event_in);
+        sent++;
+    }
+    assert(sent == destinations.size());
 }
 
 logdest::logdest(const loglevel& min_level_in) : min_level(min_level_in) { }

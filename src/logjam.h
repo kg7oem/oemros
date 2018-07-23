@@ -123,12 +123,15 @@ class logengine : public baseobj, lockable {
         std::list<logevent> event_buffer;
         void update_min_level_mustlock(void);
         void add_destination_mustlock(const std::shared_ptr<logdest>& destination_in);
-        void deliver_mustlock(const logevent& event);
+        void deliver_mustlock(const logevent& event_in);
+        void deliver_to_all_mustlock(const logevent& event_in);
         void start_mustlock();
 
     protected:
         std::atomic<loglevel> min_log_level = ATOMIC_VAR_INIT(loglevel::none);
         bool buffer_events = true;
+        // messages will only be delivered when started
+        bool started = false;
 
     public:
         logengine() = default;

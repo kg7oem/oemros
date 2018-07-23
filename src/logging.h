@@ -49,4 +49,9 @@ class log_engine : public logjam::logengine {
         log_engine();
 };
 
+class log_console : public logjam::logconsole {
+    public:
+        log_console(const logjam::loglevel& level_in);
+};
+
 }
