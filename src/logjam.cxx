@@ -180,30 +180,32 @@ void logengine::update_min_level() {
 void logengine::update_min_level__lockreq() {
     assert(caller_has_lock());
 
-    int max_found = (int)loglevel::uninit;
+    auto max_found = loglevel::uninit;
 
     for (auto&& i : destinations) {
-        if ((int)i->min_level > max_found) {
-            max_found = (int)i->min_level;
+        auto dest_level = i->get_min_level();
+        if (dest_level > max_found) {
+            max_found = dest_level;
         }
     }
 
-    if (max_found == (int)loglevel::uninit) {
+    if (max_found == loglevel::uninit) {
         return;
-    } else if (max_found != (int)min_log_level.load(std::memory_order_relaxed)) {
+    } else if (max_found != min_log_level.load(std::memory_order_relaxed)) {
         min_log_level = loglevel(max_found);
     }
 }
 
 // THREAD this function is inherently thread safe
 bool logengine::should_log(const loglevel& level_in) {
-    assert(min_log_level != loglevel::uninit);
+    auto current_level = min_log_level.load(std::memory_order_relaxed);
+    assert(current_level != loglevel::uninit);
 
     // always pass in log events if they are fatal so
     // the engine can terminate the process
     if (level_in == loglevel::fatal) return true;
-    if (min_log_level == loglevel::none) return false;
-    return level_in >= min_log_level;
+    if (current_level == loglevel::none) return false;
+    return level_in >= current_level;
 }
 
 void logengine::start() {
@@ -283,13 +285,28 @@ logdest::destid logdest::next_destination_id() {
     return ++last_dest_id;
 }
 
-// THREAD this is not yet thread safe
+loglevel logdest::get_min_level() {
+    return min_level.load(std::memory_order_relaxed);
+}
+
 loglevel logdest::set_min_level(const loglevel& min_level_in) {
-    loglevel old = min_level;
+    // lock the entire engine while the log level of this destination
+    // is changed - event delivery and buffering will block but
+    // should_log() is still going to work with atomic operations
+    // on the engine's min_log_level
+    auto engine_lock = logengine::get_engine()->get_lock();
+    return set_min_level__lockreq(min_level_in);
+}
+
+// THREAD this function asserts correct locking
+loglevel logdest::set_min_level__lockreq(const loglevel& min_level_in) {
+    assert(logengine::get_engine()->caller_has_lock());
+
+    loglevel old = get_min_level();
     min_level = min_level_in;
 
     if (engine != nullptr) {
-        engine->update_min_level();
+        engine->update_min_level__lockreq();
     }
 
     return old;

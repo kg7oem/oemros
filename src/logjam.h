@@ -113,10 +113,34 @@ struct logevent {
     ~logevent() = default;
 };
 
-class logdest;
+class logengine;
+
+class logdest : public baseobj {
+    friend class logengine;
+    using destid = uint32_t;
+
+    private:
+        std::atomic<loglevel> min_level;
+        loglevel set_min_level__lockreq(const loglevel& min_level_in);
+        static destid next_destination_id();
+
+    protected:
+        logengine* engine = nullptr;
+        virtual void handle_output(const logevent& event) = 0;
+
+    public:
+        const destid id = logdest::next_destination_id();
+        logdest(const loglevel& min_level_in);
+        virtual ~logdest() = default;
+        loglevel get_min_level();
+        loglevel set_min_level(const loglevel& min_level_in);
+        void output(const logevent& event_in);
+};
 
 class logengine : public baseobj, lockable {
     friend logengine* handlers::get_engine();
+    friend loglevel logdest::set_min_level(const loglevel& min_level_in);
+    friend loglevel logdest::set_min_level__lockreq(const loglevel& min_level_in);
 
     private:
         std::vector<std::shared_ptr<logdest>> destinations;
@@ -142,27 +166,6 @@ class logengine : public baseobj, lockable {
         bool should_log(const loglevel& level_in);
         void deliver(const logevent& event);
         void start();
-};
-
-class logdest : public baseobj {
-    friend class logengine;
-    using destid = uint32_t;
-
-    private:
-        loglevel min_level;
-        static destid next_destination_id();
-
-    protected:
-        logengine* engine = nullptr;
-        virtual void handle_output(const logevent& event) = 0;
-
-    public:
-        const destid id = logdest::next_destination_id();
-        logdest(const loglevel& min_level_in);
-        virtual ~logdest() = default;
-        loglevel get_min_level();
-        loglevel set_min_level(const loglevel& min_level_in);
-        void output(const logevent& event_in);
 };
 
 class logconsole : public logdest, lockable {
