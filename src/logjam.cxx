@@ -85,6 +85,9 @@ lockable::lock lockable::get_lock() {
 
 // THREAD this function is thread safe
 static bool logsource_compare(const char* rhs, const char* lhs) {
+    assert(rhs != nullptr);
+    assert(lhs != nullptr);
+
     // two pointers to the same string must match so check for that
     if (rhs == lhs) {
         return true;
@@ -99,10 +102,12 @@ logsource::logsource(const char* c_str_in) : c_str(c_str_in) {
 }
 
 bool logsource::operator==(const char* rhs) const {
+    assert(rhs != nullptr);
     return logsource_compare(c_str, rhs);
 }
 
 bool logsource::operator==(const logsource& rhs) const {
+    assert(rhs.c_str != nullptr);
     return logsource_compare(c_str, rhs.c_str);
 }
 
@@ -167,6 +172,7 @@ void logengine::update_min_level_mustlock() {
 // THREAD this function is inherently thread safe
 bool logengine::should_log(const loglevel& level_in) {
     assert(min_log_level != loglevel::uninit);
+
     // always pass in log events if they are fatal so
     // the engine can terminate the process
     if (level_in == loglevel::fatal) return true;
