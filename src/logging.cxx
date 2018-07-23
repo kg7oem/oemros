@@ -30,30 +30,16 @@ const oemros::_log_sources oemros::log_sources;
 #define OEMROS_PRELOG_LEVEL "OEMROS_PRELOG_LEVEL"
 #define OEMROS_PRELOG_OUTPUT "OEMROS_PRELOG_OUTPUT"
 
-void logjam::handlers::fatal(const logevent& event_in) {
-    if (std::getenv(OEMROS_PRELOG) != nullptr) {
-        // FIXME do this
-        std::cout << "OEMROS should output buffered log events but I don't yet";
-    }
-
-    // FIXME this doesn't work does it? The user could catch the
-    // exception and then the logengine calling terminate() here
-    // won't ever get a chance to call terminate() in case this
-    // doesn't wind up killing the process
-    //
-    // or is it
-    //
-    // this works exactly the way the user wants it to if the user wants
-    // to use exceptions so let them use it the way they want to?
-    throw oemros::fatal_error(event_in.message);
-}
-
 logjam::logengine* logjam::handlers::get_engine() {
     static oemros::log_engine engine;
     return &engine;
 }
 
-oemros::log_engine::log_engine() : logjam::logengine() {
+namespace oemros {
+
+using logjam::loglevel;
+
+log_engine::log_engine() : logjam::logengine() {
     // control auto prelog level
     auto prelog_env = std::getenv(OEMROS_PRELOG);
     // control initial log level
@@ -96,10 +82,6 @@ oemros::log_engine::log_engine() : logjam::logengine() {
         started = true;
     }
 }
-
-namespace oemros {
-
-using logjam::loglevel;
 
 // if auto prelog is turned on then see if the auto prelog level
 // is less than the level given to the constructor and return that

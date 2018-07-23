@@ -22,6 +22,7 @@
 #pragma once
 
 #include <atomic>
+#include <boost/lockfree/queue.hpp>
 #include <chrono>
 #include <ctime>
 #include <list>
@@ -29,6 +30,7 @@
 #include <shared_mutex>
 #include <sstream>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
 #ifdef LOGJAM_LOGSOURCE_MACRO
@@ -69,13 +71,22 @@ class mutex : public std::mutex {
         bool caller_has_lock();
 };
 
-struct baseobj {
-    baseobj(const baseobj&) = delete;
-    baseobj(const baseobj&&) = delete;
-    baseobj& operator=(const baseobj&);
+class shared_mutex : public std::shared_timed_mutex {
+    private:
+        std::thread::id owned_exclusive_by;
+        std::mutex lock_tracking_mutex;
+        std::unordered_set<std::thread::id> shared_owners;
 
-    baseobj() = default;
-    ~baseobj() = default;
+    public:
+        void lock();
+        void unlock();
+        // true if the caller has a write lock
+        bool caller_has_lockex();
+        void lock_shared();
+        void unlock_shared();
+        // true if caller has at least a read lock - it can also
+        // have a write lock and be true
+        bool caller_has_locksh();
 };
 
 class lockable {
@@ -87,6 +98,21 @@ class lockable {
     protected:
         lock get_lock();
         bool caller_has_lock();
+};
+
+class shareable {
+    using mutex = shared_mutex;
+    using write_lock = std::unique_lock<mutex>;
+    using read_lock = std::shared_lock<mutex>;
+
+    private:
+        mutex lock_mutex;
+
+    protected:
+        write_lock get_lockex();
+        read_lock get_locksh();
+        bool caller_has_lockex();
+        bool caller_has_locksh();
 };
 
 struct logsource {
@@ -113,7 +139,14 @@ struct logevent {
     ~logevent() = default;
 };
 
-class logengine;
+struct baseobj {
+    baseobj(const baseobj&) = delete;
+    baseobj(const baseobj&&) = delete;
+    baseobj& operator=(const baseobj&);
+
+    baseobj() = default;
+    ~baseobj() = default;
+};
 
 class logdest : public baseobj {
     friend class logengine;
@@ -127,29 +160,34 @@ class logdest : public baseobj {
     protected:
         logengine* engine = nullptr;
         virtual void handle_output(const logevent& event) = 0;
+        loglevel get_min_level();
 
     public:
         const destid id = logdest::next_destination_id();
         logdest(const loglevel& min_level_in);
         virtual ~logdest() = default;
-        loglevel get_min_level();
         loglevel set_min_level(const loglevel& min_level_in);
         void output(const logevent& event_in);
 };
 
-class logengine : public baseobj, lockable {
+class logengine : public baseobj, shareable {
+    using lockfree_queue = boost::lockfree::queue<logevent*>;
+
     friend logengine* handlers::get_engine();
     friend loglevel logdest::set_min_level(const loglevel& min_level_in);
     friend loglevel logdest::set_min_level__lockreq(const loglevel& min_level_in);
 
     private:
         std::vector<std::shared_ptr<logdest>> destinations;
-        std::list<logevent> event_buffer;
-        void update_min_level__lockreq(void);
-        void add_destination__lockreq(const std::shared_ptr<logdest>& destination_in);
-        void deliver__lockreq(const logevent& event_in);
-        void deliver_to_all__lockreq(const logevent& event_in);
-        void start__lockreq();
+        lockfree_queue event_buffer{0};
+        loglevel get_min_level();
+        loglevel set_min_level__lockex(loglevel level_in);
+        void update_min_level__lockex(void);
+        void add_destination__lockex(const std::shared_ptr<logdest>& destination_in);
+        void deliver__locksh(const logevent& event_in);
+        void deliver_to_one__locksh(const std::shared_ptr<logdest>& dest_in, const logevent& event_in);
+        void deliver_to_all__locksh(const logevent& event_in);
+        void start__lockex();
 
     protected:
         std::atomic<loglevel> min_log_level = ATOMIC_VAR_INIT(loglevel::none);
@@ -184,62 +222,30 @@ const char* level_name(const loglevel& level_in);
 loglevel level_from_name(const char* name_in);
 bool should_log(const loglevel& leve_in);
 
+// TODO how can this be gotten rid of?
 template <typename T>
 void accumulate_log_arg(std::stringstream& sstream, T t) {
     sstream << t;
 }
 
-template<typename T, typename... Args>
+template <typename T, typename... Args>
 void accumulate_log_arg(std::stringstream& sstream, T t, Args... args) {
-    log__accumulate_value(sstream, t);
-    log__accumulate_value(sstream, args...);
+    accumulate_log_arg(sstream, t);
+    accumulate_log_arg(sstream, args...);
 }
 
-template <typename T>
-void send_logevent(logsource source, loglevel level, const char *function, const char *path, int line, T t) {
+template<typename T, typename... Args>
+void send_logevent(const logsource& source, const loglevel& level, const char *function, const char *path, int line, T t, Args... args) {
     if (logjam::should_log(level)) {
         auto when = std::chrono::system_clock::now();
 
         std::stringstream sstream;
-        accumulate_log_arg(sstream, t);
+        accumulate_log_arg(sstream, t, args...);
 
         auto tid = std::this_thread::get_id();
         logevent event(source, level, when, tid, function, path, line, sstream.str());
         logengine::get_engine()->deliver(event);
     }
-}
-
-template<typename T, typename... Args>
-void send_logevent(logsource source, loglevel level, const char *function, const char *path, int line, T t, Args... args) {
-    if (logjam::should_log(level)) {
-        auto when = std::chrono::system_clock::now();
-
-        std::stringstream sstream;
-        accumulate_log_arg(sstream, t);
-        accumulate_log_arg(sstream, args...);
-
-        auto tid = std::this_thread::get_id();
-        logevent event(source, level, when, tid, function, path, line, sstream.str());
-        logengine::get_engine()->deliver(event);
-    }
-}
-
-
-// fatal variants of the log functions are used because they need to be marked no return
-template <typename T>
-[[ noreturn ]] void send_logevent_fatal(const logsource& source, const loglevel& level, const char* function, const char* path, const int& line, T t) {
-    send_logevent(source, level, function, path, line, t);
-    // FIXME this is actually an error condition - the engine shouldn't return
-    // when it gets a log event with fatal severity
-    std::terminate();
-}
-
-template<typename T, typename... Args>
-[[ noreturn ]] void send_logevent_fatal(const logsource& source, const loglevel& level, const char* function, const char* path, const int& line, T t, Args... args) {
-    send_logevent(source, level, function, path, line, t, args...);
-    // FIXME this is actually an error condition - the engine shouldn't return
-    // when it gets a log event with fatal severity
-   std::terminate();
 }
 
 }

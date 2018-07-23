@@ -1,6 +1,7 @@
 # stuff generated during development
 Debug/
 gmon.out
+perf.data*
 
 # Macintosh filesystem metadata
 .DS_Store

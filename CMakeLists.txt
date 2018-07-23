@@ -54,6 +54,7 @@ add_executable(
     
     src/logjam.cxx
     src/system.cxx
+    src/system.unix.cxx
     src/logging.cxx
     src/main.cxx
 )

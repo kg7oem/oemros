@@ -1,7 +1,7 @@
 /*
- * conf.h
+ * system.unix.h
  *
- *  Created on: Jun 30, 2018
+ *  Created on: Jul 25, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,9 +19,12 @@
  *
  */
 
-#ifndef SRC_CONF_H_
-#define SRC_CONF_H_
+#pragma once
 
-#define DEFAULT_FAULT_GRACE_TIME 10
+namespace oemros_unix {
 
-#endif /* SRC_CONF_H_ */
+void os_setup_kill_timer(unsigned int seconds_in);
+
+}
+
+

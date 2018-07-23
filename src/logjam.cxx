@@ -82,14 +82,13 @@ loglevel level_from_name(const char* name_in) {
 
 void mutex::lock() {
     std::mutex::lock();
-    // FIXME how do I check for no value?
-    // assert(owned_by == ??????);
+    assert(owned_by == std::thread::id());
     owned_by = std::this_thread::get_id();
 }
 
 // THREAD this function needs to be proven to be thread safe
 void mutex::unlock() {
-    // FIXME is this always guranteed locked here? If so, how?
+    // FIXME is this always locked here? If so, why?
     assert(owned_by == std::this_thread::get_id());
     owned_by = std::thread::id();
     std::mutex::unlock();
@@ -101,12 +100,73 @@ bool mutex::caller_has_lock() {
     return owned_by == std::this_thread::get_id();
 }
 
+void shared_mutex::lock() {
+    std::shared_timed_mutex::lock();
+    assert(owned_exclusive_by == std::thread::id());
+    owned_exclusive_by = std::this_thread::get_id();
+}
+
+// THREAD this function needs to be proven to be thread safe
+void shared_mutex::unlock() {
+    // FIXME is this always locked here? If so, why?
+    assert(owned_exclusive_by == std::this_thread::get_id());
+    owned_exclusive_by = std::thread::id();
+    std::shared_timed_mutex::unlock();
+}
+
+void shared_mutex::lock_shared() {
+    auto our_thread_id = std::this_thread::get_id();
+    std::unique_lock<std::mutex> our_lock(lock_tracking_mutex);
+    assert(shared_owners.find(our_thread_id) == shared_owners.end());
+    auto result = shared_owners.insert(our_thread_id);
+    if (! result.second) throw std::runtime_error("insert into set failed");
+    std::shared_timed_mutex::lock_shared();
+}
+
+void shared_mutex::unlock_shared() {
+    auto our_thread_id = std::this_thread::get_id();
+    std::unique_lock<std::mutex> our_lock(lock_tracking_mutex);
+    auto deleted_owners = shared_owners.erase(our_thread_id);
+    assert(deleted_owners == 1);
+    std::shared_timed_mutex::unlock_shared();
+}
+
+// THREAD this function needs to be proven thread safe
+bool shared_mutex::caller_has_lockex() {
+    // FIXME is this thread safe? where is the locking?
+    return owned_exclusive_by == std::this_thread::get_id();
+}
+
+// returns true if at least a shared lock is held - also true if
+// an exclusive lock is held
+bool shared_mutex::caller_has_locksh() {
+    if (caller_has_lockex()) return true;
+    std::unique_lock<std::mutex> our_lock(lock_tracking_mutex);
+    return shared_owners.find(std::this_thread::get_id()) != shared_owners.end();
+}
+
 bool lockable::caller_has_lock() {
     return lock_mutex.caller_has_lock();
 }
 
 lockable::lock lockable::get_lock() {
     return std::unique_lock<logjam::mutex>(lock_mutex);
+}
+
+shareable::write_lock shareable::get_lockex() {
+    return std::unique_lock<mutex>(lock_mutex);
+}
+
+shareable::read_lock shareable::get_locksh() {
+    return std::shared_lock<mutex>(lock_mutex);
+}
+
+bool shareable::caller_has_lockex() {
+    return lock_mutex.caller_has_lockex();
+}
+
+bool shareable::caller_has_locksh() {
+    return lock_mutex.caller_has_locksh();
 }
 
 // THREAD this function is thread safe
@@ -150,14 +210,14 @@ logengine* logengine::get_engine() {
 }
 
 void logengine::add_destination(const std::shared_ptr<logdest>& destination_in) {
-    auto lock = get_lock();
-    add_destination__lockreq(destination_in);
+    auto lock = get_lockex();
+    add_destination__lockex(destination_in);
 }
 
 // attempts to add a destination more than once silently return
 // THREAD this function asserts required locking
-void logengine::add_destination__lockreq(const std::shared_ptr<logdest>& destination_in) {
-    assert(caller_has_lock());
+void logengine::add_destination__lockex(const std::shared_ptr<logdest>& destination_in) {
+    assert(caller_has_lockex());
 
     for (auto&& i : destinations) {
         if (i->id == destination_in->id) {
@@ -168,20 +228,41 @@ void logengine::add_destination__lockreq(const std::shared_ptr<logdest>& destina
     destination_in->engine = this;
     destinations.push_back(destination_in);
 
-    update_min_level__lockreq();
+    update_min_level__lockex();
 }
 
 void logengine::update_min_level() {
-    auto lock = get_lock();
-    update_min_level__lockreq();
+    auto lock = get_lockex();
+    update_min_level__lockex();
+}
+
+loglevel logengine::get_min_level() {
+    return min_log_level.load(std::memory_order_seq_cst);
 }
 
 // THREAD this function asserts required locking
-void logengine::update_min_level__lockreq() {
-    assert(caller_has_lock());
+loglevel logengine::set_min_level__lockex(loglevel level_in) {
+    assert(caller_has_lockex());
 
-    auto max_found = loglevel::uninit;
+    auto known_level = get_min_level();
+    if (known_level == level_in) {
+        return known_level;
+    }
 
+    auto old_level = known_level;
+    if (! min_log_level.compare_exchange_strong(known_level, level_in)) {
+        // nothing but us should be writing to this
+        throw std::runtime_error("compare and swap for logengine min log level failed");
+    }
+
+    return old_level;
+}
+
+// THREAD this function asserts required locking
+void logengine::update_min_level__lockex() {
+    assert(caller_has_lockex());
+
+    auto max_found = loglevel::none;
     for (auto&& i : destinations) {
         auto dest_level = i->get_min_level();
         if (dest_level > max_found) {
@@ -189,89 +270,79 @@ void logengine::update_min_level__lockreq() {
         }
     }
 
-    if (max_found == loglevel::uninit) {
+    auto known_level = get_min_level();
+    if (known_level == max_found) {
         return;
-    } else if (max_found != min_log_level.load(std::memory_order_relaxed)) {
-        min_log_level = loglevel(max_found);
     }
+
+    set_min_level__lockex(max_found);
 }
 
 // THREAD this function is inherently thread safe
 bool logengine::should_log(const loglevel& level_in) {
-    auto current_level = min_log_level.load(std::memory_order_relaxed);
+    auto current_level = get_min_level();
     assert(current_level != loglevel::uninit);
 
-    // always pass in log events if they are fatal so
-    // the engine can terminate the process
-    if (level_in == loglevel::fatal) return true;
     if (current_level == loglevel::none) return false;
     return level_in >= current_level;
 }
 
 void logengine::start() {
-    auto lock = get_lock();
-    start__lockreq();
+    auto lock = get_lockex();
+    start__lockex();
 }
 
 // THREAD this function asserts required locking
-void logengine::start__lockreq() {
-    assert(caller_has_lock());
+void logengine::start__lockex() {
+    assert(caller_has_lockex());
+    logevent* event_ptr;
 
-    uint sent_events = 0;
-
-    // send any pending log events to any known log destinations
-    for(auto&& i : event_buffer) {
-        sent_events++;
-        deliver_to_all__lockreq(i);
+    while(event_buffer.pop(event_ptr)) {
+        deliver_to_all__locksh(*event_ptr);
+        delete event_ptr;
     }
-
-    assert(sent_events == event_buffer.size());
-    event_buffer.empty();
 
     started = true;
 }
 
 void logengine::deliver(const logevent& event_in) {
-    auto lock = get_lock();
-    deliver__lockreq(event_in);
+    auto lock = get_locksh();
+    deliver__locksh(event_in);
 }
 
 // THREAD this function asserts required locking
 // THREAD this function can use shared locking if the log
 // event queue uses lockless insertion
 // https://en.cppreference.com/w/cpp/atomic/atomic_compare_exchange
-void logengine::deliver__lockreq(const logevent& event_in) {
-    assert(caller_has_lock());
+void logengine::deliver__locksh(const logevent& event_in) {
+    assert(caller_has_locksh());
     assert(event_in.level >= loglevel::unknown);
-
-    // this function must not return if a log event came in with
-    // a level of fatal
 
     // only deliver messages if started and then deliver them
     // even if that means 0 destinations receive them
     if (started) {
-        deliver_to_all__lockreq(event_in);
+        deliver_to_all__locksh(event_in);
     } else if (buffer_events) {
-        event_buffer.push_back(event_in);
+        auto copied_event_ptr = new logevent(event_in);
+        event_buffer.push(copied_event_ptr);
     }
 
-    if (event_in.level == loglevel::fatal) {
-        handlers::fatal(event_in);
-        // should never get here - if so the user defined terminate
-        // handler didn't work
-        std::terminate();
-    }
-
-    // it is now ok to return after here
     return;
 }
 
-void logengine::deliver_to_all__lockreq(const logevent& event_in) {
-    assert(caller_has_lock());
+void logengine::deliver_to_one__locksh(const std::shared_ptr<logdest>& dest_in, const logevent& event_in) {
+    assert(caller_has_locksh());
+    if (event_in.level >= dest_in->get_min_level()) {
+        dest_in->output(event_in);
+    }
+}
+
+void logengine::deliver_to_all__locksh(const logevent& event_in) {
+    assert(caller_has_locksh());
 
     uint sent = 0;
     for(auto&& i : destinations) {
-        i->output(event_in);
+        deliver_to_one__locksh(i, event_in);
         sent++;
     }
     assert(sent == destinations.size());
@@ -286,7 +357,7 @@ logdest::destid logdest::next_destination_id() {
 }
 
 loglevel logdest::get_min_level() {
-    return min_level.load(std::memory_order_relaxed);
+    return min_level.load(std::memory_order_seq_cst);
 }
 
 loglevel logdest::set_min_level(const loglevel& min_level_in) {
@@ -294,19 +365,19 @@ loglevel logdest::set_min_level(const loglevel& min_level_in) {
     // is changed - event delivery and buffering will block but
     // should_log() is still going to work with atomic operations
     // on the engine's min_log_level
-    auto engine_lock = logengine::get_engine()->get_lock();
+    auto engine_lock = logengine::get_engine()->get_lockex();
     return set_min_level__lockreq(min_level_in);
 }
 
 // THREAD this function asserts correct locking
 loglevel logdest::set_min_level__lockreq(const loglevel& min_level_in) {
-    assert(logengine::get_engine()->caller_has_lock());
+    assert(logengine::get_engine()->caller_has_lockex());
 
     loglevel old = get_min_level();
     min_level = min_level_in;
 
     if (engine != nullptr) {
-        engine->update_min_level__lockreq();
+        engine->update_min_level__lockex();
     }
 
     return old;
@@ -314,6 +385,7 @@ loglevel logdest::set_min_level__lockreq(const loglevel& min_level_in) {
 
 // THREAD this function is inherently thread safe
 void logdest::output(const logevent& event_in) {
+    assert(event_in.level >= get_min_level());
     handle_output(event_in);
 }
 
@@ -321,6 +393,7 @@ void logdest::output(const logevent& event_in) {
 std::string logconsole::format_event(const logevent& event_in) const {
     std::stringstream buf;
 
+    buf << event_in.tid << " ";
     buf << "@" << event_in.category << "." << level_name(event_in.level) << " ";
     buf << event_in.function << ": " << event_in.message;
 

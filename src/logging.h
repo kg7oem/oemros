@@ -26,7 +26,6 @@
 #include "logjam.h"
 #include "system.h"
 
-#define log_fatal(...)   logjam::send_logevent_fatal(oemros::log_sources.oemros, logjam::loglevel::fatal, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_error(...)   logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::error, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_info(...)    logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::info, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)
 #define log_verbose(...) logjam::send_logevent(oemros::log_sources.oemros, logjam::loglevel::verbose, __PRETTY_FUNCTION__, __FILE__, __LINE__, __VA_ARGS__)

@@ -1,7 +1,7 @@
 /*
- * main.cxx
+ * system.unix.cxx
  *
- *  Created on: Jul 21, 2018
+ *  Created on: Jul 25, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,28 +19,34 @@
  *
  */
 
-#include <memory>
-
-#include "logging.h"
 #include "system.h"
+#include "system.unix.h"
 
-using std::make_shared;
+namespace oemros_unix {
 
-void run() {
-    auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<oemros::log_console>(logjam::loglevel::debug);
+#include <cassert>
+#include <signal.h>
+#include <unistd.h>
 
-    logging->add_destination(test_dest);
-    logging->start();
+static void kill_timer_alarm_handler(UNUSED int signum_in) {
+    assert(signum_in == SIGALRM);
+    system_panic("grace period for fault handlers has expired");
 }
 
-int main() {
-    try {
-        run();
-    } catch (oemros::fault& fault) {
-        log_error("OEMROS faulted: ", fault.what());
+void os_setup_kill_timer(unsigned int seconds_in) {
+    auto old_handler = signal(SIGALRM, kill_timer_alarm_handler);
+
+    if (old_handler == SIG_ERR) {
+        system_panic("could not set handler for SIGALRM: ", oemros::errno_str(errno));
     }
 
-    oemros::exit_fault_state();
+    assert(old_handler == SIG_DFL);
+    assert(seconds_in > 0);
+    auto alarm_result = alarm(seconds_in);
+    assert(alarm_result == 0);
 }
+
+}
+
+
 
