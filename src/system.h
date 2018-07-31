@@ -44,6 +44,7 @@ enum class exit_code {
     panic = 3,
 };
 
+exit_code get_fault_state();
 [[noreturn]] void exit_fault_state();
 
 template <typename T>

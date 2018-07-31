@@ -1,7 +1,7 @@
 /*
- * main.cxx
+ * object.cxx
  *
- *  Created on: Jul 21, 2018
+ *  Created on: Jul 31, 2018
  *      Author: tyler
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,39 +19,15 @@
  *
  */
 
-#include <memory>
+#include <atomic>
 
-#include "logging.h"
 #include "object.h"
-#include "radio.h"
-#include "system.h"
 
-using std::make_shared;
+namespace oemros {
 
-void run() {
-    oemros::radio myrig;
+uint32_t get_next_subscription_num() {
+    static std::atomic<uint32_t> last_subscription_num = ATOMIC_VAR_INIT(0);
+    return ++last_subscription_num;
 }
 
-void bootstrap() {
-    auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<oemros::log_console>(logjam::loglevel::debug);
-
-    logging->add_destination(test_dest);
-    logging->start();
 }
-
-int main() {
-    bootstrap();
-
-    log_debug("Starting OEMROS");
-
-    try {
-        run();
-    } catch (oemros::fault& fault) {
-        log_error("OEMROS faulted: ", fault.what());
-    }
-
-    log_debug("Exiting OEMROS with fault state: ", (int)oemros::get_fault_state());
-    oemros::exit_fault_state();
-}
-

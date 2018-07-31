@@ -56,6 +56,7 @@ add_executable(
     src/system.cxx
     src/system.unix.cxx
     src/logging.cxx
+    src/radio.cxx
     src/main.cxx
 )
 

@@ -40,6 +40,10 @@ using oemros_unix::os_setup_kill_timer;
 
 static std::atomic<exit_code> system_fault_state = ATOMIC_VAR_INIT(exit_code::ok);
 
+exit_code get_fault_state() {
+    return system_fault_state.load(std::memory_order_seq_cst);
+}
+
 [[noreturn]] static void system_exit(exit_code code_in) {
     std::exit((int)code_in);
 }

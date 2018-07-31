@@ -224,18 +224,18 @@ bool should_log(const loglevel& leve_in);
 
 // TODO how can this be gotten rid of?
 template <typename T>
-void accumulate_log_arg(std::stringstream& sstream, T t) {
+void accumulate_log_arg(std::stringstream& sstream, T&& t) {
     sstream << t;
 }
 
 template <typename T, typename... Args>
-void accumulate_log_arg(std::stringstream& sstream, T t, Args... args) {
+void accumulate_log_arg(std::stringstream& sstream, T&& t, Args&&... args) {
     accumulate_log_arg(sstream, t);
     accumulate_log_arg(sstream, args...);
 }
 
 template<typename T, typename... Args>
-void send_logevent(const logsource& source, const loglevel& level, const char *function, const char *path, int line, T t, Args... args) {
+void send_logevent(const logsource& source, const loglevel& level, const char *function, const char *path, const int& line, T&& t, Args&&... args) {
     if (logjam::should_log(level)) {
         auto when = std::chrono::system_clock::now();
 
