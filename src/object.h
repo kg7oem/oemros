@@ -31,7 +31,7 @@ namespace oemros {
 
 uint32_t get_next_subscription_num();
 
-struct baseobj {
+struct baseobj : public std::enable_shared_from_this<baseobj> {
     baseobj& operator=(const baseobj&) = delete;
     baseobj(const baseobj&) = delete;
     baseobj(const baseobj&&) = delete;

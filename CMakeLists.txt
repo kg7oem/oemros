@@ -56,8 +56,10 @@ add_executable(
     src/system.cxx
     src/system.unix.cxx
     src/logging.cxx
+    src/runloop.cxx
     src/radio.cxx
     src/main.cxx
 )
 
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oemros boost_system)

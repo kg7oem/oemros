@@ -24,12 +24,17 @@
 #include "logging.h"
 #include "object.h"
 #include "radio.h"
+#include "runloop.h"
 #include "system.h"
 
 using std::make_shared;
+using namespace std::chrono_literals;
 
 void run() {
-    oemros::radio myrig;
+    auto loop = make_shared<oemros::runloop>();
+    auto repeat = loop->make_started<oemros::oneshot_timer>(2s);
+
+    loop->enter();
 }
 
 void bootstrap() {
