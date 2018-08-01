@@ -31,6 +31,10 @@ void runloop::enter() {
     io.run();
 }
 
+void runloop::post(const std::function<void ()>& post_in) {
+    io.post(post_in);
+}
+
 void runloop_item::start() {
     start__child();
 }

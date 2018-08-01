@@ -65,6 +65,11 @@ class runloop : public baseobj {
             return new_item;
         }
         void enter();
+        void post(const std::function<void ()>& post_in);
+        template <class Class, class Instance>
+        void post(Class&& class_in, Instance&& instance_in) {
+            post(std::bind(class_in, instance_in));
+        }
 };
 
 class oneshot_timer : public runloop_item {

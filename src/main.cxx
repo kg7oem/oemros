@@ -30,9 +30,17 @@
 using std::make_shared;
 using namespace std::chrono_literals;
 
+struct biddle {
+    void ok() { log_debug("biddle ok!"); }
+};
+
 void run() {
     auto loop = make_shared<oemros::runloop>();
     auto repeat = loop->make_started<oemros::oneshot_timer>(2s);
+    biddle abiddle;
+
+    loop->post([] { log_debug("I am posted"); });
+    loop->post(&biddle::ok, abiddle);
 
     loop->enter();
 }
