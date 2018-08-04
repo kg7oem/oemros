@@ -21,6 +21,7 @@
 
 #include <memory>
 
+#include "hamlib.h"
 #include "logging.h"
 #include "object.h"
 #include "radio.h"
@@ -28,21 +29,11 @@
 #include "system.h"
 
 using std::make_shared;
-using namespace std::chrono_literals;
-
-struct biddle {
-    void ok() { log_debug("biddle ok!"); }
-};
 
 void run() {
-    auto loop = make_shared<oemros::runloop>();
-    auto repeat = loop->make_started<oemros::oneshot_timer>(2s);
-    biddle abiddle;
+    oemros::hamlib_rig rig{1};
 
-    loop->post([] { log_debug("I am posted"); });
-    loop->post(&biddle::ok, abiddle);
-
-    loop->enter();
+    rig.open();
 }
 
 void bootstrap() {
