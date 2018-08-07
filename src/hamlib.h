@@ -50,8 +50,9 @@ template <typename T> struct hamlib_result {
 
     hamlib_result(const int& error_in, const T& value_in)
     : error(error_in), value(value_in) { }
+    operator bool() { return error == hamlib::RIG_OK; }
     operator T() {
-        if (error != hamlib::RIG_OK) throw hamlib_error(error);
+        if (! *this) throw hamlib_error(error);
         return value;
     }
     std::string error_str() {
@@ -87,11 +88,16 @@ class hamlib_radio : public radio {
     private:
         hamlib_rig* rig;
 
+    protected:
+        virtual void update__alc() override;
+        virtual void update__power() override;
+        virtual void update__swr() override;
+        virtual void update__tuner() override;
+
     public:
         hamlib_radio(const hamlib::rig_model_t& model_in);
         ~hamlib_radio();
         bool open();
-        void update__child() override;
 };
 
 }

@@ -34,15 +34,16 @@ void run() {
     oemros::hamlib_radio radio(1);
 
     radio.open();
+    radio.update();
 
     log_info("Frequency: ", radio.vfo.tuner);
 }
 
 void bootstrap() {
     auto logging = logjam::logengine::get_engine();
-    auto test_dest = make_shared<oemros::log_console>(logjam::loglevel::debug);
+    auto console = make_shared<oemros::log_console>(logjam::loglevel::debug);
 
-    logging->add_destination(test_dest);
+    logging->add_destination(console);
     logging->start();
 
     oemros::hamlib_bootstrap();
@@ -55,8 +56,8 @@ int main() {
 
     try {
         run();
-    } catch (oemros::fault& fault) {
-        log_error("OEMROS faulted: ", fault.what());
+    } catch (oemros::exception& e) {
+        log_error("OEMROS faulted: ", e.what());
     }
 
     log_debug("Exiting OEMROS with fault state: ", (int)oemros::get_fault_state());

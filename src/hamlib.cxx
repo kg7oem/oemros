@@ -22,6 +22,7 @@
 #include <cassert>
 
 #include "hamlib.h"
+#include "logging.h"
 
 namespace oemros {
 
@@ -100,9 +101,43 @@ bool hamlib_radio::open() {
     return rig->open();
 }
 
-void hamlib_radio::update__child() {
+void hamlib_radio::update__alc() {
     assert(rig != nullptr);
 
+    auto result = rig->get_alc();
+    if (result) {
+        meters.alc = result.value;
+    } else {
+        log_error("could not get ALC from hamlib: ", result.error_str());
+    }
+}
+
+void hamlib_radio::update__power() {
+    assert(rig != nullptr);
+
+    log_error("can not update power meter from hamlib yet");
+}
+
+void hamlib_radio::update__swr() {
+    assert(rig != nullptr);
+
+    auto result = rig->get_swr();
+    if (result) {
+        meters.swr = result.value;
+    } else {
+        log_error("could not get SWR from hamlib: ", result.error_str());
+    }
+}
+
+void hamlib_radio::update__tuner() {
+    assert(rig != nullptr);
+
+    auto result = rig->get_freq();
+    if (result) {
+        vfo.tuner = result.value;
+    } else {
+        log_error("could not get frequency from hamlib: ", result.error_str());
+    }
 }
 
 }

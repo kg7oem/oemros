@@ -24,7 +24,10 @@
 namespace oemros {
 
 void radio::update() {
-    update__child();
+    if (~ update_mask & (mask_type)radio::update::alc) update__alc();
+    if (~ update_mask & (mask_type)radio::update::power) update__power();
+    if (~ update_mask & (mask_type)radio::update::swr) update__swr();
+    if (~ update_mask & (mask_type)radio::update::tuner) update__tuner();
 }
 
 }

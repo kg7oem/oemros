@@ -31,8 +31,20 @@ namespace oemros {
 using frequency = uint64_t;
 
 class radio : public baseobj {
+    public:
+        using mask_type = uint64_t;
+        enum class update : mask_type {
+            alc = 1 << 0,
+            power = 1 << 1,
+            swr = 1 << 2,
+            tuner = 1 << 3,
+        };
+
     protected:
-        virtual void update__child() = 0;
+        virtual void update__alc() = 0;
+        virtual void update__power() = 0;
+        virtual void update__swr() = 0;
+        virtual void update__tuner() = 0;
 
     public:
         struct vfo_type : public baseobj {
@@ -46,6 +58,7 @@ class radio : public baseobj {
             value_source<float> alc{0};
         };
 
+        mask_type update_mask = 0;
         vfo_type vfo;
         meters_type meters;
 
