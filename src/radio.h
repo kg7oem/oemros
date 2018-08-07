@@ -24,6 +24,7 @@
 #include <cstdint>
 
 #include "object.h"
+#include "runloop.h"
 
 namespace oemros {
 
@@ -41,6 +42,7 @@ class radio : public baseobj {
         };
 
     protected:
+        std::shared_ptr<runloop> loop;
         virtual void update__alc() = 0;
         virtual void update__power() = 0;
         virtual void update__swr() = 0;
@@ -62,6 +64,7 @@ class radio : public baseobj {
         vfo_type vfo;
         meters_type meters;
 
+        radio(std::shared_ptr<runloop> loop_in) : loop(loop_in) { }
         void update();
 };
 

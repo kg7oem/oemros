@@ -86,8 +86,8 @@ hamlib_result<float> hamlib_rig::get_swr(hamlib_rig::vfo_type vfo_in) {
     return make_hamlib_result(retval, buf.f);
 }
 
-hamlib_radio::hamlib_radio(const hamlib::rig_model_t& model_in)
-: rig(new hamlib_rig(model_in)) { }
+hamlib_radio::hamlib_radio(std::shared_ptr<runloop> loop_in, const hamlib::rig_model_t& model_in)
+: radio(loop_in), rig(new hamlib_rig(model_in)) { }
 
 hamlib_radio::~hamlib_radio() {
     if (rig != nullptr) {

@@ -31,10 +31,13 @@
 using std::make_shared;
 
 void run() {
-    oemros::hamlib_radio radio(1);
+    auto loop = std::make_shared<oemros::runloop>();
+    oemros::hamlib_radio radio(loop, 1);
 
     radio.open();
     radio.update();
+
+    loop->enter();
 
     log_info("Frequency: ", radio.vfo.tuner);
 }

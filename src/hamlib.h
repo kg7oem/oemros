@@ -95,7 +95,7 @@ class hamlib_radio : public radio {
         virtual void update__tuner() override;
 
     public:
-        hamlib_radio(const hamlib::rig_model_t& model_in);
+        hamlib_radio(std::shared_ptr<runloop> loop_in, const hamlib::rig_model_t& model_in);
         ~hamlib_radio();
         bool open();
 };
