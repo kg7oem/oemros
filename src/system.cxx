@@ -135,14 +135,16 @@ const char* enum_to_str(const exit_code& code_in) {
     system_fault("could not find string for enum");
 }
 
-fault::fault(const char* file_in, int line_in, const char* function_in, const std::string& message_in)
-: file(file_in), line(line_in), function(function_in), message(message_in) {
-    assert(file != nullptr);
-    assert(function_in != nullptr);
+exception::exception(const std::string& message_in) : message(message_in) { }
+
+const char* exception::what() const noexcept {
+    return message.c_str();
 }
 
-const char* fault::what() const noexcept {
-    return message.c_str();
+fault::fault(const char* file_in, int line_in, const char* function_in, const std::string& message_in)
+: exception(message_in), file(file_in), line(line_in), function(function_in) {
+    assert(file != nullptr);
+    assert(function_in != nullptr);
 }
 
 std::string errno_str(int errno_in) {

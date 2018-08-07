@@ -31,9 +31,11 @@
 using std::make_shared;
 
 void run() {
-    oemros::hamlib_rig rig{1};
+    oemros::hamlib_radio radio(1);
 
-    rig.open();
+    radio.open();
+
+    log_info("Frequency: ", radio.vfo.tuner);
 }
 
 void bootstrap() {
@@ -42,6 +44,8 @@ void bootstrap() {
 
     logging->add_destination(test_dest);
     logging->start();
+
+    oemros::hamlib_bootstrap();
 }
 
 int main() {

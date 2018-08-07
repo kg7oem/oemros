@@ -31,6 +31,8 @@ namespace oemros {
 using frequency = uint64_t;
 
 class radio : public baseobj {
+    protected:
+        virtual void update__child() = 0;
 
     public:
         struct vfo_type : public baseobj {
@@ -46,6 +48,8 @@ class radio : public baseobj {
 
         vfo_type vfo;
         meters_type meters;
+
+        void update();
 };
 
 }

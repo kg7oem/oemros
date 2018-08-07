@@ -21,4 +21,10 @@
 
 #include "radio.h"
 
+namespace oemros {
 
+void radio::update() {
+    update__child();
+}
+
+}

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <functional>
 #include <list>
 #include <memory>
@@ -83,14 +84,16 @@ template <typename T>
 class value_source : public baseobj {
     using value_type = T;
     // the sink gets const values so it can not modify the stored value
-    using source_type = event_source<const T&>;
+    using source_type = event_source<const value_source<T>&>;
     using sink_type = typename source_type::sink_type;
     using subscription_type = typename source_type::subscription;
+    using timestamp_type = std::chrono::time_point<std::chrono::system_clock>;
 
     private:
         value_type value;
         source_type source;
-        void deliver() { source.deliver(value); }
+        timestamp_type last_update;
+        void deliver() { source.deliver(*this); }
 
     public:
         value_source(const T& value_in) : value(value_in) { }
@@ -98,8 +101,10 @@ class value_source : public baseobj {
         operator T() { return get(); }
         T get() { return value; }
         T set(const T& value_in) {
+            auto now = std::chrono::system_clock::now();
             auto old = value;
             value = value_in;
+            last_update = now;
             deliver();
             return old;
         }

@@ -70,17 +70,21 @@ std::string vaargs_to_string(Args... args) {
 
 const char* enum_to_str(const exit_code& code_in);
 
-struct fault : std::exception {
-    const char* file;
-    int line;
-    const char* function;
-    std::string message;
-
-    fault(const char* file_in, int line_in, const char* function_in, const std::string& message_in);
+struct exception : public std::exception {
+    const std::string message;
+    exception(const std::string& message_in);
     virtual const char* what() const noexcept override;
 };
 
-struct double_fault : fault {
+struct fault : public exception {
+    const char* file;
+    int line;
+    const char* function;
+
+    fault(const char* file_in, int line_in, const char* function_in, const std::string& message_in);
+};
+
+struct double_fault : public fault {
     double_fault(const char* file_in, int line_in, const char* function_in, const char* message_in)
     : fault(file_in, line_in, function_in, message_in) { }
 };

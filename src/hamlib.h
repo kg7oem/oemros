@@ -21,7 +21,11 @@
 
 #pragma once
 
+#include <utility>
+
 #include "object.h"
+#include "radio.h"
+#include "system.h"
 
 namespace hamlib {
 
@@ -31,7 +35,40 @@ namespace hamlib {
 
 namespace oemros {
 
+void hamlib_bootstrap();
+
+struct hamlib_error : public exception {
+    const int error_num;
+    hamlib_error(int error_num_in);
+};
+
+template <typename T> struct hamlib_result {
+    using value_type = T;
+
+    const int error;
+    const T value;
+
+    hamlib_result(const int& error_in, const T& value_in)
+    : error(error_in), value(value_in) { }
+    operator T() {
+        if (error != hamlib::RIG_OK) throw hamlib_error(error);
+        return value;
+    }
+    std::string error_str() {
+        return std::string(hamlib::rigerror(error));
+    }
+};
+
+template <class T> hamlib_result<T>
+make_hamlib_result(const int& error_in, const T& value_in) {
+    return hamlib_result<T>(error_in, value_in);
+}
+
 class hamlib_rig : public baseobj {
+    public:
+        using freq_type = hamlib::freq_t;
+        using vfo_type = hamlib::vfo_t;
+
     private:
         hamlib::RIG* hl_rig = nullptr;
 
@@ -40,6 +77,21 @@ class hamlib_rig : public baseobj {
         hamlib_rig(const hamlib::rig_model_t& model_in) : model(model_in) { }
         ~hamlib_rig();
         bool open();
+        hamlib_result<float> get_alc(vfo_type vfo_in = RIG_VFO_CURR);
+        hamlib_result<freq_type> get_freq(vfo_type vfo_in = RIG_VFO_CURR);
+        hamlib_result<int> get_strength(vfo_type vfo_in = RIG_VFO_CURR);
+        hamlib_result<float> get_swr(vfo_type vfo_in = RIG_VFO_CURR);
+};
+
+class hamlib_radio : public radio {
+    private:
+        hamlib_rig* rig;
+
+    public:
+        hamlib_radio(const hamlib::rig_model_t& model_in);
+        ~hamlib_radio();
+        bool open();
+        void update__child() override;
 };
 
 }

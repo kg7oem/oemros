@@ -19,9 +19,18 @@
  *
  */
 
+#include <cassert>
+
 #include "hamlib.h"
 
 namespace oemros {
+
+void hamlib_bootstrap() {
+    hamlib::rig_set_debug_level(hamlib::RIG_DEBUG_NONE);
+}
+
+hamlib_error::hamlib_error(int error_num_in)
+: exception(hamlib::rigerror(error_num_in)), error_num(error_num_in) { }
 
 hamlib_rig::~hamlib_rig() {
     if (hl_rig != nullptr) {
@@ -41,6 +50,59 @@ bool hamlib_rig::open() {
 
     auto retcode = hamlib::rig_open(hl_rig);
     return retcode;
+}
+
+hamlib_result<float> hamlib_rig::get_alc(hamlib_rig::vfo_type vfo_in) {
+    assert(hl_rig != nullptr);
+
+    hamlib::value_t buf;
+    auto retval = hamlib::rig_get_level(hl_rig, vfo_in, hamlib::RIG_LEVEL_ALC, &buf);
+    return make_hamlib_result(retval, buf.f);
+}
+
+hamlib_result<hamlib_rig::freq_type>
+hamlib_rig::get_freq(hamlib_rig::vfo_type vfo_in) {
+    assert(hl_rig != nullptr);
+
+    hamlib_rig::freq_type buf;
+    auto retval = hamlib::rig_get_freq(hl_rig, vfo_in, &buf);
+    return make_hamlib_result(retval, buf);
+}
+
+hamlib_result<int> hamlib_rig::get_strength(hamlib_rig::vfo_type vfo_in) {
+    assert(hl_rig != nullptr);
+
+    hamlib::value_t buf;
+    auto retval = hamlib::rig_get_level(hl_rig, vfo_in, hamlib::RIG_LEVEL_STRENGTH, &buf);
+    return make_hamlib_result(retval, buf.i);
+}
+
+hamlib_result<float> hamlib_rig::get_swr(hamlib_rig::vfo_type vfo_in) {
+    assert(hl_rig != nullptr);
+
+    hamlib::value_t buf;
+    auto retval = hamlib::rig_get_level(hl_rig, vfo_in, hamlib::RIG_LEVEL_SWR, &buf);
+    return make_hamlib_result(retval, buf.f);
+}
+
+hamlib_radio::hamlib_radio(const hamlib::rig_model_t& model_in)
+: rig(new hamlib_rig(model_in)) { }
+
+hamlib_radio::~hamlib_radio() {
+    if (rig != nullptr) {
+        delete rig;
+        rig = nullptr;
+    }
+}
+
+bool hamlib_radio::open() {
+    assert(rig != nullptr);
+    return rig->open();
+}
+
+void hamlib_radio::update__child() {
+    assert(rig != nullptr);
+
 }
 
 }
