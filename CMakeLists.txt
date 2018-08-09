@@ -55,6 +55,7 @@ add_executable(
     src/logjam.cxx
     src/system.cxx
     src/system.unix.cxx
+    src/thread.cxx
     src/logging.cxx
     src/runloop.cxx
     src/hamlib.cxx
@@ -64,4 +65,5 @@ add_executable(
 
 target_link_libraries(oemros ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(oemros boost_system)
+target_link_libraries(oemros boost_thread)
 target_link_libraries(oemros hamlib)

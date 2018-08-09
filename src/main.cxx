@@ -27,6 +27,7 @@
 #include "radio.h"
 #include "runloop.h"
 #include "system.h"
+#include "thread.h"
 
 using std::make_shared;
 

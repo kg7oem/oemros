@@ -23,9 +23,11 @@
 
 #include <boost/asio.hpp>
 #include <chrono>
+#include <functional>
 #include <memory>
 
 #include "object.h"
+#include "thread.h"
 
 namespace oemros {
 
